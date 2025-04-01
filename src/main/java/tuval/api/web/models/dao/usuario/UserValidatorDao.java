@@ -25,7 +25,7 @@ public class UserValidatorDao {
         try {
 
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
-                    .withProcedureName("sp_msw_consulta_usuarios_tuv1")
+                    .withProcedureName("sp_msw_consulta_usuarios_tuv")
                     .withoutProcedureColumnMetaDataAccess()
                     .declareParameters(
                             new SqlParameter("@compania", Types.VARCHAR),
