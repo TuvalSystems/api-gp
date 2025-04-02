@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import tuval.api.web.models.entity.sucursales.BranchesClientEntity;
-import tuval.api.web.models.service.sucursales.BranchesClientsService;
-import tuval.api.web.models.entity.sucursales.CoordinateListEntity;
+import tuval.api.web.models.entity.tuval.sucursales.BranchesClientEntity;
+import tuval.api.web.models.entity.tuval.sucursales.CoordinateListEntity;
+import tuval.api.web.models.service.tuval.sucursales.BranchesClientsService;
 
 @RestController
 @RequestMapping("/api")
