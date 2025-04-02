@@ -66,7 +66,6 @@ public class DynamicsJpaConfig {
         return new JpaTransactionManager(entityManagerFactory);
     }
 
-
     //para las conexinexiones en las entidades de dynamics
     @Primary
     @Bean(name = "dynamicsEntityManager")
