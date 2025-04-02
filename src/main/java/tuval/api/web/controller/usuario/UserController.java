@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import tuval.api.web.models.service.usuario.UserService;
+import tuval.api.web.models.service.dynamics.usuario.UserService;
 
 @RestController
 @RequestMapping("/api")

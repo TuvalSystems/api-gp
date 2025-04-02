@@ -9,9 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import tuval.api.web.models.entity.transferencia.TransferDetailEntity;
-import tuval.api.web.models.entity.transferencia.TransferHeaderEntity;
-import tuval.api.web.models.service.transferencia.TransferenciaService;
+import tuval.api.web.models.entity.tuval.transferencia.TransferDetailEntity;
+import tuval.api.web.models.entity.tuval.transferencia.TransferHeaderEntity;
+import tuval.api.web.models.service.tuval.transferencia.TransferenciaService;
+
 
 @RestController
 @RequestMapping("/api")
