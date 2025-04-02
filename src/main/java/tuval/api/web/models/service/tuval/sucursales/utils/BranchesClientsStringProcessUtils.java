@@ -17,7 +17,6 @@ public class BranchesClientsStringProcessUtils {
             if (addressStr.indexOf("*") > 0) {
                 String currentAddress = addressStr.substring(0, addressStr.indexOf("*"));
                 String[] parts = currentAddress.split("\\|");
-                System.out.println(currentAddress);
                 BranchesClientAddressEntity address = new BranchesClientAddressEntity();
                 address.setIdDireccion(getPart(parts, 0));
                 address.setDireccion(getPart(parts, 1));
