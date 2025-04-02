@@ -10,7 +10,6 @@ public class UserValidatorEntity {
     @JsonProperty("INTERID")
     private String interId;
 
-
     public UserValidatorEntity() {
     }
 
