@@ -13,6 +13,16 @@ public class StockWarehouseEntity {
     private String STOCK_DISPONIBLE;
     private String STOCK_USO;
     private String STOCK_DANADO;
+    private String COMPARTIMIENTO;
+
+    @JsonProperty("COMPARTIMIENTO")
+    public String getCOMPARTIMIENTO() {
+        return COMPARTIMIENTO != null ? COMPARTIMIENTO.trim() : null;
+    }
+
+    public void setCOMPARTIMIENTO(String COMPARTIMIENTO) {
+        this.COMPARTIMIENTO = COMPARTIMIENTO;
+    }
 
     @JsonProperty("ARTICULO")
     public String getARTICULO() {

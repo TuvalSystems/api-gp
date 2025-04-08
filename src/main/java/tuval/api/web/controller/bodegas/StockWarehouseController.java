@@ -26,4 +26,13 @@ public class StockWarehouseController {
         return response;
     }
 
+    @CrossOrigin
+    @RequestMapping("/consultar-stock-articulo-bodega-compartimento")
+    public List<StockWarehouseEntity> consultaStockBodegaCompartimento(@RequestParam String articulo,
+            @RequestParam String bodega, @RequestParam String compartimento) {
+        List<StockWarehouseEntity> response = stockWarehouseService.consultarStockBodegaCompartimento(articulo, bodega, compartimento);
+        return response;
+    }
+   
+
 }

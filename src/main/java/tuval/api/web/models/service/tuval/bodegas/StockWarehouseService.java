@@ -38,4 +38,27 @@ public class StockWarehouseService {
         return resp;
     }
 
+
+    public List<StockWarehouseEntity> consultarStockBodegaCompartimento(String articulo, String bodega, String compartimento) {
+        List<StockWarehouseEntity> resp = new ArrayList<>();
+        try {
+            StockWarehouseResponseEntity response = stockWarehouseDao.consultStockByWarehouseAndCompartment(articulo, bodega, compartimento);
+            if (response != null && response.getStockWarehouseList() instanceof List) {
+                Object data = response.getStockWarehouseList();
+                List<StockWarehouseEntity> tempResponse = new ArrayList<>();
+                if (data instanceof List<?>) {
+                    for (Object item : (List<?>) data) {
+                        if (item instanceof StockWarehouseEntity) {
+                            tempResponse.add((StockWarehouseEntity) item);
+                        }
+                    }
+                }
+                resp = tempResponse;
+            }
+        } catch (Exception e) {
+            System.err.println("Error en servicio: " + e.getMessage());
+        }
+        return resp;
+    }
+
 }
