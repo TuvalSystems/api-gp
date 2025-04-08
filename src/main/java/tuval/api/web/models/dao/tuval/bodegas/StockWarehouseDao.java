@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
@@ -17,7 +16,7 @@ import org.springframework.stereotype.Repository;
 import jakarta.annotation.PostConstruct;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseResponseEntity;
-import tuval.api.web.models.entity.tuval.transferencia.TransferHeaderEntity;
+
 
 @Repository
 public class StockWarehouseDao {
