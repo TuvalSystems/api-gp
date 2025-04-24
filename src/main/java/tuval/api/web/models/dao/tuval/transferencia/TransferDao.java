@@ -258,4 +258,6 @@ public class TransferDao {
             throw new RuntimeException("Error al consultar transferencias: " + e.getMessage(), e);
         }
     }
+
+   
 }
