@@ -4,10 +4,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import tuval.api.web.models.dao.dynamics.transferencia.TransferDynamicDao;
 import tuval.api.web.models.dao.tuval.transferencia.TransferDao;
 import tuval.api.web.models.entity.tuval.transferencia.TransferDetailEntity;
 import tuval.api.web.models.entity.tuval.transferencia.TransferDetailResponseEntity;
@@ -19,6 +22,9 @@ public class TransferenciaService {
 
     @Autowired
     private TransferDao transferDao;
+
+     @Autowired
+    private TransferDynamicDao transferDynamicDao;
 
     public List<TransferHeaderEntity> consultaCabeceraTransferencia(String idCompany, String fecha, String numDoc) {
         List<TransferHeaderEntity> response = new ArrayList<>();
@@ -35,6 +41,10 @@ public class TransferenciaService {
             } catch (Exception e) {
                 fechaDate = new Date();
             }
+            if (numDoc != null && !numDoc.isEmpty()) {
+                transferDynamicDao.updateTrcNumdocAndTrcStatusTransfer( new java.sql.Date(fechaDate.getTime()), numDoc);
+            }
+
             TransferHeaderResponseEntity resultEntity = transferDao.consultDocumentTransfer(
                     new java.sql.Date(fechaDate.getTime()),
                     "usuario", 1, numDoc);
