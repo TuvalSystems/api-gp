@@ -43,9 +43,9 @@ public class TransferenciaServiceImp implements TransferenciaService {
             } catch (Exception e) {
                 fechaDate = new Date();
             }
-            if (numDoc != null && !numDoc.isEmpty()) {
-                transferDynamicDao.updateTrcNumdocAndTrcStatusTransfer(new java.sql.Date(fechaDate.getTime()), numDoc);
-            }
+            // if (numDoc != null && !numDoc.isEmpty()) {
+            //     transferDynamicDao.updateTrcNumdocAndTrcStatusTransfer(new java.sql.Date(fechaDate.getTime()), numDoc);
+            // }
 
             TransferHeaderResponseEntity resultEntity = transferDao.consultDocumentTransfer(
                     new java.sql.Date(fechaDate.getTime()),
