@@ -1,7 +1,5 @@
 package tuval.api.web.controller.transferencia;
 
-import java.math.BigDecimal;
-import java.sql.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

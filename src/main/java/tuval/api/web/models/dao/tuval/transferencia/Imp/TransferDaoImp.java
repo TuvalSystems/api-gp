@@ -1,6 +1,5 @@
 package tuval.api.web.models.dao.tuval.transferencia.Imp;
 
-import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Types;
 import java.util.HashMap;

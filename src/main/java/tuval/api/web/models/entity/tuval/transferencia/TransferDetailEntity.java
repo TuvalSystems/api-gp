@@ -16,6 +16,17 @@ public class TransferDetailEntity {
     private String NombreItem;
     @JsonProperty("cantidad")
     private int Cantidad;
+    @JsonProperty("trd_ubic")
+    private String trd_ubic;
+
+    public String getTrd_ubic() {
+        return trd_ubic;
+    }
+
+
+    public void setTrd_ubic(String trd_ubic) {
+        this.trd_ubic = trd_ubic;
+    }
 
     public TransferDetailEntity() {
     }
@@ -71,7 +82,7 @@ public class TransferDetailEntity {
     @Override
     public String toString() {
         return "TransferDetailEntity{" + "Documento=" + Documento + ", Origen=" + Origen + ", Destino=" + Destino
-                + ", Item=" + Item + ", NombreItem=" + NombreItem + ", Cantidad=" + Cantidad + '}';
+                + ", Item=" + Item + ", NombreItem=" + NombreItem + ", Cantidad=" + Cantidad +  ", trd_ubic=" + trd_ubic + '}';
     }
 
 }
