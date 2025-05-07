@@ -22,10 +22,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.GetMapping;
+
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping(value = "/api" , produces = "application/json")
 public class InvoiceReturnController {
 
     @Autowired
@@ -83,7 +83,7 @@ public class InvoiceReturnController {
         return invoiceReturnService.getResponseCreditNote(document, tipo);
     }
 
-    @GetMapping("/devoluciones/generar-devolucion-venta")
+    @PostMapping("/devoluciones/generar-devolucion-venta")
     public ResponseEntity<?> generacionDevolucionVenta(@RequestBody Map<String, Object> data) {
         try {
             String idCompania = (String) data.get("IDCompania");
