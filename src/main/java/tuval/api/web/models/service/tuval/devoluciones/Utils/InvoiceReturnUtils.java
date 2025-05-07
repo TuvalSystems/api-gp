@@ -1,12 +1,17 @@
 package tuval.api.web.models.service.tuval.devoluciones.Utils;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 
-public class InvoiceUtils {
+import tuval.api.web.models.entity.tuval.devoluciones.RetornoEntity;
+
+@Component
+public class InvoiceReturnUtils {
     
     
     public static ResponseEntity<Map<String, Object>> buildError(String message) {
@@ -53,6 +58,31 @@ public class InvoiceUtils {
             throw new Exception("(" + code + ") " + msg);
         }
         return value;
+    }
+
+
+       public static boolean validarDatos(String documento, String pedidoOrigen, String bodega, String usuario, List<RetornoEntity> response) {
+        if (documento == null || documento.isBlank()) {
+            response.add(new RetornoEntity(false, 10, "No se ha enviado el número de Documento en la cabecera de la transacción."));
+            return false;
+        }
+
+        if (pedidoOrigen == null || pedidoOrigen.isBlank()) {
+            response.add(new RetornoEntity(false, 11, "No se ha enviado el número de pedido original en la cabecera de la transacción."));
+            return false;
+        }
+
+        if (bodega == null || bodega.isBlank()) {
+            response.add(new RetornoEntity(false, 12, "No se ha enviado la bodega en la cabecera de la transacción."));
+            return false;
+        }
+
+        if (usuario == null || usuario.isBlank()) {
+            response.add(new RetornoEntity(false, 13, "No se ha enviado el usuario en la cabecera de la transacción."));
+            return false;
+        }
+
+        return true;
     }
 
 }

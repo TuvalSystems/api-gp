@@ -8,8 +8,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import tuval.api.web.models.entity.tuval.devoluciones.ItemsDevolucionEntity;
+import tuval.api.web.models.entity.tuval.devoluciones.RetornoEntity;
 import tuval.api.web.models.service.tuval.devoluciones.InvoiceReturnService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +22,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
-@RequestMapping(value = "/api" , produces = "application/json")
+@RequestMapping("/api")
 public class InvoiceReturnController {
 
     @Autowired
@@ -46,9 +50,8 @@ public class InvoiceReturnController {
             }
             if (cabeceraNode.size() > 1) {
                 return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "No se puede procesar un documento con 2 o más cabeceras."
-                ));
+                        "success", false,
+                        "message", "No se puede procesar un documento con 2 o más cabeceras."));
             }
 
             ObjectMapper mapper = new ObjectMapper();
@@ -74,11 +77,56 @@ public class InvoiceReturnController {
         }
     }
 
-
     @PostMapping("/devoluciones/respuesta-nota-credito")
     public ResponseEntity<?> respuestaNotaCredito(@RequestParam String document,
             @RequestParam String tipo) {
         return invoiceReturnService.getResponseCreditNote(document, tipo);
+    }
+
+    @GetMapping("/devoluciones/generar-devolucion-venta")
+    public ResponseEntity<?> generacionDevolucionVenta(@RequestBody Map<String, Object> data) {
+        try {
+            String idCompania = (String) data.get("IDCompania");
+            String documento = (String) data.get("Documento");
+            String pedidoOrigen = (String) data.get("PedidoOrigen");
+            String bodega = (String) data.get("Bodega");
+            String observacion = (String) data.get("Observacion");
+            String usuario = String.valueOf(data.get("Usuario")); // convertir int a String
+
+            // Convertir Items_Devolucion a lista de ItemsDevolucion
+            ObjectMapper mapper = new ObjectMapper();
+            List<Map<String, Object>> itemsData = mapper.convertValue(data.get("Items_Devolucion"),
+                    new TypeReference<List<Map<String, Object>>>() {
+                    });
+            List<ItemsDevolucionEntity> items = new ArrayList<>();
+
+            for (Map<String, Object> item : itemsData) {
+                ItemsDevolucionEntity detalle = new ItemsDevolucionEntity();
+                detalle.setItem((String) item.get("Item"));
+                detalle.setCantidad(Float.parseFloat(item.get("Cantidad").toString()));
+                detalle.setCompartimento(
+                        item.get("Compartimento") != null ? item.get("Compartimento").toString() : null);
+                items.add(detalle);
+            }
+
+            List<RetornoEntity> resultado = invoiceReturnService.generateSalesReturn(
+                    idCompania,
+                    documento,
+                    pedidoOrigen,
+                    bodega,
+                    observacion,
+                    usuario,
+                    items);
+
+            return ResponseEntity.ok(resultado);
+
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error interno al procesar la solicitud.");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
 }
