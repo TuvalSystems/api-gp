@@ -22,10 +22,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
+import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
-@RequestMapping(value = "/api" , produces = "application/json")
+@RequestMapping(value = "/api", produces = "application/json")
 public class InvoiceReturnController {
 
     @Autowired
@@ -122,6 +122,36 @@ public class InvoiceReturnController {
 
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error interno al procesar la solicitud.");
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/devoluciones/consulta-item-compartimento-bin")
+    public ResponseEntity<Map<String, Object>> consultarItemCompartimento(
+            @RequestParam String item,
+            @RequestParam String bodega) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            if (item == null || item.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "Falta el campo 'detalle' o está vacío.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            if (bodega == null || bodega.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "Falta el campo 'bodega' o está vacío.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // ✅ Llamada al servicio para consultar el item en el compartimento
+            return invoiceReturnService.getResponseItemBin(item, bodega);
+        } catch (Exception e) {
+            // 🔄 Manejo de excepciones y respuesta clara
+            // Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "Error interno al procesar la solicitud.");
             response.put("error", e.getMessage());

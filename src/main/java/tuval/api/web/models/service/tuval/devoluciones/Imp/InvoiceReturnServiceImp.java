@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +19,8 @@ import tuval.api.web.models.service.tuval.devoluciones.Utils.InvoiceReturnUtils;
 @Service
 public class InvoiceReturnServiceImp implements InvoiceReturnService {
 
-
     @Autowired
     private InvoiceReturnDao invoiceReturnDao;
-
-    
 
     public ResponseEntity<Map<String, Object>> generacionNotaCreditoVTA(Map<String, Object> cabecera,
             List<Map<String, Object>> detalle) {
@@ -92,7 +90,8 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
                         "Campo descripción vacío");
                 String unidad = InvoiceReturnUtils.getRequiredField(det, "NC_VTA_DET_UNIDAD_MEDIDA", "008",
                         "Campo unidad vacío");
-                String bodegaDet = InvoiceReturnUtils.getRequiredField(det, "NC_VTA_DET_BODEGA", "009", "Campo bodega vacío");
+                String bodegaDet = InvoiceReturnUtils.getRequiredField(det, "NC_VTA_DET_BODEGA", "009",
+                        "Campo bodega vacío");
                 double cantidad = parseDoubleOrFail(det, "NC_VTA_DET_CANTIDAD", document, tipo, "010",
                         "Cantidad inválida");
 
@@ -172,7 +171,6 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
         }
 
     }
-
 
     private double parseDoubleOrFail(Map<String, Object> map, String key, String doc, String tipo, String code,
             String msg) throws Exception {
@@ -309,5 +307,26 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
 
     }
 
-   
+    public ResponseEntity<Map<String, Object>> getResponseItemBin(String item, String bodega) {
+        try {
+            // ✅ Llamada al DAO con el valor fijo "16"
+            ResponseEntity<Map<String, Object>> response = invoiceReturnDao.consultItemBin(item, bodega, 16);
+
+            // 🔍 Validación de respuesta nula
+            if (response == null || response.getBody() == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "No se encontraron datos para el item y bodega proporcionados.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            }
+
+            // ✅ Respuesta correcta
+            return response;
+
+        } catch (Exception e) {
+            // 🔄 Manejo de excepción controlada
+            return InvoiceReturnUtils.buildException(e);
+        }
+    }
+
 }

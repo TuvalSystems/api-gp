@@ -60,4 +60,6 @@ public interface InvoiceReturnDao {
                         String transaccionOriginal,
                         String usuario,
                         int modo);
+
+        ResponseEntity<Map<String, Object>> consultItemBin(String item, String bodega, int modo);
 }

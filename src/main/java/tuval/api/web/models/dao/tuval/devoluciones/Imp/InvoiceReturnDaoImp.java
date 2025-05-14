@@ -583,7 +583,7 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
                 response.put("idmov", idMov); // lo puedes devolver si quieres confirmar que sigue siendo válido
                 return ResponseEntity.ok(response);
             } else {
-                return buildError("Error al generar detalle de devolución: " +codRet + " - "+ mensaje);
+                return buildError("Error al generar detalle de devolución: " + codRet + " - " + mensaje);
             }
 
         } catch (Exception e) {
@@ -650,7 +650,7 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
             params.put("bindes", "");
             params.put("item", "");
             params.put("cantidad", 0);
-             params.put("secitem", 0);
+            params.put("secitem", 0);
             params.put("compartimento", "");
             params.put("numtran", 0);
             params.put("idfila", 0);
@@ -674,6 +674,102 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
                 return ResponseEntity.ok(response);
             } else {
                 return buildError("Error al generar el movimiento: " + codRet + " - " + mensaje);
+            }
+
+        } catch (Exception e) {
+            return buildException(e);
+        }
+    }
+
+    public ResponseEntity<Map<String, Object>> consultItemBin(String item, String bodegaOrigen, int modo) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                    .withProcedureName("sp_msw_movimientos_iv")
+                    .declareParameters(
+                            new SqlParameter("numdoc", Types.VARCHAR),
+                            new SqlParameter("bodorigen", Types.VARCHAR),
+                            new SqlParameter("boddestino", Types.VARCHAR),
+                            new SqlParameter("observacion", Types.VARCHAR),
+                            new SqlInOutParameter("idmov", Types.INTEGER),
+                            new SqlInOutParameter("docgp", Types.VARCHAR),
+                            new SqlParameter("numdocori", Types.VARCHAR),
+                            new SqlParameter("userid", Types.CHAR),
+                            new SqlParameter("modo", Types.INTEGER),
+
+                            new SqlParameter("tipotrx", Types.VARCHAR),
+                            new SqlParameter("binitem", Types.VARCHAR),
+                            new SqlParameter("binori", Types.VARCHAR),
+                            new SqlParameter("bindes", Types.VARCHAR),
+                            new SqlParameter("item", Types.VARCHAR),
+                            new SqlParameter("cantidad", Types.REAL),
+                            new SqlParameter("secitem", Types.INTEGER),
+                            new SqlParameter("compartimento", Types.VARCHAR),
+                            new SqlParameter("numtran", Types.NUMERIC),
+                            new SqlParameter("idfila", Types.INTEGER),
+                            new SqlParameter("fecpro", Types.DATE),
+                            new SqlParameter("submodo", Types.SMALLINT),
+
+                            new SqlParameter("equipo", Types.VARCHAR),
+                            new SqlInOutParameter("codret", Types.INTEGER),
+                            new SqlInOutParameter("msj", Types.VARCHAR));
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("numdoc", "");
+            params.put("bodorigen", bodegaOrigen);
+            params.put("boddestino", "");
+            params.put("observacion", "");
+            params.put("idmov", 0);
+            params.put("docgp", ""); // OUT
+            params.put("numdocori", "");
+            params.put("userid", "");
+            params.put("modo", modo); // normalmente 19
+
+            params.put("tipotrx", "");
+            params.put("binitem", "");
+            params.put("binori", "");
+            params.put("bindes", "");
+            params.put("item", item);
+            params.put("cantidad", 0);
+            params.put("secitem", 0);
+            params.put("compartimento", "");
+            params.put("numtran", 0);
+            params.put("idfila", 0);
+            params.put("fecpro", "");
+            params.put("submodo", 0);
+
+            params.put("equipo", "wserver");
+            params.put("codret", 0);
+            params.put("msj", "");
+
+            Map<String, Object> result = jdbcCall.execute(params);
+
+            // int codRet = (int) result.get("codret");
+            // String mensaje = (String) result.get("msj");
+
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> registros = (List<Map<String, Object>>) result.get("#result-set-1");
+
+            // ✅ Ordenar de forma descendente por "bodega"
+            registros.sort((a, b) -> {
+                // 📌 Obtener los valores de "bodega", si no existe el valor, se usa un string
+                // vacío
+                String bodegaA = (String) a.getOrDefault("bodega", "");
+                String bodegaB = (String) b.getOrDefault("bodega", "");
+
+                // 🔄 Orden descendente (de Z a A)
+                return bodegaB.compareTo(bodegaA);
+            });
+
+            if (registros != null && !registros.isEmpty()) {
+                Map<String, Object> registro = registros.get(0); // 👈 Tomamos el primer elemento
+                response.put("success", true);
+                response.put("message", "Compartimento generado correctamente");
+                response.put("data", registro);
+                response.put("lista", registros);
+                return ResponseEntity.ok(response);
+            } else {
+                return buildError("No se encontraron resultados para el compartimento.");
             }
 
         } catch (Exception e) {

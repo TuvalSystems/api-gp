@@ -21,4 +21,6 @@ public interface InvoiceReturnService {
             String observacion,
             String usuario,
             List<ItemsDevolucionEntity> itemsDevolucion);
+
+    ResponseEntity<Map<String, Object>> getResponseItemBin(String item, String bodega);
 } 
