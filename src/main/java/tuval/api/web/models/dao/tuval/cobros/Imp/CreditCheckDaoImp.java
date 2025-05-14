@@ -63,7 +63,6 @@ public class CreditCheckDaoImp implements CreditCheckDao {
                     "msj", "");
 
             Map<String, Object> result = jdbcCall.execute(params);
-            System.out.println(result);
             @SuppressWarnings("unchecked")
            List<CheckValidatorEntity> listaCupos = (List<CheckValidatorEntity>) result.get("resultSet");
 
