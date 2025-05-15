@@ -22,7 +22,7 @@ public class CollectorController {
     @Autowired
     private CreditCheckService creditCheckService;
 
-    @GetMapping("/consultar-validacion-credito")
+    @GetMapping("/consultar-cupo-disponible-cliente")
     public ResponseEntity<Map<String, Object>> getConsultCreditValidation(@RequestParam String ruc,  @RequestParam(required = false, defaultValue = "") String  idCompania) {
                Map<String, Object> response = new HashMap<>();
                try {
