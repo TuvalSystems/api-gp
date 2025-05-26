@@ -447,6 +447,7 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
                             new SqlParameter("numtran", Types.NUMERIC),
                             new SqlParameter("idfila", Types.INTEGER),
                             new SqlParameter("fecpro", Types.DATE),
+                            new SqlParameter("docgp", Types.VARCHAR),
                             new SqlParameter("submodo", Types.SMALLINT),
                             new SqlInOutParameter("idmov", Types.INTEGER),
                             new SqlInOutParameter("codret", Types.INTEGER),
@@ -476,6 +477,7 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
             params.put("idfila", 0);
             params.put("fecpro", "");
             params.put("submodo", 0);
+            params.put("docgp", "");
 
             Map<String, Object> result = jdbcCall.execute(params);
 
@@ -539,6 +541,7 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
                             new SqlParameter("idfila", Types.INTEGER),
                             new SqlParameter("fecpro", Types.DATE),
                             new SqlParameter("submodo", Types.SMALLINT),
+                            new SqlParameter("docgp", Types.VARCHAR),
 
                             new SqlParameter("equipo", Types.VARCHAR),
                             new SqlInOutParameter("codret", Types.INTEGER),
@@ -566,6 +569,7 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
             params.put("idfila", 0);
             params.put("fecpro", "");
             params.put("submodo", 0);
+            params.put("docgp", "");
 
             params.put("equipo", "wserver");
             params.put("codret", 0);
@@ -628,6 +632,7 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
                             new SqlParameter("idfila", Types.INTEGER),
                             new SqlParameter("fecpro", Types.DATE),
                             new SqlParameter("submodo", Types.SMALLINT),
+                            new SqlParameter("docgp", Types.VARCHAR),
 
                             new SqlParameter("equipo", Types.VARCHAR),
                             new SqlInOutParameter("codret", Types.INTEGER),
@@ -656,13 +661,14 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
             params.put("idfila", 0);
             params.put("fecpro", "");
             params.put("submodo", 0);
+            params.put("docgp", "");
 
             params.put("equipo", "wserver");
             params.put("codret", 0);
             params.put("msj", "");
 
             Map<String, Object> result = jdbcCall.execute(params);
-
+            System.out.println("Resultado: " + result);
             int codRet = (int) result.get("codret");
             String mensaje = (String) result.get("msj");
             int idMov = (int) result.get("idmov");

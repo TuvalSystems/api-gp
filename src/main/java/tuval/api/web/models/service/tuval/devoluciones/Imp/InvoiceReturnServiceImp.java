@@ -283,7 +283,7 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
             // SP para confirmar movimiento (modo 19)
             // Reutilizas `executeCabeceraDevolucionVenta` si el SP es el mismo
             ResponseEntity<Map<String, Object>> finalizaMovimiento = invoiceReturnDao.generateTransferMovement(
-                    documento, pedidoOrigen, bodega, observacion, 0, usuario, "", 19);
+                    documento, bodega, "", observacion, idMovimiento, pedidoOrigen, usuario, 19);
             Map<String, Object> result = finalizaMovimiento.getBody();
             if (result == null) {
                 response.add(new RetornoEntity(false, 500,
