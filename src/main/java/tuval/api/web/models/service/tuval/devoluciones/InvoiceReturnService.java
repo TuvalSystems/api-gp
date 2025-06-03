@@ -10,11 +10,12 @@ import tuval.api.web.models.entity.tuval.devoluciones.RetornoEntity;
 
 public interface InvoiceReturnService {
 
-    ResponseEntity<Map<String, Object>> generacionNotaCreditoVTA( Map<String, Object>  cabecera, List<Map<String, Object>>  detalle);
+    ResponseEntity<Map<String, Object>> generacionNotaCreditoVTA(Map<String, Object> cabecera,
+            List<Map<String, Object>> detalle);
 
     ResponseEntity<Map<String, Object>> getResponseCreditNote(String document, String tipo);
 
-     List<RetornoEntity> generateSalesReturn(String idCompania,
+    List<RetornoEntity> generateSalesReturn(String idCompania,
             String documento,
             String pedidoOrigen,
             String bodega,
@@ -23,4 +24,6 @@ public interface InvoiceReturnService {
             List<ItemsDevolucionEntity> itemsDevolucion);
 
     ResponseEntity<Map<String, Object>> getResponseItemBin(String item, String bodega);
-} 
+
+    ResponseEntity<Map<String, Object>> getClientGroupEconomicService(String ruc);
+}

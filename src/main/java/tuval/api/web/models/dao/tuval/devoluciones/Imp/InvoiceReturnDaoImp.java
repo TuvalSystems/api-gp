@@ -783,6 +783,34 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
         }
     }
 
+    @Override
+    public ResponseEntity<Map<String, Object>> getGroupEconomicCLiente(String ruc) {
+        try {
+            Map<String, Object> response = new HashMap<>();
+            SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                    .withProcedureName("MSW_SP_OBTENER_CLIENTE_GRUPO_ECONOMICO")
+                    .declareParameters(
+                            new SqlParameter("@cliente", Types.VARCHAR))
+                    .returningResultSet("response", (rs, rowNum) -> rs.getString("RUC").trim());
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("cliente", ruc != null ? ruc.trim() : "");
+            Map<String, Object> result = jdbcCall.execute(params);
+            @SuppressWarnings("unchecked")
+            List<String> resultSet = (List<String>) result.get("response");
+            if (!resultSet.isEmpty()) {
+                response.put("success", true);
+                response.put("message", "Grupo económico obtenido correctamente.");
+                response.put("CGE_RUC", resultSet);
+                return ResponseEntity.ok(response);
+            } else {
+                return buildError("No se encontró el grupo económico para el cliente proporcionado.");
+            }
+        } catch (Exception e) {
+            return buildException(e);
+        }
+    }
+
     private ResponseEntity<Map<String, Object>> buildError(String message) {
         Map<String, Object> response = new HashMap<>();
         response.put("success", false);

@@ -62,4 +62,6 @@ public interface InvoiceReturnDao {
                         int modo);
 
         ResponseEntity<Map<String, Object>> consultItemBin(String item, String bodega, int modo);
+
+        ResponseEntity<Map<String, Object>> getGroupEconomicCLiente(String ruc);
 }

@@ -329,4 +329,9 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
         }
     }
 
+    @Override
+    public ResponseEntity<Map<String, Object>> getClientGroupEconomicService(String ruc) {
+        return invoiceReturnDao.getGroupEconomicCLiente(ruc);
+    }
+
 }
