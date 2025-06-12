@@ -43,7 +43,10 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
                     "Fecha no proporcionada.");
             String fechaFormateada = fechaOriginal.replace("-", "/");
 
-            if (invoiceReturnDao.ValidateGenerationDocumentVTANC(document, tipo).getBody().get("data") != null) {
+            ResponseEntity<Map<String, Object>> validateResponse = invoiceReturnDao.ValidateGenerationDocumentVTANC(document, tipo);
+            Map<String, Object> validateBody = validateResponse.getBody();
+            if (validateBody != null && validateBody.get("data") != null) {
+                System.out.println("a "+ validateBody.get("data"));
                 invoiceReturnDao.eliminacionNcCabDet(document, tipo);
                 return InvoiceReturnUtils.buildError("El documento ya tiene una nota de crédito generada.");
             }
