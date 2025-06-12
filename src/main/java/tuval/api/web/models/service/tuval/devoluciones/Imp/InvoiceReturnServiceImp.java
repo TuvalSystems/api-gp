@@ -46,11 +46,10 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
             ResponseEntity<Map<String, Object>> validateResponse = invoiceReturnDao.ValidateGenerationDocumentVTANC(document, tipo);
             Map<String, Object> validateBody = validateResponse.getBody();
             if (validateBody != null && validateBody.get("data") != null) {
-                System.out.println("a "+ validateBody.get("data"));
-                invoiceReturnDao.eliminacionNcCabDet(document, tipo);
                 return InvoiceReturnUtils.buildError("El documento ya tiene una nota de crédito generada.");
             }
-
+            
+            invoiceReturnDao.eliminacionNcCabDet(document, tipo);
             String puntoVenta = InvoiceReturnUtils.getRequiredField(cabecera, "NC_VTA_PUNTO_VENTA", "002.3",
                     "Punto de venta no proporcionado.");
             String docId = InvoiceReturnUtils.getRequiredField(cabecera, "NC_VTA_DOC_ID", "002.4",
