@@ -13,6 +13,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Give mvnw permission to execute
+        run: chmod +x mvnw
+
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
