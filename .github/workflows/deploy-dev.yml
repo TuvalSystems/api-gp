@@ -24,7 +24,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Build with Maven
-        run: ./mvn clean install -Dspring.profiles.active=dev
+        run: ./mvnw clean install -Dspring.profiles.active=dev
 
       - name: Build Docker image
         run: |
