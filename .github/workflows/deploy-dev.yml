@@ -16,6 +16,8 @@ jobs:
       - name: Give mvnw permission to execute
         run: chmod +x mvnw
 
+      - name: Verifica si mvnw existe
+        run: ls -l
 
       - name: Set up Java
         uses: actions/setup-java@v4
