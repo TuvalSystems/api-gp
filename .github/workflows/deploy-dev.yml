@@ -74,11 +74,11 @@ jobs:
         if: success()
         uses: dawidd6/action-send-mail@master
         with:
-          server_address: smtp.gmail.com
+          server_address: mail.cosenco.ec
           server_port: 587
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
-          subject: '🚀 Deploy DEV (Spring Boot Docker) Succeeded - API GP'
+          subject: "✅ Despliegue DEV exitoso - API GP"
           to: sistemas6@tuvalsa.com
           from: ${{ secrets.SMTP_USERNAME }}
           body: |
@@ -92,12 +92,12 @@ jobs:
         if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: smtp.gmail.com
+          server_address: mail.cosenco.ec
           server_port: 587
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: "❌ Error en despliegue DEV - API GP"
-          to: your@email.com
+          to: sistemas6@tuvalsa.com
           from: ${{ secrets.SMTP_USERNAME }}
           body: |
             Ocurrió un error durante el despliegue al entorno de desarrollo ❗
