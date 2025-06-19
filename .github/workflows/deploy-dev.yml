@@ -82,6 +82,7 @@ jobs:
           subject: "✅ Despliegue DEV exitoso - API GP"
           to: sistemas6@tuvalsa.com
           from: ${{ secrets.SMTP_USERNAME }}
+          tls: true
           body: |
             El despliegue al entorno de desarrollo fue exitoso 🎉.
             Rama: develop
@@ -101,6 +102,7 @@ jobs:
           subject: "❌ Error en despliegue DEV - API GP"
           to: sistemas6@tuvalsa.com
           from: ${{ secrets.SMTP_USERNAME }}
+          tls: true
           body: |
             Ocurrió un error durante el despliegue al entorno de desarrollo ❗
             Revisa el log del job en GitHub Actions:
