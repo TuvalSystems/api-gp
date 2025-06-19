@@ -51,6 +51,7 @@ jobs:
             docker pull sistematuval/webservice-pruebas:img_apigp
             docker stop apigp || true
             docker rm apigp || true
+            docker rmi sistematuval/webservice-pruebas:img_apigp || true
             docker run -it -d --network=host --name apigp \
               -e SPRING_PROFILES_ACTIVE=dev \
               sistematuval/webservice-pruebas:img_apigp
