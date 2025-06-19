@@ -72,10 +72,11 @@ jobs:
       
       - name: Notify Success via Email 
         if: success()
-        uses: dawidd6/action-send-mail@master
+        uses:  dawidd6/action-send-mail@v3
         with:
           server_address: mail.cosenco.ec
           server_port: 587
+          secure: true
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: "✅ Despliegue DEV exitoso - API GP"
@@ -94,6 +95,7 @@ jobs:
         with:
           server_address: mail.cosenco.ec
           server_port: 587
+          secure: true
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: "❌ Error en despliegue DEV - API GP"
