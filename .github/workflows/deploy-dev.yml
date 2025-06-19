@@ -48,9 +48,21 @@ jobs:
           username: ${{ secrets.SERVER_DEV_USER }}
           key: ${{ secrets.SERVER_DEV_SSH_KEY }}
           script: |
+            echo "📥 Pulling latest image from DockerHub..."
             docker pull sistematuval/webservice-pruebas:img_apigp
+
+            echo "🧼 Stopping and removing previous container if exists..."
             docker stop apigp || true
             docker rm apigp || true
+
+            echo "🗑️ Removing old image..."
+            docker rmi sistematuval/webservice-pruebas:img_apigp || true
+
+            echo "✅ Verifying pulled image ID..."
+            IMAGE_ID=$(docker images --no-trunc --quiet sistematuval/webservice-pruebas:img_apigp)
+            echo "✔️ Using image ID: $IMAGE_ID"
+
+             echo "🚀 Running new container..."
             docker rmi sistematuval/webservice-pruebas:img_apigp || true
             docker run -it -d --network=host --name apigp \
               -e SPRING_PROFILES_ACTIVE=dev \
