@@ -48,10 +48,10 @@ jobs:
           username: ${{ secrets.SERVER_DEV_USER }}
           key: ${{ secrets.SERVER_DEV_SSH_KEY }}
           script: |
-            sudo docker pull sistematuval/webservice-pruebas:img_apigp
-            sudo docker stop apigp || true
-            sudo docker rm apigp || true
-            sudo docker rmi sistematuval/webservice-pruebas:img_apigp || true
-            sudo docker run -it -d --network=host --name apigp \
+            docker pull sistematuval/webservice-pruebas:img_apigp
+            docker stop apigp || true
+            docker rm apigp || true
+            docker rmi sistematuval/webservice-pruebas:img_apigp || true
+            docker run -it -d --network=host --name apigp \
               -e SPRING_PROFILES_ACTIVE=dev \
               sistematuval/webservice-pruebas:img_apigp
