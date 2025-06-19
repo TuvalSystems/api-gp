@@ -69,3 +69,37 @@ jobs:
             docker run -it -d --network=host --name apigp \
               -e SPRING_PROFILES_ACTIVE=dev \
               sistematuval/webservice-pruebas:img_apigp
+      
+      - name: Notify Success via Email 
+        if: success()
+        uses: dawidd6/action-send-mail@master
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: '🚀 Deploy DEV (Spring Boot Docker) Succeeded - API GP'
+          to: sistemas6@tuvalsa.com
+          from: ${{ secrets.SMTP_USERNAME }}
+          body: |
+            El despliegue al entorno de desarrollo fue exitoso 🎉.
+            Rama: develop
+            Imagen: sistematuval/webservice-pruebas:img_apigp
+            Fecha: ${{ github.event.head_commit.timestamp }}
+            Autor: ${{ github.event.head_commit.author.name }}
+
+      - name: Notify Failure via Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "❌ Error en despliegue DEV - API GP"
+          to: your@email.com
+          from: ${{ secrets.SMTP_USERNAME }}
+          body: |
+            Ocurrió un error durante el despliegue al entorno de desarrollo ❗
+            Revisa el log del job en GitHub Actions:
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}  
