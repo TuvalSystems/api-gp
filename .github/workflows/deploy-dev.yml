@@ -26,7 +26,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Build with Maven
-        run: ./mvn clean install -DskipTests
+        run: ./mvnw clean install -DskipTests
 
       - name: Build Docker image
         run: |
