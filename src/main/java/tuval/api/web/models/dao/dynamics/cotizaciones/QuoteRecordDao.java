@@ -32,15 +32,14 @@ public class QuoteRecordDao {
     public void save(QuoteRecordEntity entity) {
          String sql = """
             INSERT INTO dbo.tbm_cabcotrec (
-                co_tbcot,tx_cot, tx_usr, tx_cliRuc, tx_cliRazSoc, tx_cotCliSri, tx_est,
+                tx_cot, tx_usr, tx_cliRuc, tx_cliRazSoc, tx_cotCliSri, tx_est,
                 tx_bod, tx_ptoVta, tx_ptoVtaDesc, tx_cotReqapr, tx_cotAprCom,
                 tx_cotMot, co_cotRec, fe_cotRec, tx_obsMot, fe_ing,
                 tx_usrIng, fe_ultmod, tx_usrMod
-            ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         jdbcTemplate.update(sql,
-                entity.getCoTbcot(),
                 entity.getTxCot(),
                 entity.getTxUsr(),
                 entity.getTxCliRuc(),
