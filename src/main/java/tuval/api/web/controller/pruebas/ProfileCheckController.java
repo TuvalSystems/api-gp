@@ -18,4 +18,6 @@ public class ProfileCheckController {
     public String entorno() {
         return "Entorno: " + entorno;
     }
+
+    
 }
