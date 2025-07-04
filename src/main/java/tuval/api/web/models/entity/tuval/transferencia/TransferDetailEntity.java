@@ -15,7 +15,7 @@ public class TransferDetailEntity {
     @JsonProperty("nombreItem")
     private String NombreItem;
     @JsonProperty("cantidad")
-    private int Cantidad;
+    private float Cantidad;
     @JsonProperty("trd_ubic")
     private String trd_ubic;
 
@@ -71,11 +71,11 @@ public class TransferDetailEntity {
         this.NombreItem = NombreItem;
     }
 
-    public int getCantidad() {
+    public float getCantidad() {
         return Cantidad;
     }
 
-    public void setCantidad(int Cantidad) {
+    public void setCantidad(float Cantidad) {
         this.Cantidad = Cantidad;
     }
 
