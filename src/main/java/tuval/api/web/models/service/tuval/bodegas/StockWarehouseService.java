@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import tuval.api.web.models.dao.tuval.bodegas.StockWarehouseDao;
+import tuval.api.web.models.entity.tuval.bodegas.ArticleWarehouseRequestEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseResponseEntity;
 
@@ -38,7 +39,6 @@ public class StockWarehouseService {
         return resp;
     }
 
-
     public List<StockWarehouseEntity> consultarStockBodegaCompartimento(String articulo, String bodega, String compartimento) {
         List<StockWarehouseEntity> resp = new ArrayList<>();
         try {
@@ -58,6 +58,31 @@ public class StockWarehouseService {
         } catch (Exception e) {
             System.err.println("Error en servicio: " + e.getMessage());
         }
+        return resp;
+    }
+
+    public List<StockWarehouseEntity> consultarStockBodegaBatch(List<ArticleWarehouseRequestEntity> requests) {
+        List<StockWarehouseEntity> resp = new ArrayList<>();
+        try {
+            for (ArticleWarehouseRequestEntity request : requests) {
+                StockWarehouseResponseEntity response = stockWarehouseDao.consultStockWarehouseList(request.getArticulo(), request.getBodega());
+                if (response != null && response.getStockWarehouseList() instanceof List) {
+                    Object data = response.getStockWarehouseList();
+                    List<StockWarehouseEntity> tempResponse = new ArrayList<>();
+                    if (data instanceof List<?>) {
+                        for (Object item : (List<?>) data) {
+                            if (item instanceof StockWarehouseEntity) {
+                                tempResponse.add((StockWarehouseEntity) item);
+                            }
+                        }
+                    }
+                    resp.addAll(tempResponse);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error en servicio: " + e.getMessage());
+        }
+
         return resp;
     }
 

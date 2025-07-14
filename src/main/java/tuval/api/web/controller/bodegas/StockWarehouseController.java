@@ -4,12 +4,16 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseEntity;
 import tuval.api.web.models.service.tuval.bodegas.StockWarehouseService;
+import tuval.api.web.models.entity.tuval.bodegas.ArticleWarehouseRequestEntity;
+
 
 @RestController
 @RequestMapping("/api")
@@ -33,6 +37,16 @@ public class StockWarehouseController {
         List<StockWarehouseEntity> response = stockWarehouseService.consultarStockBodegaCompartimento(articulo, bodega, compartimento);
         return response;
     }
+
+
+    /** utiliza el mismo sp que consultar stock bodega pero en este caso lo hace por lote  */
+
+    @CrossOrigin
+    @PostMapping("/consultar-stock-bodega-lotes")
+    public List<StockWarehouseEntity> consultaStockBodegasBatch(@RequestBody List<ArticleWarehouseRequestEntity> requests) {
+        return stockWarehouseService.consultarStockBodegaBatch(requests);
+    }
+    
    
 
 }
