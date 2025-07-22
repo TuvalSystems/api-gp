@@ -73,6 +73,9 @@ public class QuoteRecordEntity {
     @Column(name = "tx_usrMod")
     private String txUsrMod;
 
+    @Column(name = "nd_cotTot")
+    private String ndCotTot;
+
     // Getters y Setters
     public Integer getCoTbcot() {
         return coTbcot;
@@ -232,5 +235,13 @@ public class QuoteRecordEntity {
 
     public void setTxUsrMod(String txUsrMod) {
         this.txUsrMod = txUsrMod;
+    }
+
+    public String getNdCotTot() {
+        return ndCotTot;
+    }
+
+    public void setNdCotTot(String ndCotTot) {
+        this.ndCotTot = ndCotTot;
     }
 }

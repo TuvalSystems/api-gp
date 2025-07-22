@@ -45,8 +45,8 @@ public class QuoteRecordDao {
                 tx_cot, tx_usr, tx_cliRuc, tx_cliRazSoc, tx_cotCliSri, tx_est,
                 tx_bod, tx_ptoVta, tx_ptoVtaDesc, tx_cotReqapr, tx_cotAprCom,
                 tx_cotMot, co_cotRec, fe_cotRec, tx_obsMot, fe_ing,
-                tx_usrIng, fe_ultmod, tx_usrMod
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                tx_usrIng, fe_ultmod, tx_usrMod, nd_cotTot
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         jdbcTemplate.update(sql,
@@ -68,7 +68,8 @@ public class QuoteRecordDao {
                 entity.getFeIng(),
                 entity.getTxUsrIng(),
                 entity.getFeUltmod(),
-                entity.getTxUsrMod()
+                entity.getTxUsrMod(),
+                entity.getNdCotTot() 
         );
     }
 
@@ -85,9 +86,12 @@ public class QuoteRecordDao {
 
             return ResponseJsonUtils.buildSuccessWithData("Descripciones alternativas obtenidas correctamente.", itemsList); // buildSuccessWithData
             // return ResponseEntity.ok(response); 
-        } catch (Exception e) {
-           log.error("Error al consultar item {}: {}", item, e.getMessage(), e);
-            return ResponseJsonUtils.buildException(e);
+        } catch (org.springframework.dao.DataAccessException dae) {
+            log.error("Error de acceso a datos al consultar item {}: {}", item, dae.getMessage(), dae);
+            return ResponseJsonUtils.buildException(dae);
+        } catch (RuntimeException re) {
+            log.error("Error de ejecución al consultar item {}: {}", item, re.getMessage(), re);
+            return ResponseJsonUtils.buildException(re);
         }
     }
 
