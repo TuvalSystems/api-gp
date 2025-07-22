@@ -18,8 +18,7 @@ public class quoteRecordService {
 
     @Transactional("dynamicsTransactionManager")
     public void save(QuoteRecordEntity entity) {
-        // QuoteRecordEntity entity = new QuoteRecordEntity();
-        // BeanUtils.copyProperties(dto, entity);
+     
         quoteRecordDao.save(entity);
     }
 
