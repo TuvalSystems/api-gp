@@ -217,7 +217,6 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
         if (!InvoiceReturnUtils.validarDatos(documento, pedidoOrigen, bodega, usuario, response)) {
             return response;
         }
-
         // ➡️ 2. Ejecutar SP de cabecera
         int idMovimiento;
         try {
