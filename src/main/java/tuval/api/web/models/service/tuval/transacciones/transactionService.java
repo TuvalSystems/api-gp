@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import tuval.api.web.models.dao.tuval.transacciones.transactionDao;
-import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateReceidLRequestEntity;
+import tuval.api.web.models.dto.transacciones.reciboCompraL.validateReceidLRequestEntity;
 import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateResponseEntity;
 
 @Service

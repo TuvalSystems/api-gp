@@ -13,7 +13,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 
 import jakarta.annotation.PostConstruct;
-import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateReceidLRequestEntity;
+import tuval.api.web.models.dto.transacciones.reciboCompraL.validateReceidLRequestEntity;
 import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateResponseEntity;
 
 @Repository

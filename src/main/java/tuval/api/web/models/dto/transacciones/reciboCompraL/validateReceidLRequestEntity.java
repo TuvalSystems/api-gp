@@ -1,4 +1,4 @@
-package tuval.api.web.models.entity.tuval.transacciones.reciboCompraL;
+package tuval.api.web.models.dto.transacciones.reciboCompraL;
 
 public class validateReceidLRequestEntity {
 
