@@ -1,17 +1,13 @@
 package tuval.api.web.models.dao.tuval.cobros.Imp;
 
 import java.sql.Types;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 
@@ -37,8 +33,7 @@ public class CreditCheckDaoImp implements CreditCheckDao {
         }
     }
 
-    public ResponseEntity<Map<String, Object>> getConsultCreditValidation(String ruc, String idCompania, int modo) {
-        Map<String, Object> response = new HashMap<>();
+    public CheckValidatorEntity getConsultCreditValidation(String ruc, String idCompania, int modo) {
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                     .withProcedureName("sp_mc_validacion_creditica")
@@ -49,50 +44,50 @@ public class CreditCheckDaoImp implements CreditCheckDao {
                             new SqlParameter("equipo", Types.VARCHAR),
                             new SqlParameter("codret", Types.VARCHAR),
                             new SqlParameter("msj", Types.VARCHAR))
-                            .returningResultSet("resultSet", BeanPropertyRowMapper.newInstance(CheckValidatorEntity.class));;
-            Map<String, Object> params = Map.of(
-                    "idcliente", ruc,
-                    "userid", "wsrvmc",
-                    "modo", modo,
-                    "equipo", "wserver",
-                    "idvendedor", "",
-                    "documento", "", 
-                    "fecini","", 
-                    "fecfin","",
-                    "codret", 0,
-                    "msj", "");
+                    .returningResultSet("resultSet", (rs, rowNum) -> {
 
-            Map<String, Object> result = jdbcCall.execute(params);
+                        CheckValidatorEntity e = new CheckValidatorEntity();
+
+                        e.setRuc((rs.getString("ruc") != null && !rs.getString("ruc").trim().isEmpty())
+                                ? rs.getString("ruc").trim()
+                                : "0");
+                        Double cupo = rs.getObject("CUPO", Double.class);
+                        e.setCupoAsignado(cupo != null ? cupo : 0d);
+
+                        Double cupoPermitido = rs.getObject("CUPO_PERMITIDO", Double.class);
+                        e.setCupoDisponibleGp(cupoPermitido != null ? cupoPermitido : 0d);
+
+                        Integer susp = rs.getObject("SUSPENDIDO", Integer.class);
+                        e.setSuspendido(susp != null ? susp : 0);
+                        return e;
+                    });
+            Map<String, Object> result = jdbcCall.execute(
+                    new MapSqlParameterSource()
+                            .addValue("idcliente", ruc)
+                            .addValue("userid", "wsrvmc")
+                            .addValue("modo", modo)
+                            .addValue("equipo", "wserver")
+                            .addValue("idvendedor", "")
+                            .addValue("documento", "")
+                            .addValue("fecini", "")
+                            .addValue("fecfin", "")
+                            .addValue("codret", "")
+                            .addValue("msj", ""));
+
             @SuppressWarnings("unchecked")
-           List<CheckValidatorEntity> listaCupos = (List<CheckValidatorEntity>) result.get("resultSet");
+            List<CheckValidatorEntity> listaCupos = (List<CheckValidatorEntity>) result.get("resultSet");
 
-          if (listaCupos == null || listaCupos.isEmpty()) {
-              return buildError("No se encontraron cupos.");
+            if (listaCupos == null || listaCupos.isEmpty()) {
+                throw new RuntimeException("No existe cupo disponible para el cliente con RUC: " + ruc);
             }
 
-            response.put("success", true);
-            response.put("message", "Cupos encontrados.");
-            response.put("cupos", listaCupos);
-            return ResponseEntity.ok(response);
+            return listaCupos.get(0);
 
         } catch (Exception e) {
-            return buildException(e);
+            throw new RuntimeException(
+                    "Error al ejecutar el sp: sp_mc_validacion_creditica: " + e.getMessage(), e);
         }
 
-    }
-
-    private ResponseEntity<Map<String, Object>> buildError(String message) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("message", message);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-    }
-
-    private ResponseEntity<Map<String, Object>> buildException(Exception e) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", false);
-        response.put("message", e.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
 }

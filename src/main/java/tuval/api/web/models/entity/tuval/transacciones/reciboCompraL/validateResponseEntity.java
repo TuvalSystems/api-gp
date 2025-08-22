@@ -7,7 +7,6 @@ public class validateResponseEntity {
     private String tipoDocGenerado;
     private String numDocGenerado;
 
-    
     public String getCodigo() {
         return codigo;
     }
@@ -39,7 +38,5 @@ public class validateResponseEntity {
     public void setNumDocGenerado(String numDocGenerado) {
         this.numDocGenerado = numDocGenerado;
     }
-
-
 
 }

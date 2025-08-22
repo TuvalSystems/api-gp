@@ -1,12 +1,10 @@
 package tuval.api.web.models.service.tuval.transacciones;
 
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import lombok.val;
 import tuval.api.web.models.dao.tuval.transacciones.transactionDao;
 import tuval.api.web.models.dto.transacciones.reciboCompraL.DetailReceivedLRequest;
 import tuval.api.web.models.dto.transacciones.reciboCompraL.ReceivedSalesLRequest;

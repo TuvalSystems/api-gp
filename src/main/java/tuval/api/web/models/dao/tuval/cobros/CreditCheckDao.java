@@ -1,9 +1,6 @@
 package tuval.api.web.models.dao.tuval.cobros;
-
-import java.util.Map;
-
-import org.springframework.http.ResponseEntity;
+import tuval.api.web.models.entity.tuval.cobros.CheckValidatorEntity;
 
 public interface CreditCheckDao {
-    public ResponseEntity<Map<String, Object>> getConsultCreditValidation(String ruc, String idCompania, int modo);
+    public CheckValidatorEntity getConsultCreditValidation(String ruc, String idCompania, int modo);
 }

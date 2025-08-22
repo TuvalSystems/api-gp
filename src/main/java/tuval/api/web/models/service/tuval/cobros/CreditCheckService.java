@@ -1,11 +1,10 @@
 package tuval.api.web.models.service.tuval.cobros;
 
-import java.util.Map;
 
-import org.springframework.http.ResponseEntity;
+import tuval.api.web.models.entity.tuval.cobros.CheckValidatorEntity;
 
 public interface CreditCheckService {
 
-    public ResponseEntity<Map<String, Object>> getConsultCreditValidation(String ruc, String idCompania);
+    public CheckValidatorEntity getConsultCreditValidation(String ruc, String idCompania);
     
 } 
