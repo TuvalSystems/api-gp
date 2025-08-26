@@ -12,8 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
+import tuval.api.web.models.dto.transacciones.facturacionVenta.ReceivedInvoiceRequest;
+import tuval.api.web.models.dto.transacciones.facturacionVenta.ResponseConsultInvoiceRequest;
 import tuval.api.web.models.dto.transacciones.reciboCompraL.ReceivedSalesLRequest;
 import tuval.api.web.models.dto.transacciones.reciboCompraL.validateReceidLRequestEntity;
+import tuval.api.web.models.entity.tuval.transacciones.facturacionVenta.responseInvoiceVtaEntity;
+import tuval.api.web.models.entity.tuval.transacciones.facturacionVenta.validateGenerateInvoiceResponseEntity;
 import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateReceivedLResponseEntity;
 import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateResponseEntity;
 import tuval.api.web.models.service.tuval.transacciones.transactionService;
@@ -90,4 +94,51 @@ public class TransactionController {
         }
     }
 
+
+    /** proceso de generacion de factura - apis  */
+
+    @CrossOrigin
+    @PostMapping("/guardar-documento-factura-vta")
+    public ResponseEntity<Map<String, Object>> guardarFacturaVenta(@Valid @RequestBody ReceivedInvoiceRequest request) {
+       try {
+        validateGenerateInvoiceResponseEntity resultado = transactionService.storeInvoice(request);
+        return ResponseJsonUtils.buildSuccess(resultado.getMensaje());
+            // return ResponseJsonUtils.buildSuccessWithData("Validacion exitosa", request);
+
+       } catch (Exception e) {
+         e.printStackTrace(); // para ver la traza completa
+            return ResponseJsonUtils.buildException(e);
+       }
+    }
+    
+    @CrossOrigin
+    @PostMapping("/respuesta-documento-factura-vta")
+    public ResponseEntity<Map<String, Object>> validarGeneracionFacturaVenta(
+            @RequestBody ResponseConsultInvoiceRequest request) {
+        try {
+            responseInvoiceVtaEntity resultado = transactionService.consultInvoiceVta(request);
+            return ResponseJsonUtils.buildSuccessWithData("Validacion exitosa", resultado);
+        } catch (Exception e) {
+            e.printStackTrace(); // para ver la traza completa
+            return ResponseJsonUtils.buildException(e);
+        }
+
+    }
+
+    @CrossOrigin
+    @PostMapping("/eliminar-documento-factura-vta")
+    public ResponseEntity<Map<String, Object>> eliminarFacturaNoProcesadaVta(
+            @RequestBody ResponseConsultInvoiceRequest request) {
+        try {
+            validateGenerateInvoiceResponseEntity resultado = transactionService.deleteInvoiceVta(request);
+            return ResponseJsonUtils.buildSuccessWithData("Validacion exitosa", resultado);
+        } catch (Exception e) {
+            e.printStackTrace(); // para ver la traza completa
+            return ResponseJsonUtils.buildException(e);
+        }
+
+    }
+
+
+    
 }
