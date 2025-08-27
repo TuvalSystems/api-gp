@@ -108,19 +108,19 @@ public class StockWarehouseEntity {
     public StockWarehouseEntity() {
     }
 
-    @Override
-    public String toString() {
-        return "{" +
-                "ARTICULO='" + ARTICULO + '\'' +
-                ", DESCRIPCION_ARTICULO='" + DESCRIPCION_ARTICULO + '\'' +
-                ", BODEGA='" + BODEGA + '\'' +
-                ", UMEDIDA='" + UMEDIDA + '\'' +
-                ", STOCK_MANO='" + STOCK_MANO + '\'' +
-                ", STOCK_RESERVADO='" + STOCK_RESERVADO + '\'' +
-                ", STOCK_DISPONIBLE='" + STOCK_DISPONIBLE + '\'' +
-                ", STOCK_USO='" + STOCK_USO + '\'' +
-                ", STOCK_DANADO='" + STOCK_DANADO + '\'' +
-                '}';
-    }
+    // @Override
+    // public String toString() {
+    //     return "{" +
+    //             "ARTICULO='" + ARTICULO + '\'' +
+    //             ", DESCRIPCION_ARTICULO='" + DESCRIPCION_ARTICULO + '\'' +
+    //             ", BODEGA='" + BODEGA + '\'' +
+    //             ", UMEDIDA='" + UMEDIDA + '\'' +
+    //             ", STOCK_MANO='" + STOCK_MANO + '\'' +
+    //             ", STOCK_RESERVADO='" + STOCK_RESERVADO + '\'' +
+    //             ", STOCK_DISPONIBLE='" + STOCK_DISPONIBLE + '\'' +
+    //             ", STOCK_USO='" + STOCK_USO + '\'' +
+    //             ", STOCK_DANADO='" + STOCK_DANADO + '\'' +
+    //             '}';
+    // }
 
 }

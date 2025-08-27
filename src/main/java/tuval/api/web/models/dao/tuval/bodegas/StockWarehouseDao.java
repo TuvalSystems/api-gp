@@ -14,6 +14,8 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 
 import jakarta.annotation.PostConstruct;
+import tuval.api.web.models.dto.bodegas.StockWarehouseParamsRequest;
+import tuval.api.web.models.entity.tuval.bodegas.ArticleWarehouseRequestEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseResponseEntity;
 
@@ -35,38 +37,34 @@ public class StockWarehouseDao {
         }
     }
 
-    public StockWarehouseResponseEntity consultStockWarehouseList(String articulo, String bodega) {
+    public StockWarehouseEntity executeSpConsultStockWarehouse(StockWarehouseParamsRequest request, String type) {
         try {
-
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                     .withProcedureName("SP_TUV_OBTENER_STOCK_BODEGA")
                     .declareParameters(
-                            // Parámetros de entrada
-                            new SqlParameter("@ARTICULO", Types.VARCHAR),
-                            new SqlParameter("@BODEGA", Types.VARCHAR)
-
-                    ).returningResultSet("resultados",
+                            new SqlParameter("ARTICULO", Types.VARCHAR),
+                            new SqlParameter("BODEGA", Types.VARCHAR))
+                    .returningResultSet("resultados",
                             new BeanPropertyRowMapper<>(StockWarehouseEntity.class));
-
             Map<String, Object> params = new HashMap<>();
-            params.put("ARTICULO", articulo != null ? articulo.trim() : "");
-            params.put("BODEGA", bodega != null ? bodega.trim() : "");
+            params.put("ARTICULO", request.getArticulo() != null ? request.getArticulo().trim() : "");
+            params.put("BODEGA", request.getBodega() != null ? request.getBodega().trim() : "");
             Map<String, Object> result = jdbcCall.execute(params);
-
-            StockWarehouseResponseEntity response = new StockWarehouseResponseEntity();
             @SuppressWarnings("unchecked")
             List<StockWarehouseEntity> stockList = (List<StockWarehouseEntity>) result.get("resultados");
-            if (stockList == null) {
-                stockList = List.of(); // Inicializa como lista vacía si es nulo
+            if (stockList == null || stockList.isEmpty()) {
+                throw new RuntimeException("No se encontraron datos para el artículo y bodega especificados.");
             }
-            response.setStockWarehouseList(stockList);
-            return response;
+            return stockList.get(0);
         } catch (Exception e) {
-            throw new RuntimeException("Error al consultar transferencias: " + e.getMessage(), e);
+            throw new RuntimeException("Error al ejecutar SP_TUV_OBTENER_STOCK_BODEGA -%s- (articulo=%s, bodega=%s): %s"
+                    .formatted(type,
+                            String.valueOf(request.getArticulo()),
+                            String.valueOf(request.getBodega()),
+                            e.getMessage()),
+                    e);
         }
     }
-
-
 
     public StockWarehouseResponseEntity consultStockByWarehouseAndCompartment(String articulo, String bodega,
             String compartimiento) {
