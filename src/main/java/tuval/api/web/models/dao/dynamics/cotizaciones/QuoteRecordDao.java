@@ -1,4 +1,5 @@
 package tuval.api.web.models.dao.dynamics.cotizaciones;
+
 import org.slf4j.Logger;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +21,7 @@ import tuval.api.web.models.entity.dynamics.cotizaciones.QuoteRecordEntity;
 @Repository
 public class QuoteRecordDao {
 
-       private static final Logger log = LoggerFactory.getLogger(QuoteRecordDao.class);
+    private static final Logger log = LoggerFactory.getLogger(QuoteRecordDao.class);
 
     @PostConstruct
     public void init() {
@@ -41,13 +42,13 @@ public class QuoteRecordDao {
     // private JdbcTemplate dynamicsJdbcTemplate;
     public void save(QuoteRecordEntity entity) {
         String sql = """
-            INSERT INTO dbo.tbm_cabcotrec (
-                tx_cot, tx_usr, tx_cliRuc, tx_cliRazSoc, tx_cotCliSri, tx_est,
-                tx_bod, tx_ptoVta, tx_ptoVtaDesc, tx_cotReqapr, tx_cotAprCom,
-                tx_cotMot, co_cotRec, fe_cotRec, tx_obsMot, fe_ing,
-                tx_usrIng, fe_ultmod, tx_usrMod, nd_cotTot
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """;
+                    INSERT INTO dbo.tbm_cabcotrec (
+                        tx_cot, tx_usr, tx_cliRuc, tx_cliRazSoc, tx_cotCliSri, tx_est,
+                        tx_bod, tx_ptoVta, tx_ptoVtaDesc, tx_cotReqapr, tx_cotAprCom,
+                        tx_cotMot, co_cotRec, fe_cotRec, tx_obsMot, fe_ing,
+                        tx_usrIng, fe_ultmod, tx_usrMod, nd_cotTot
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """;
 
         jdbcTemplate.update(sql,
                 entity.getTxCot(),
@@ -69,8 +70,7 @@ public class QuoteRecordDao {
                 entity.getTxUsrIng(),
                 entity.getFeUltmod(),
                 entity.getTxUsrMod(),
-                entity.getNdCotTot() 
-        );
+                entity.getNdCotTot());
     }
 
     /**
@@ -79,13 +79,16 @@ public class QuoteRecordDao {
     public ResponseEntity<Map<String, Object>> findByItem(String item) {
         try {
             String sql = "SELECT * FROM vw_ListadoItemsDescripcionesAlternativas WHERE tx_itm = ?";
-            List<ItemDescripcionAlternativaDto> itemsList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(ItemDescripcionAlternativaDto.class), item); // <ItemDescripcionAlternativaDto>
+            List<ItemDescripcionAlternativaDto> itemsList = jdbcTemplate.query(sql,
+                    new BeanPropertyRowMapper<>(ItemDescripcionAlternativaDto.class), item); // <ItemDescripcionAlternativaDto>
             if (itemsList.isEmpty()) {
-                return ResponseJsonUtils.buildError("No se encontraron descripciones alternativas para el ítem: " + item);
+                return ResponseJsonUtils
+                        .buildError("No se encontraron descripciones alternativas para el ítem: " + item);
             }
 
-            return ResponseJsonUtils.buildSuccessWithData("Descripciones alternativas obtenidas correctamente.", itemsList); // buildSuccessWithData
-            // return ResponseEntity.ok(response); 
+            return ResponseJsonUtils.buildSuccessWithData("Descripciones alternativas obtenidas correctamente.",
+                    itemsList); // buildSuccessWithData
+            // return ResponseEntity.ok(response);
         } catch (org.springframework.dao.DataAccessException dae) {
             log.error("Error de acceso a datos al consultar item {}: {}", item, dae.getMessage(), dae);
             return ResponseJsonUtils.buildException(dae);
