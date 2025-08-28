@@ -9,10 +9,14 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.service.tuval.guiaremision.ShippingGuideService;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 
 
 @RestController
@@ -37,6 +41,18 @@ public class ShippingGuideController {
        
        return ResponseEntity.ok(response);
         
+    }
+    
+
+
+    /** proceso de guias de remision - traslado de inventario --- pendiente de programar */
+
+    @CrossOrigin
+    @PostMapping("/inventario/generar-transferencia-venta")
+    public ResponseEntity<Map<String, Object>> postMethodName(@RequestBody String req) {
+        
+        
+       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", req);
     }
     
 }
