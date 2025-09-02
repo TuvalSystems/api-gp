@@ -29,7 +29,7 @@ public class ShippingGuideController {
     private ShippingGuideService shippingGuideService;
 
     @CrossOrigin
-    @GetMapping("/check-guia-remision")
+    @GetMapping("/inventario/guia-remision-obtener-claveacceso")
     public ResponseEntity<Map<String, Object>> respuestaGuiaRemision(@RequestParam String numDoc) {
         if (numDoc == null || numDoc.trim().isEmpty()) {
             return ResponseJsonUtils.buildError("El documento es requerido.");

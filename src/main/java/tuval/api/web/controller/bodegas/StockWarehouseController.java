@@ -43,11 +43,16 @@ public class StockWarehouseController {
 
     @CrossOrigin
     @RequestMapping("/consultar-stock-articulo-bodega-compartimento")
-    public List<StockWarehouseEntity> consultaStockBodegaCompartimento(@RequestParam String articulo,
+    public ResponseEntity<Map<String, Object>> consultaStockBodegaCompartimento(@RequestParam String articulo,
             @RequestParam String bodega, @RequestParam String compartimento) {
-        List<StockWarehouseEntity> response = stockWarehouseService.consultarStockBodegaCompartimento(articulo, bodega,
+          try {
+            StockWarehouseEntity response = stockWarehouseService.consultarStockBodegaCompartimento(articulo, bodega,
                 compartimento);
-        return response;
+            return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
+        } catch (Exception e) {
+            e.printStackTrace(); // para ver la traza completa
+            return ResponseJsonUtils.buildException(e);
+        }
     }
 
     /**

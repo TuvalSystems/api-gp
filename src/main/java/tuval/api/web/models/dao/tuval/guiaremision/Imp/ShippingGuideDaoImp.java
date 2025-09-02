@@ -91,7 +91,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       @SuppressWarnings("unchecked")
       var rows = (java.util.List<java.util.Map<String, Object>>) out.get("#result-set-1");
       if (rows == null || rows.isEmpty()) {
-        throw new RuntimeException("No se encontraron filas en MSW_SP_VALIDAR_GENERACION_GUIA_REMISION");
+        return new CheckCodeAccessDeliveryNoteResponse("", "", 0, "", "");
       }
 
       var row = rows.get(0);
@@ -101,12 +101,12 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       int codigo = getInt(row.get("I_vCODIGO"), 0); // ojo: viene vacío en tu log -> quedará 0
       String mensaje = asStr(row.get("I_vMENSAJE"));
       String docGenerado = asStr(row.get("DOC_GENERADO"));
-     
+
       return new CheckCodeAccessDeliveryNoteResponse(
           claveAcceso, documentoOrigen, codigo, mensaje, docGenerado);
 
     } catch (Exception e) {
-      throw new RuntimeException("Error ejecutando MSW_SP_VALIDAR_GENERACION_GUIA_REMISION", e);
+      throw new RuntimeException(e.getMessage());
     }
   }
 
