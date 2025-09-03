@@ -3,13 +3,9 @@ package tuval.api.web.models.dao.tuval.devoluciones;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 
-import tuval.api.web.models.dto.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideDispatchShipmentRequest;
 import tuval.api.web.models.dto.devolucion.DetailDevolutionRequest;
 import tuval.api.web.models.dto.devolucion.HeaderDevolutionRequest;
 import tuval.api.web.models.entity.tuval.devoluciones.DevolutionResponse;
-import tuval.api.web.models.entity.tuval.guiaremision.DetailGuideTransferVtaResponse;
-import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 
 public interface InvoiceReturnDao {
 
@@ -61,39 +57,7 @@ public interface InvoiceReturnDao {
 
   ResponseEntity<Map<String, Object>> respuestaNotaCredito(String docu, String tipo);
 
-  ResponseEntity<Map<String, Object>> executeCabeceraDevolucionVenta(
-      String pedido,
-      String transaccionOriginal,
-      String bodegaOrigen,
-      String observacion,
-      String usuario,
-      int modo);
-
-  ResponseEntity<Map<String, Object>> executeDetalleTransferenciaVenta(
-      String pedido,
-      String item,
-      int secuencia,
-      String bodegaOrigen,
-      String bodegaDestino,
-      float cantidad,
-      int idMovimiento,
-      String transaccionOriginal,
-      String binItem,
-      String compartimentoOrigen,
-      String compartimentoDestino,
-      String usuario,
-      int modo);
-
-  ResponseEntity<Map<String, Object>> generateTransferMovement(
-      String pedido,
-      String bodegaOrigen,
-      String bodegaDestino,
-      String observacion,
-      int idMovimiento,
-      String transaccionOriginal,
-      String usuario,
-      int modo);
-
+  
   public DevolutionResponse executeSpStoreHeaderDevolution(HeaderDevolutionRequest req, int modo);
 
    public DevolutionResponse executeSpStoreDetaillDevolution(
