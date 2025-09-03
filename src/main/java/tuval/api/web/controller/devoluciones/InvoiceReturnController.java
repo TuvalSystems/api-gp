@@ -6,8 +6,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.validation.Valid;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import tuval.api.web.models.Utils.ResponseJsonUtils;
+import tuval.api.web.models.dto.devolucion.DevolutionRequest;
+import tuval.api.web.models.entity.tuval.devoluciones.DevolutionResponse;
 import tuval.api.web.models.entity.tuval.devoluciones.ItemsDevolucionEntity;
 import tuval.api.web.models.entity.tuval.devoluciones.RetornoEntity;
 import tuval.api.web.models.service.tuval.devoluciones.InvoiceReturnService;
@@ -84,50 +90,17 @@ public class InvoiceReturnController {
     }
 
     @PostMapping("/devoluciones/generar-devolucion-venta")
-    public ResponseEntity<?> generacionDevolucionVenta(@RequestBody Map<String, Object> data) {
+    public ResponseEntity<Map<String, Object>> generarAjusteDevolucion(@Valid @RequestBody DevolutionRequest data) {
         try {
-            String idCompania = (String) data.get("IDCompania");
-            String documento = (String) data.get("Documento");
-            String pedidoOrigen = (String) data.get("PedidoOrigen");
-            String bodega = (String) data.get("Bodega");
-            String observacion = (String) data.get("Observacion");
-            String usuario = String.valueOf(data.get("Usuario")); // convertir int a String
-
-            // Convertir Items_Devolucion a lista de ItemsDevolucion
-            ObjectMapper mapper = new ObjectMapper();
-            List<Map<String, Object>> itemsData = mapper.convertValue(data.get("Items_Devolucion"),
-                    new TypeReference<List<Map<String, Object>>>() {
-                    });
-            List<ItemsDevolucionEntity> items = new ArrayList<>();
-
-            for (Map<String, Object> item : itemsData) {
-                ItemsDevolucionEntity detalle = new ItemsDevolucionEntity();
-                detalle.setItem((String) item.get("Item"));
-                detalle.setCantidad(Float.parseFloat(item.get("Cantidad").toString()));
-                detalle.setCompartimento(
-                        item.get("Compartimento") != null ? item.get("Compartimento").toString() : null);
-                items.add(detalle);
-            }
-
-            List<RetornoEntity> resultado = invoiceReturnService.generateSalesReturn(
-                    idCompania,
-                    documento,
-                    pedidoOrigen,
-                    bodega,
-                    observacion,
-                    usuario,
-                    items);
-
-            return ResponseEntity.ok(resultado);
-
+            DevolutionResponse response = invoiceReturnService.generateAjustmentDevolutionService(data);
+            return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
         } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Error interno al procesar la solicitud.");
-            response.put("error", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+           e.printStackTrace(); // para ver la traza completa
+            return ResponseJsonUtils.buildException(e);
         }
     }
+
+
 
     @GetMapping("/devoluciones/consulta-item-compartimento-bin")
     public ResponseEntity<Map<String, Object>> consultarItemCompartimento(
