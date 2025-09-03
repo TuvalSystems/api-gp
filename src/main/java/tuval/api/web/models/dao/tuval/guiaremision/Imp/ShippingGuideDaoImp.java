@@ -292,11 +292,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException(
-          "Fallo en generar movimiento pedido="
+          "Fallo en generar movimiento="
               + req.getPedido()
-              + ", idmov="
-              + idmov
-              + ": "
               + e.getMessage(),
           e);
     }
