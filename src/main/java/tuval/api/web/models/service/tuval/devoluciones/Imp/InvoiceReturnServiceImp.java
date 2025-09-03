@@ -11,8 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import tuval.api.web.models.dao.tuval.devoluciones.InvoiceReturnDao;
-import tuval.api.web.models.entity.tuval.devoluciones.ItemsDevolucionEntity;
-import tuval.api.web.models.entity.tuval.devoluciones.RetornoEntity;
+import tuval.api.web.models.dto.devolucion.DetailDevolutionRequest;
+import tuval.api.web.models.dto.devolucion.DevolutionRequest;
+import tuval.api.web.models.entity.tuval.devoluciones.DevolutionResponse;
 import tuval.api.web.models.service.tuval.devoluciones.InvoiceReturnService;
 import tuval.api.web.models.service.tuval.devoluciones.Utils.InvoiceReturnUtils;
 
@@ -204,110 +205,18 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
         }
     }
 
-    public List<RetornoEntity> generateSalesReturn(String idCompania,
-            String documento,
-            String pedidoOrigen,
-            String bodega,
-            String observacion,
-            String usuario,
-            List<ItemsDevolucionEntity> itemsDevolucion) {
-        List<RetornoEntity> response = new ArrayList<>();
-
-        // ➡️ 1. Validar datos de entrada
-        if (!InvoiceReturnUtils.validarDatos(documento, pedidoOrigen, bodega, usuario, response)) {
-            return response;
+    @Override
+    public DevolutionResponse generateAjustmentDevolutionService(DevolutionRequest request) {
+         DevolutionResponse responseHeader = invoiceReturnDao.executeSpStoreHeaderDevolution(request.getCabecera(), 17);
+    //    return invoiceReturnDao.executeSpStoreHeaderDevolution(request.getCabecera(), 17);
+        if (request.getDetalle() != null) {
+            for (DetailDevolutionRequest det : request.getDetalle()) {
+                invoiceReturnDao.executeSpStoreDetaillDevolution(det,  request.getCabecera(), responseHeader.getIdMovimiento(),  1, 18);
+            }
         }
-        // ➡️ 2. Ejecutar SP de cabecera
-        int idMovimiento;
-        try {
-            // Ejecutar SP de cabecera
-            ResponseEntity<Map<String, Object>> cabeceraResult = invoiceReturnDao.executeCabeceraDevolucionVenta(
-                    documento, pedidoOrigen, bodega, observacion, usuario, 17);
-            Map<String, Object> resultData = cabeceraResult.getBody();
-
-            if (resultData == null) {
-                response.add(new RetornoEntity(false, 500,
-                        "No se recibió una respuesta válida desde el procedimiento almacenado."));
-                return response;
-            }
-            boolean success = (boolean) resultData.get("success");
-            if (!success) {
-                response.add(new RetornoEntity(false, 98, (String) resultData.get("message")));
-                return response;
-            }
-
-            idMovimiento = (int) resultData.get("idmov");
-        } catch (Exception e) {
-            response.add(new RetornoEntity(false, 99,
-                    "Error general al insertar cabecera de movimiento: " + e.getMessage()));
-            return response;
-        }
-
-        // ➡️ 3. Ejecutar detalle para cada item
-        try {
-            int secuencia = 1;
-            for (ItemsDevolucionEntity item : itemsDevolucion) {
-                ResponseEntity<Map<String, Object>> detalleResult = invoiceReturnDao.executeDetalleTransferenciaVenta(
-                        documento,
-                        item.getItem(),
-                        secuencia++,
-                        bodega,
-                        "", // Bodega destino vacía
-                        item.getCantidad(),
-                        idMovimiento,
-                        pedidoOrigen,
-                        item.getCompartimento(),
-                        item.getCompartimento(), // bindes puede ir vacío o igual al origen
-                        "",
-                        usuario,
-                        18);
-
-                Map<String, Object> resultDetalle = detalleResult.getBody();
-                if (resultDetalle == null) {
-                    response.add(new RetornoEntity(false, 500,
-                            "No se recibió una respuesta válida desde el procedimiento almacenado para el detalle."));
-                    return response;
-                }
-                boolean success = (boolean) resultDetalle.get("success");
-                if (!success) {
-                    response.add(new RetornoEntity(false, 97, (String) resultDetalle.get("message")));
-                    return response;
-                }
-            }
-        } catch (Exception e) {
-            response.add(new RetornoEntity(false, 99, "Error al registrar detalle de transacción: " + e.getMessage()));
-            return response;
-        }
-
-        // ➡️ 4. Finalizar transferencia
-        try {
-            // SP para confirmar movimiento (modo 19)
-            // Reutilizas `executeCabeceraDevolucionVenta` si el SP es el mismo
-            ResponseEntity<Map<String, Object>> finalizaMovimiento = invoiceReturnDao.generateTransferMovement(
-                    documento, bodega, "", observacion, idMovimiento, pedidoOrigen, usuario, 19);
-            Map<String, Object> result = finalizaMovimiento.getBody();
-            if (result == null) {
-                response.add(new RetornoEntity(false, 500,
-                        "No se recibió una respuesta válida desde el procedimiento almacenado al finalizar el movimiento."));
-                return response;
-            }
-
-            boolean success = (boolean) result.get("success");
-            if (!success) {
-                response.add(new RetornoEntity(false, 96, (String) result.get("message")));
-                return response;
-            }
-        } catch (Exception e) {
-            response.add(
-                    new RetornoEntity(false, 99, "Error en la generación final de transferencia: " + e.getMessage()));
-            return response;
-        }
-
-        response.add(new RetornoEntity(true, 0, "Devolución generada correctamente"));
-        return response;
-
+        return  invoiceReturnDao.executeSpGenerateMovimentDevolution( request.getCabecera(), responseHeader.getIdMovimiento(),19);       
     }
-
+    @Override
     public ResponseEntity<Map<String, Object>> getResponseItemBin(String item, String bodega) {
         try {
             // ✅ Llamada al DAO con el valor fijo "16"
