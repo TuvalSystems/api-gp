@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import tuval.api.web.models.dao.tuval.guiaremision.ShippingGuideDao;
 import tuval.api.web.models.dto.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
+import tuval.api.web.models.dto.bodegas.guiaRemision.DispatchVtaRequest;
 import tuval.api.web.models.dto.bodegas.guiaRemision.TransferVtaRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
@@ -26,14 +27,35 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
 
     @Transactional(rollbackFor = Exception.class)
     public HeaderGuideTransferVtaResponse generateGuideTransferVtaService(TransferVtaRequest req) {
-        HeaderGuideTransferVtaResponse responseHeader = shippingGuideDao.executeSpStoreHeaderTransferVta(req.getCabecera());
-        int sec = 1;
+        HeaderGuideTransferVtaResponse responseHeader = shippingGuideDao.executeSpStoreHeaderTransferVta(req.getCabecera(), 1);
+        
         if (req.getDetalle() != null) {
             for (DetailGuideTransferVtaRequest det : req.getDetalle()) {
-                shippingGuideDao.executeSpStoreDetailGuideTransferVta(det,  req.getCabecera(), responseHeader.getIdMovimiento(),  sec);
-                 sec++;
+                shippingGuideDao.executeSpStoreDetailGuideTransferVta(det,  req.getCabecera(), responseHeader.getIdMovimiento(),  1, 2);
             }
         }
-        return  shippingGuideDao.executeSpGenerateMovimentTransferVta( req.getCabecera(), responseHeader.getIdMovimiento());       
+        return  shippingGuideDao.executeSpGenerateMovimentTransferVta( req.getCabecera(), responseHeader.getIdMovimiento(), 3);       
+    }
+
+     @Transactional(rollbackFor = Exception.class)
+    public HeaderGuideTransferVtaResponse generateGuideReposicionService(TransferVtaRequest req) {
+        HeaderGuideTransferVtaResponse responseHeader = shippingGuideDao.executeSpStoreHeaderTransferVta(req.getCabecera(),10 );
+        if (req.getDetalle() != null) {
+            for (DetailGuideTransferVtaRequest det : req.getDetalle()) {
+                shippingGuideDao.executeSpStoreDetailGuideTransferVta(det,  req.getCabecera(), responseHeader.getIdMovimiento(),  1, 11);
+            }
+        }
+        return  shippingGuideDao.executeSpGenerateMovimentTransferVta( req.getCabecera(), responseHeader.getIdMovimiento(),12);       
+    }
+
+     @Transactional(rollbackFor = Exception.class)
+    public HeaderGuideTransferVtaResponse generateGuideDispatchVtaService(DispatchVtaRequest req) {
+        HeaderGuideTransferVtaResponse responseHeader = shippingGuideDao.executeSpStoreHeaderGuideDispatchVta(req.getCabecera(),7 );
+        if (req.getDetalle() != null) {
+            for (DetailGuideTransferVtaRequest det : req.getDetalle()) {
+                shippingGuideDao.executeSpStoreDetailGuideDispatchVta(det,  req.getCabecera(), responseHeader.getIdMovimiento(),  1, 8);
+            }
+        }
+        return  shippingGuideDao.executeSpGenerateMovimentDispatchVta( req.getCabecera(), responseHeader.getIdMovimiento(),9);       
     }
 }

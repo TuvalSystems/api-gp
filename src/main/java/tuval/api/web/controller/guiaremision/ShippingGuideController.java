@@ -1,6 +1,5 @@
 package tuval.api.web.controller.guiaremision;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
+import tuval.api.web.models.dto.bodegas.guiaRemision.DispatchVtaRequest;
 import tuval.api.web.models.dto.bodegas.guiaRemision.TransferVtaRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
@@ -54,6 +54,35 @@ public class ShippingGuideController {
     public ResponseEntity<Map<String, Object>> generarTranasferenciaVenta(@Valid @RequestBody TransferVtaRequest req) {
         try {
             HeaderGuideTransferVtaResponse response = shippingGuideService.generateGuideTransferVtaService(req);
+            return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
+
+        } catch (Exception e) {
+            e.printStackTrace(); // para ver la traza completa
+            return ResponseJsonUtils.buildException(e);
+        }
+
+    }
+
+     @CrossOrigin
+    @PostMapping("/inventario/guardar-generar-movimiento-reposicion")
+    public ResponseEntity<Map<String, Object>> generarDepachoReposicion(@Valid @RequestBody TransferVtaRequest req) {
+        try {
+            HeaderGuideTransferVtaResponse response = shippingGuideService.generateGuideReposicionService(req);
+            return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
+
+        } catch (Exception e) {
+            e.printStackTrace(); // para ver la traza completa
+            return ResponseJsonUtils.buildException(e);
+        }
+
+    }
+
+
+      @CrossOrigin
+    @PostMapping("/inventario/guardar-generar-movimiento-despacho")
+    public ResponseEntity<Map<String, Object>> generarDespachoVta(@Valid @RequestBody DispatchVtaRequest req) {
+        try {
+            HeaderGuideTransferVtaResponse response = shippingGuideService.generateGuideDispatchVtaService(req);
             return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
         } catch (Exception e) {
