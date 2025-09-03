@@ -114,13 +114,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     }
   }
 
-   /** 
-   * 
-   * Transferencia de venta
-   * Reposición 
-   * 
-   * 
-   * */
+  /** Transferencia de venta Reposición */
   public HeaderGuideTransferVtaResponse executeSpStoreHeaderTransferVta(
       HeaderGuideTransferVtaRequest req, int modo) {
 
@@ -177,9 +171,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
       e.printStackTrace();
-      throw new RuntimeException(
-          "Fallo guardar cabecera pedido=" + req.getPedido() + ": " + e.getMessage(),
-          e);
+      throw new RuntimeException(e.getMessage(), e);
     }
   }
 
@@ -233,14 +225,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
     } catch (Exception e) {
       e.printStackTrace();
-      throw new RuntimeException(
-          "Fallo guardar detalle pedido="
-              + cab.getPedido()
-              + ", idmov="
-              + idmov
-              + ": "
-              + e.getMessage(),
-          e);
+      throw new RuntimeException(e.getMessage(), e);
     }
   }
 
@@ -291,21 +276,11 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
       e.printStackTrace();
-      throw new RuntimeException(
-          "Fallo en generar movimiento="
-              + req.getPedido()
-              + e.getMessage(),
-          e);
+      throw new RuntimeException(e.getMessage(), e);
     }
   }
 
-
-  /** 
-   * 
-   * despacho de venta 
-   * 
-   * 
-   * */
+  /** despacho de venta */
   public HeaderGuideTransferVtaResponse executeSpStoreHeaderGuideDispatchVta(
       HeaderGuideDispatchShipmentRequest req, int modo) {
 
@@ -362,13 +337,11 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
       e.printStackTrace();
-      throw new RuntimeException(
-          "Fallo guardar cabecera Despacho pedido=" + req.getPedido() + ": " + e.getMessage(),
-          e);
+      throw new RuntimeException(e.getMessage(), e);
     }
   }
 
-    public DetailGuideTransferVtaResponse executeSpStoreDetailGuideDispatchVta(
+  public DetailGuideTransferVtaResponse executeSpStoreDetailGuideDispatchVta(
       DetailGuideTransferVtaRequest det,
       HeaderGuideDispatchShipmentRequest cab,
       int idmov,
@@ -429,8 +402,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     }
   }
 
-
-   public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
+  public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
       HeaderGuideDispatchShipmentRequest req, int idmov, int modo) {
     MapSqlParameterSource in =
         new MapSqlParameterSource()
@@ -438,7 +410,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             .addValue("numdoc", req.getPedido())
             .addValue("numdocori", "")
             .addValue("bodorigen", req.getBodegaOrigen())
-            .addValue("boddestino","")
+            .addValue("boddestino", "")
             .addValue("binitem", "")
             .addValue("binori", "")
             .addValue("bindes", "")
@@ -477,14 +449,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
       e.printStackTrace();
-      throw new RuntimeException(
-          "Fallo en generar movimiento de despacho, pedido="
-              + req.getPedido()
-              + ", idmov="
-              + idmov
-              + ": "
-              + e.getMessage(),
-          e);
+      throw new RuntimeException(e.getMessage(), e);
     }
   }
 }
