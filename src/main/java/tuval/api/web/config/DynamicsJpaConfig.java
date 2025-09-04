@@ -51,7 +51,7 @@ public class DynamicsJpaConfig {
     public LocalContainerEntityManagerFactoryBean dynamicsEntityManagerFactory(EntityManagerFactoryBuilder builder,
             @Qualifier("dynamicsDataSource") DataSource dataSource) {
         Map<String, Object> properties = new HashMap<>();
-        properties.put("hibernate.hbm2ddl.auto", "update");
+        properties.put("hibernate.hbm2ddl.auto", "none");
         properties.put("hibernate.dialect", "org.hibernate.dialect.SQLServerDialect");
         properties.put("hibernate.show_sql", "true");
         return builder.dataSource(dataSource).properties(properties)
@@ -65,7 +65,6 @@ public class DynamicsJpaConfig {
             @Qualifier("dynamicsEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
     }
-
 
     //para las conexinexiones en las entidades de dynamics
     @Primary
