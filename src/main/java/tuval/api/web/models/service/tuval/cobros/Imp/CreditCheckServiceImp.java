@@ -1,6 +1,5 @@
 package tuval.api.web.models.service.tuval.cobros.Imp;
 
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -8,7 +7,8 @@ import org.springframework.stereotype.Service;
 import tuval.api.web.models.dao.tuval.cobros.CreditCheckDao;
 import tuval.api.web.models.entity.tuval.cobros.CheckValidatorEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientOverdueDocumentEntity;
-import tuval.api.web.models.entity.tuval.cobros.pruebaEntity;
+import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
+import tuval.api.web.models.entity.tuval.cobros.ListaClientSinSoporteEntity;
 import tuval.api.web.models.service.tuval.cobros.CreditCheckService;
 
 @Service
@@ -27,16 +27,20 @@ public class CreditCheckServiceImp implements CreditCheckService {
         return creditCheckDao.getConsultCreditValidation(ruc, idCompania, modo);
     }
 
-    public pruebaEntity funcionprueba() {
 
-        pruebaEntity abc = new pruebaEntity();
-        abc.setTexto("abcdeffedoejdojeodoe");
-        abc.setNumero(12121212);
-        return abc;
+    public ClientSinSoporteEntity getConsultDocumentClientDontSupport(String ruc, String idCompania) {
+        int modo = 2;
+        return creditCheckDao.executeSpConsultDocumentClientDontSupport(ruc, idCompania, modo);
     }
 
-    // public pruebaEntity funcionPrueba2() {
+    
+    public ListaClientSinSoporteEntity getConsultDocumentClientDontSupport2(String ruc, String idCompania) {
+        int modo = 2;
+        return creditCheckDao.executeSpConsultDocumentClientDontSupport2(ruc, idCompania, modo);
+    }
 
-    // }
+
+    
+
 
 }
