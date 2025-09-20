@@ -77,7 +77,6 @@ public class CreditCheckDaoImp implements CreditCheckDao {
         throw new RuntimeException("SP no retornó filas para cliente=" + ruc);
       }
       Map<String, Object> row = rs.get(0);
-      System.out.println(row + " - " + row.get("RUC") + "executeSpConsultExpiredClientDocument");
       ClientOverdueDocumentEntity e = new ClientOverdueDocumentEntity();
       e.setRuc(CoerceHelperUtils.stringOrEmpty(row.get("RUC")));
       e.setFactura(CoerceHelperUtils.stringOrEmpty(row.get("FACTURA")));
