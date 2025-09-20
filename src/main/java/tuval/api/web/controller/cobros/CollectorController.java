@@ -47,7 +47,7 @@ public class CollectorController {
         }
     }
 
-     @GetMapping("/consultar-cliente-documentos-vencidos")
+     @GetMapping("/consultar-documentos-vencidos-cliente")
     public ResponseEntity<Map<String, Object>> getConsultaDocumentoVencidosCliente(@RequestParam String ruc,
             @RequestParam(required = false, defaultValue = "") String idCompania) {
 
