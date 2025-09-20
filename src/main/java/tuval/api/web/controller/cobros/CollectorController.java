@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.RestController;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.entity.tuval.cobros.CheckValidatorEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientOverdueDocumentEntity;
+import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
+import tuval.api.web.models.entity.tuval.cobros.ListaClientSinSoporteEntity;
 import tuval.api.web.models.service.tuval.cobros.CreditCheckService;
 
 import java.util.HashMap;
@@ -60,6 +62,7 @@ public class CollectorController {
             if (idCompania == null || idCompania.isEmpty()) {
                 return ResponseJsonUtils.buildError("Falta el campo " + "idCompania" + "o está vacío.");
 
+                
             }
             ClientOverdueDocumentEntity result = creditCheckService.getConsultExpiredClientDocument(ruc, idCompania);
             return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
@@ -70,5 +73,57 @@ public class CollectorController {
         }
 
     }
+
+
+    @GetMapping("/consultar-documentos-cliente-sinsoporte")
+    public ResponseEntity<Map<String, Object>> getConsultaDocumentoClienteSinSoporte(@RequestParam String ruc,
+            @RequestParam(required = false, defaultValue = "") String idCompania) {
+
+        try {
+
+            if (ruc == null || ruc.isEmpty()) {
+                return ResponseJsonUtils.buildError("Falta el campo " + "ruc" + "o está vacío.");
+            }
+
+            if (idCompania == null || idCompania.isEmpty()) {
+                return ResponseJsonUtils.buildError("Falta el campo " + "idCompania" + "o está vacío.");
+
+            }
+            ClientSinSoporteEntity result = creditCheckService.getConsultDocumentClientDontSupport(ruc, idCompania);
+            return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseJsonUtils.buildException(e);
+
+        }
+
+    }
+
+    
+    @GetMapping("/consultar-documentos-cliente-sinsoporte-2")
+    public ResponseEntity<Map<String, Object>> getConsultaDocumentoClienteSinSoporte2(@RequestParam String ruc,
+            @RequestParam(required = false, defaultValue = "") String idCompania) {
+
+        try {
+
+            if (ruc == null || ruc.isEmpty()) {
+                return ResponseJsonUtils.buildError("Falta el campo " + "ruc" + "o está vacío.");
+            }
+
+            if (idCompania == null || idCompania.isEmpty()) {
+                return ResponseJsonUtils.buildError("Falta el campo " + "idCompania" + "o está vacío.");
+
+            }
+            ListaClientSinSoporteEntity result = creditCheckService.getConsultDocumentClientDontSupport2(ruc, idCompania);
+            return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result.data);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseJsonUtils.buildException(e);
+
+        }
+
+    }
+
+
 
 }
