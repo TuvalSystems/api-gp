@@ -20,7 +20,6 @@ import tuval.api.web.models.dto.transacciones.reciboCompraL.DetailReceivedLReque
 import tuval.api.web.models.dto.transacciones.reciboCompraL.HeaderReceivedLRequest;
 import tuval.api.web.models.dto.transacciones.reciboCompraL.validateReceidLRequestEntity;
 import tuval.api.web.models.entity.tuval.transacciones.facturacionVenta.responseInvoiceVtaEntity;
-import tuval.api.web.models.entity.tuval.transacciones.facturacionVenta.validateGenerateInvoiceResponseEntity;
 import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateResponseEntity;
 
 @Repository
