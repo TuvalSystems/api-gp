@@ -50,10 +50,12 @@ public class CreditCheckDaoImp implements CreditCheckDao {
                 new SqlParameter("equipo", Types.VARCHAR),
                 new SqlParameter("codret", Types.INTEGER),
                 new SqlParameter("msj", Types.VARCHAR));
+                
   }
 
   public ClientOverdueDocumentEntity executeSpConsultExpiredClientDocument(
       String ruc, String idCompania, int modo) {
+        
     MapSqlParameterSource in =
         new MapSqlParameterSource()
             .addValue("idcliente", ruc)
@@ -73,7 +75,6 @@ public class CreditCheckDaoImp implements CreditCheckDao {
       if (rs == null || rs.isEmpty()) {
         throw new RuntimeException("SP no retornó filas para cliente=" + ruc);
       }
-
       Map<String, Object> row = rs.get(0);
       System.out.println(row + " - " + row.get("RUC") + "executeSpConsultExpiredClientDocument");
       ClientOverdueDocumentEntity e = new ClientOverdueDocumentEntity();

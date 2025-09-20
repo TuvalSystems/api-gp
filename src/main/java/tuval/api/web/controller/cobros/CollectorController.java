@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.entity.tuval.cobros.CheckValidatorEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientOverdueDocumentEntity;
+import tuval.api.web.models.entity.tuval.cobros.pruebaEntity;
 import tuval.api.web.models.service.tuval.cobros.CreditCheckService;
 
 import java.util.HashMap;
@@ -47,7 +48,7 @@ public class CollectorController {
         }
     }
 
-     @GetMapping("/consultar-ciente-documentos-vencidos")
+    @GetMapping("/consultar-ciente-documentos-vencidos")
     public ResponseEntity<Map<String, Object>> getConsultaDocumentoVencidosCliente(@RequestParam String ruc,
             @RequestParam(required = false, defaultValue = "") String idCompania) {
 
@@ -70,5 +71,22 @@ public class CollectorController {
         }
 
     }
+
+    @GetMapping("/prueba")
+    public ResponseEntity<Map<String, Object>> getConsultaDocumentoVencidosCliente() {
+
+        try {
+            pruebaEntity result = creditCheckService.funcionprueba();
+            return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseJsonUtils.buildException(e);
+
+        }
+
+    }
+
+
+    
 
 }
