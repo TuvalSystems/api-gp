@@ -75,7 +75,7 @@ public class CollectorController {
     }
 
 
-    @GetMapping("/consultar-documentos-cliente-sinsoporte")
+    @GetMapping("/consultar-documentos-sin-soporte-cliente")
     public ResponseEntity<Map<String, Object>> getConsultaDocumentoClienteSinSoporte(@RequestParam String ruc,
             @RequestParam(required = false, defaultValue = "") String idCompania) {
 
