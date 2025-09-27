@@ -1,6 +1,8 @@
 package tuval.api.web.models.service.tuval.cobros.Imp;
 
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -8,6 +10,9 @@ import tuval.api.web.models.dao.tuval.cobros.CreditCheckDao;
 import tuval.api.web.models.entity.tuval.cobros.CheckValidatorEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientOverdueDocumentEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
+import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountDetailEntity;
+import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountHeaderEntity;
+import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountResponseEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListClientOverdueDocumentEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListaClientSinSoporteEntity;
 import tuval.api.web.models.service.tuval.cobros.CreditCheckService;
@@ -45,7 +50,15 @@ public class CreditCheckServiceImp implements CreditCheckService {
         return creditCheckDao.executeSpConsultDocumentClientDontSupport2(ruc, idCompania, modo);
     }
 
+    public ClientStatusAccountResponseEntity getConsultaEstadoCuentaDetalleCliente(String ruc) {
+        ClientStatusAccountHeaderEntity respHeader = creditCheckDao.executeSpConsultClientStatusAccountHeader(ruc,  1);
+        List<ClientStatusAccountDetailEntity> respDetail = creditCheckDao.executeSpConsultClientStatusAccountDetail(ruc,  2);
 
+        ClientStatusAccountResponseEntity resp = new ClientStatusAccountResponseEntity();
+        resp.setCabecera(respHeader);
+        resp.setDetalle(respDetail);
+        return resp;
+    }
     
 
 

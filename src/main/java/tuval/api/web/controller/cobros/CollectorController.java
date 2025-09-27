@@ -7,6 +7,7 @@ import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.entity.tuval.cobros.CheckValidatorEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientOverdueDocumentEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
+import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountResponseEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListClientOverdueDocumentEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListaClientSinSoporteEntity;
 import tuval.api.web.models.service.tuval.cobros.CreditCheckService;
@@ -150,6 +151,31 @@ public class CollectorController {
         }
 
     }
+
+    @GetMapping("/consultar-detalle-estado-cuenta-cliente")
+    public ResponseEntity<Map<String, Object>> getConsultaEstadoCuentaProveedor(@RequestParam(required = true) String ruc,
+            @RequestParam(required = true) String idCompania) {
+
+        try {
+
+            if (ruc == null || ruc.isEmpty()) {
+                return ResponseJsonUtils.buildError("Falta el campo " + "ruc" + "o está vacío.");
+            }
+
+            if (idCompania == null || idCompania.isEmpty()) {
+                return ResponseJsonUtils.buildError("Falta el campo " + "idCompania" + "o está vacío.");
+
+            }
+            ClientStatusAccountResponseEntity result = creditCheckService.getConsultaEstadoCuentaDetalleCliente(ruc);
+            return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseJsonUtils.buildException(e);
+
+        }
+
+    }
+
 
 
 
