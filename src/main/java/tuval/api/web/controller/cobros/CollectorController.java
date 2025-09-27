@@ -7,6 +7,7 @@ import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.entity.tuval.cobros.CheckValidatorEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientOverdueDocumentEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
+import tuval.api.web.models.entity.tuval.cobros.ListClientOverdueDocumentEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListaClientSinSoporteEntity;
 import tuval.api.web.models.service.tuval.cobros.CreditCheckService;
 
@@ -74,8 +75,34 @@ public class CollectorController {
 
     }
 
+        @GetMapping("/consultar-lista-documentos-vencidos-cliente")
+    public ResponseEntity<Map<String, Object>> getConsultaDocumentoVencidosClienteList(@RequestParam String ruc,
+            @RequestParam(required = false, defaultValue = "") String idCompania) {
 
-    @GetMapping("/consultar-documentos-cliente-sinsoporte")
+        try {
+
+            if (ruc == null || ruc.isEmpty()) {
+                return ResponseJsonUtils.buildError("Falta el campo " + "ruc" + "o está vacío.");
+            }
+
+            if (idCompania == null || idCompania.isEmpty()) {
+                return ResponseJsonUtils.buildError("Falta el campo " + "idCompania" + "o está vacío.");
+
+                
+            }
+            ListClientOverdueDocumentEntity result = creditCheckService.getConsultExpiredClientDocumentList(ruc, idCompania);
+            return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result.data);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseJsonUtils.buildException(e);
+
+        }
+
+    }
+
+
+
+    @GetMapping("/consultar-documentos-sin-soporte-cliente")
     public ResponseEntity<Map<String, Object>> getConsultaDocumentoClienteSinSoporte(@RequestParam String ruc,
             @RequestParam(required = false, defaultValue = "") String idCompania) {
 
@@ -100,7 +127,7 @@ public class CollectorController {
     }
 
     
-    @GetMapping("/consultar-documentos-cliente-sinsoporte-2")
+    @GetMapping("/consultar-lista-documentos-sin-soporte-cliente")
     public ResponseEntity<Map<String, Object>> getConsultaDocumentoClienteSinSoporte2(@RequestParam String ruc,
             @RequestParam(required = false, defaultValue = "") String idCompania) {
 

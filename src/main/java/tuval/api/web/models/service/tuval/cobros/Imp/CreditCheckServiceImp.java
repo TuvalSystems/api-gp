@@ -8,6 +8,7 @@ import tuval.api.web.models.dao.tuval.cobros.CreditCheckDao;
 import tuval.api.web.models.entity.tuval.cobros.CheckValidatorEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientOverdueDocumentEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
+import tuval.api.web.models.entity.tuval.cobros.ListClientOverdueDocumentEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListaClientSinSoporteEntity;
 import tuval.api.web.models.service.tuval.cobros.CreditCheckService;
 
@@ -20,6 +21,11 @@ public class CreditCheckServiceImp implements CreditCheckService {
     public ClientOverdueDocumentEntity getConsultExpiredClientDocument(String ruc, String idCompania) {
         int modo = 1;
         return creditCheckDao.executeSpConsultExpiredClientDocument(ruc, idCompania, modo);
+    }
+
+     public ListClientOverdueDocumentEntity getConsultExpiredClientDocumentList(String ruc, String idCompania) {
+        int modo = 1;
+        return creditCheckDao.executeSpConsultExpiredClientDocumentList(ruc, idCompania, modo);
     }
 
     public CheckValidatorEntity getConsultCreditValidation(String ruc, String idCompania) {
