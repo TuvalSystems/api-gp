@@ -153,7 +153,7 @@ public class CollectorController {
     }
 
     @GetMapping("/consultar-detalle-estado-cuenta-cliente")
-    public ResponseEntity<Map<String, Object>> getConsultaEstadoCuentaProveedor(@RequestParam(required = true) String ruc,
+    public ResponseEntity<Map<String, Object>> getConsultaEstadoCuentaCliente(@RequestParam(required = true) String ruc,
             @RequestParam(required = true) String idCompania) {
 
         try {
@@ -175,6 +175,8 @@ public class CollectorController {
         }
 
     }
+
+   
 
 
 
