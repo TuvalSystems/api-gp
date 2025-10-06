@@ -386,7 +386,9 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
                 + ", codret="
                 + codret
                 + ", msj="
-                + msj);
+                + msj
+                + ", item="
+                + det.getItem());
       }
       return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
     } catch (Exception e) {
@@ -397,7 +399,9 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
               + ", idmov="
               + idmov
               + ": "
-              + e.getMessage(),
+              + e.getMessage()
+              + ", item="
+                + det.getItem(),
           e);
     }
   }
