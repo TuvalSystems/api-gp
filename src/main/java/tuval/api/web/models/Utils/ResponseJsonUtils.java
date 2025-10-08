@@ -36,4 +36,11 @@ public class ResponseJsonUtils {
     response.put("message", message);
     return ResponseEntity.ok(response);
   }
+
+    public static ResponseEntity<Map<String, Object>> buildNoFound(String message) {
+    Map<String, Object> response = new HashMap<>();
+    response.put("success", false);
+    response.put("message", message);
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+  }
 }

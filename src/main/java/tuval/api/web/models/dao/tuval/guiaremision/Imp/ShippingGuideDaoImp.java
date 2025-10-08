@@ -5,6 +5,8 @@ import java.sql.Types;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlInOutParameter;
 import org.springframework.jdbc.core.SqlOutParameter;
@@ -19,6 +21,7 @@ import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideDispatchShipment
 import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideTransferVtaRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailGuideTransferVtaResponse;
+import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 
 @Repository
@@ -401,7 +404,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
               + ": "
               + e.getMessage()
               + ", item="
-                + det.getItem(),
+              + det.getItem(),
           e);
     }
   }
@@ -454,6 +457,34 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException(e.getMessage(), e);
+    }
+  }
+
+  public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(String orderNumber) {
+    String SQL =
+        """
+          SELECT TOP (1)
+            mc_id      AS idMovimiento,
+            mc_numdoc  AS numDoc,
+            mc_origen  AS origen,
+            RTRIM(mc_usring) AS userIngreso,
+            mc_fecgp   AS fechaGp,
+            RTRIM(mc_docgp)  AS docGp
+        FROM dbo.tbmsw_movimiento_cab
+        WHERE mc_numdoc = ?
+          AND mc_docgp IS NOT NULL
+        ORDER BY mc_fecgp DESC
+        """;
+    try {
+      var mapper =
+          new org.springframework.jdbc.core.BeanPropertyRowMapper<>(
+              HeaderCheckGuideDispatchResponse.class);
+      return jdbcTemplate.queryForObject(SQL, mapper, orderNumber);
+    } catch (EmptyResultDataAccessException e) {
+      return null;
+    } catch (DataAccessException e) {
+      System.out.println("getAjusteGuideDispatchVtaDao" + e.getMessage());
+      throw new IllegalStateException("Error al consultar la base de datos", e);
     }
   }
 }

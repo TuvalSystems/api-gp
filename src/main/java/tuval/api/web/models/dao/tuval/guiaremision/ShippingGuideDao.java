@@ -5,6 +5,7 @@ import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideDispatchShipment
 import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideTransferVtaRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailGuideTransferVtaResponse;
+import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 
 public interface ShippingGuideDao {
@@ -36,4 +37,8 @@ public interface ShippingGuideDao {
 
   public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
       HeaderGuideDispatchShipmentRequest req, int idmov, int modo);
+
+
+
+ public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(String orderNumber);
 }
