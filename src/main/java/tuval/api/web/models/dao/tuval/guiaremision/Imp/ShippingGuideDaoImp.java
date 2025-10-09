@@ -316,14 +316,10 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
 
       if (codret != 0) {
         throw new IllegalStateException(
-            "Error al guardar la cabecera de Despacho pedido="
-                + req.getPedido()
-                + ", idmov="
-                + idmov
-                + ", codret="
-                + codret
-                + ", msj="
-                + msj);
+            String.format(
+                "Error al guardar la cabecera de Despacho. Pedido: %s, ID Movimiento: %d, Código"
+                    + " retorno: %d, Mensaje: %s",
+                req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
@@ -370,16 +366,14 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
         throw new IllegalStateException(
-            "Error al guardar el detalle de despacho, pedido="
-                + cab.getPedido()
-                + ", idmov="
-                + idmov
-                + ", codret="
-                + codret
-                + ", msj="
-                + msj
-                + ", item="
-                + det.getItem());
+            String.format(
+                "Error al guardar el detalle de despacho.\n"
+                    + "  Pedido: %s\n"
+                    + "  ID Movimiento: %d\n"
+                    + "  Código de retorno: %d\n"
+                    + "  Item: %s\n"
+                    + "  Mensaje del sistema: %s",
+                cab.getPedido(), idmov, codret,det.getItem(), msj));
       }
       return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
     } catch (Exception e) {
@@ -460,6 +454,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             RTRIM(mc_docgp)  AS docGp
         FROM dbo.tbmsw_movimiento_cab
         WHERE mc_numdoc = ?
+          AND mc_tipotrx = 'DSP'
           AND mc_docgp IS NOT NULL
         ORDER BY mc_fecgp DESC
         """;
