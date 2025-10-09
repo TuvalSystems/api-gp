@@ -163,8 +163,11 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       if (codret != 0) {
         throw new IllegalStateException(
             String.format(
-                "Error al guardar la cabecera. Pedido: %s, ID Movimiento: %d, Código retorno: %d,"
-                    + " Mensaje: %s",
+                "Error al guardar la cabecera de transferencia.\n"
+                    + "  Pedido: %s\n"
+                    + "  ID Movimiento: %d\n"
+                    + "  Código de retorno: %d\n"
+                    + "  Mensaje del sistema: %s",
                 req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
@@ -211,10 +214,14 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
-        throw new IllegalStateException(
+          throw new IllegalStateException(
             String.format(
-                "Error al guardar el detalle. Pedido: %s, ID Movimiento: %d, Articulo : %s, Código"
-                    + " retorno: %d, Mensaje: %s",
+                "Error al guardar el detalle de transferencia.\n"
+                    + "  Pedido: %s\n"
+                    + "  ID Movimiento: %d\n"
+                    + "  Código de retorno: %d\n"
+                    + "  Item: %s\n"
+                    + "  Mensaje del sistema: %s",
                 cab.getPedido(), idmov, codret, det.getItem(), msj));
       }
       return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
@@ -260,8 +267,11 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       if (codret != 0) {
         throw new IllegalStateException(
             String.format(
-                "Error al generar movimiento. Pedido: %s, ID Movimiento: %d, Código retorno: %d,"
-                    + " Mensaje: %s",
+                "Error al guardar el movimiento de transferencia.\n"
+                    + "  Pedido: %s\n"
+                    + "  ID Movimiento: %d\n"
+                    + "  Código de retorno: %d\n"
+                    + "  Mensaje del sistema: %s",
                 req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
@@ -317,8 +327,11 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       if (codret != 0) {
         throw new IllegalStateException(
             String.format(
-                "Error al guardar la cabecera de Despacho. Pedido: %s, ID Movimiento: %d, Código"
-                    + " retorno: %d, Mensaje: %s",
+                "Error al guardar la cabecera de despacho.\n"
+                    + "  Pedido: %s\n"
+                    + "  ID Movimiento: %d\n"
+                    + "  Código de retorno: %d\n"
+                    + "  Mensaje del sistema: %s",
                 req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
@@ -373,7 +386,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
                     + "  Código de retorno: %d\n"
                     + "  Item: %s\n"
                     + "  Mensaje del sistema: %s",
-                cab.getPedido(), idmov, codret,det.getItem(), msj));
+                cab.getPedido(), idmov, codret, det.getItem(), msj));
       }
       return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
     } catch (Exception e) {
@@ -425,15 +438,16 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
-        throw new IllegalStateException(
-            "Error al generar movimiento de despacho, pedido="
-                + req.getPedido()
-                + ", idmov="
-                + idmov
-                + ", codret="
-                + codret
-                + ", msj="
-                + msj);
+        if (codret != 0) {
+          throw new IllegalStateException(
+              String.format(
+                  "Error al generar el movimiento de despacho.\n"
+                      + "  Pedido: %s\n"
+                      + "  ID Movimiento: %d\n"
+                      + "  Código de retorno: %d\n"
+                      + "  Mensaje del sistema: %s",
+                  req.getPedido(), idmov, codret, msj));
+        }
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
