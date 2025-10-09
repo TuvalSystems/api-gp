@@ -162,14 +162,13 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
 
       if (codret != 0) {
         throw new IllegalStateException(
-            "Error al guardar la cabecera pedido="
-                + req.getPedido()
-                + ", idmov="
-                + idmov
-                + ", codret="
-                + codret
-                + ", msj="
-                + msj);
+            String.format(
+                "Error al guardar la cabecera de transferencia.\n"
+                    + "  Pedido: %s\n"
+                    + "  ID Movimiento: %d\n"
+                    + "  Código de retorno: %d\n"
+                    + "  Mensaje del sistema: %s",
+                req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
@@ -215,15 +214,15 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
-        throw new IllegalStateException(
-            "Error al guardar el detalle pedido="
-                + cab.getPedido()
-                + ", idmov="
-                + idmov
-                + ", codret="
-                + codret
-                + ", msj="
-                + msj);
+          throw new IllegalStateException(
+            String.format(
+                "Error al guardar el detalle de transferencia.\n"
+                    + "  Pedido: %s\n"
+                    + "  ID Movimiento: %d\n"
+                    + "  Código de retorno: %d\n"
+                    + "  Item: %s\n"
+                    + "  Mensaje del sistema: %s",
+                cab.getPedido(), idmov, codret, det.getItem(), msj));
       }
       return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
     } catch (Exception e) {
@@ -267,14 +266,13 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
         throw new IllegalStateException(
-            "Error al generar movimiento pedido="
-                + req.getPedido()
-                + ", idmov="
-                + idmov
-                + ", codret="
-                + codret
-                + ", msj="
-                + msj);
+            String.format(
+                "Error al guardar el movimiento de transferencia.\n"
+                    + "  Pedido: %s\n"
+                    + "  ID Movimiento: %d\n"
+                    + "  Código de retorno: %d\n"
+                    + "  Mensaje del sistema: %s",
+                req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
@@ -328,14 +326,13 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
 
       if (codret != 0) {
         throw new IllegalStateException(
-            "Error al guardar la cabecera de Despacho pedido="
-                + req.getPedido()
-                + ", idmov="
-                + idmov
-                + ", codret="
-                + codret
-                + ", msj="
-                + msj);
+            String.format(
+                "Error al guardar la cabecera de despacho.\n"
+                    + "  Pedido: %s\n"
+                    + "  ID Movimiento: %d\n"
+                    + "  Código de retorno: %d\n"
+                    + "  Mensaje del sistema: %s",
+                req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
@@ -382,16 +379,14 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
         throw new IllegalStateException(
-            "Error al guardar el detalle de despacho, pedido="
-                + cab.getPedido()
-                + ", idmov="
-                + idmov
-                + ", codret="
-                + codret
-                + ", msj="
-                + msj
-                + ", item="
-                + det.getItem());
+            String.format(
+                "Error al guardar el detalle de despacho.\n"
+                    + "  Pedido: %s\n"
+                    + "  ID Movimiento: %d\n"
+                    + "  Código de retorno: %d\n"
+                    + "  Item: %s\n"
+                    + "  Mensaje del sistema: %s",
+                cab.getPedido(), idmov, codret, det.getItem(), msj));
       }
       return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
     } catch (Exception e) {
@@ -443,15 +438,16 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
-        throw new IllegalStateException(
-            "Error al generar movimiento de despacho, pedido="
-                + req.getPedido()
-                + ", idmov="
-                + idmov
-                + ", codret="
-                + codret
-                + ", msj="
-                + msj);
+        if (codret != 0) {
+          throw new IllegalStateException(
+              String.format(
+                  "Error al generar el movimiento de despacho.\n"
+                      + "  Pedido: %s\n"
+                      + "  ID Movimiento: %d\n"
+                      + "  Código de retorno: %d\n"
+                      + "  Mensaje del sistema: %s",
+                  req.getPedido(), idmov, codret, msj));
+        }
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
@@ -472,6 +468,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             RTRIM(mc_docgp)  AS docGp
         FROM dbo.tbmsw_movimiento_cab
         WHERE mc_numdoc = ?
+          AND mc_tipotrx = 'DSP'
           AND mc_docgp IS NOT NULL
         ORDER BY mc_fecgp DESC
         """;
