@@ -18,5 +18,5 @@ public interface ShippingGuideService {
 
 
     /** para obtener el ajuste de guias de despacho */
-     public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService (String orderN);
+     public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService (String orderN, String newOrderN);
 }

@@ -456,18 +456,20 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     }
   }
 
-  public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(String orderNumber) {
+  public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(String orderNumber, String newOrderNumber) {
     String SQL =
         """
           SELECT TOP (1)
             mc_id      AS idMovimiento,
             mc_numdoc  AS numDoc,
+            mc_numdocori  AS numDocOri,
             mc_origen  AS origen,
             RTRIM(mc_usring) AS userIngreso,
             mc_fecgp   AS fechaGp,
             RTRIM(mc_docgp)  AS docGp
         FROM dbo.tbmsw_movimiento_cab
         WHERE mc_numdoc = ?
+          AND mc_numdocori = ?
           AND mc_tipotrx = 'DSP'
           AND mc_docgp IS NOT NULL
         ORDER BY mc_fecgp DESC
@@ -476,7 +478,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       var mapper =
           new org.springframework.jdbc.core.BeanPropertyRowMapper<>(
               HeaderCheckGuideDispatchResponse.class);
-      return jdbcTemplate.queryForObject(SQL, mapper, orderNumber);
+      return jdbcTemplate.queryForObject(SQL, mapper, orderNumber, newOrderNumber);
     } catch (EmptyResultDataAccessException e) {
       return null;
     } catch (DataAccessException e) {
