@@ -2,6 +2,8 @@ package tuval.api.web.controller.guiaremision;
 
 import jakarta.validation.Valid;
 import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -90,11 +92,11 @@ public class ShippingGuideController {
   @CrossOrigin
   @GetMapping("/inventario/validar-existencia-guia-despacho")
   public ResponseEntity<Map<String, Object>> postMethodName(
-      @Valid @RequestParam String orderNumber) {
+      @Valid @RequestParam String orderNumber ,  @RequestParam(defaultValue = "") String newOrderNumber) {
 
     try {
       HeaderCheckGuideDispatchResponse resp =
-          shippingGuideService.checkAjusteGuideDispatchVtaService(orderNumber);
+          shippingGuideService.checkAjusteGuideDispatchVtaService(orderNumber, newOrderNumber);
 
       if (resp == null) {
         return ResponseJsonUtils.buildNoFound("No existe guía para mc_numdoc=" + orderNumber);

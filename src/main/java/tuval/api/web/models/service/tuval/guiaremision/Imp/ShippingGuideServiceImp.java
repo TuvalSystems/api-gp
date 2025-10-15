@@ -63,7 +63,7 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
         req.getCabecera(), responseHeader.getIdMovimiento(), 9);
   }
 
-  public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(String orderN) {
-    return shippingGuideDao.getAjusteGuideDispatchVtaDao(orderN);
+  public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(String orderN, String newOrderN) {
+    return shippingGuideDao.getAjusteGuideDispatchVtaDao(orderN, newOrderN);
   }
 }

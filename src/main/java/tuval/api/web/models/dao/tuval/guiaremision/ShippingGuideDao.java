@@ -40,5 +40,5 @@ public interface ShippingGuideDao {
 
 
 
- public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(String orderNumber);
+ public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(String orderNumber, String newOrderNumber);
 }
