@@ -4,9 +4,11 @@ import tuval.api.web.models.dto.bodegas.guiaRemision.DetailGuideTransferVtaReque
 import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideDispatchShipmentRequest;
 import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideTransferVtaRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
+import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
+
 
 public interface ShippingGuideDao {
 
@@ -41,4 +43,8 @@ public interface ShippingGuideDao {
 
 
  public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(String orderNumber, String newOrderNumber);
+ public HeaderCheckGuideDispatchResponse getAjusteGuideTransferVtaDao(String orderNumber, String newOrderNumber, String origen, Integer idMovimiento);
+ public HeaderCheckGuideDispatchResponse getAjusteGuideRepositionVtaDao(String orderNumber, String origen, Integer idMovimiento);
+ public DetailCheckGuideAnyResponse getAjustmentDetailGuide(String orderNumber, String newOrderNumber, String item, Integer idMovimiento, Integer cantidad);
+ 
 }
