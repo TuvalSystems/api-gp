@@ -2,7 +2,6 @@ package tuval.api.web.models.service.tuval.guiaremision.Imp;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import tuval.api.web.models.dao.tuval.guiaremision.ShippingGuideDao;
 import tuval.api.web.models.dto.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
 import tuval.api.web.models.dto.bodegas.guiaRemision.DispatchVtaRequest;
@@ -11,7 +10,6 @@ import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNot
 import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
-import tuval.api.web.models.entity.tuval.guiaremision.ListHeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.service.tuval.guiaremision.ShippingGuideService;
 
 @Service
@@ -42,16 +40,33 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
   //  @Transactional(rollbackFor = Exception.class)
   @Override
   public HeaderGuideTransferVtaResponse generateGuideReposicionService(TransferVtaRequest req) {
-    HeaderGuideTransferVtaResponse responseHeader =
-        shippingGuideDao.executeSpStoreHeaderTransferVta(req.getCabecera(), 10);
-    if (req.getDetalle() != null) {
+    HeaderGuideTransferVtaResponse header;
+    try {
+      header = shippingGuideDao.executeSpStoreHeaderTransferVta(req.getCabecera(), 10);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "No se pudo guardar la cabecera de la guía de transferencia: " + e);
+    }
+
+    if (req.getDetalle() != null && !req.getDetalle().isEmpty()) {
+      int secItem = 1;
       for (DetailGuideTransferVtaRequest det : req.getDetalle()) {
-        shippingGuideDao.executeSpStoreDetailGuideTransferVta(
-            det, req.getCabecera(), responseHeader.getIdMovimiento(), 1, 11);
+        try {
+          shippingGuideDao.executeSpStoreDetailGuideTransferVta(
+              det, req.getCabecera(), header.getIdMovimiento(), 1, 11);
+          secItem++;
+        } catch (Exception e) {
+          throw new RuntimeException("Error al guardar el detalle (secItem=" + secItem + "): " + e);
+        }
       }
     }
-    return shippingGuideDao.executeSpGenerateMovimentTransferVta(
-        req.getCabecera(), responseHeader.getIdMovimiento(), 12);
+
+    try {
+      return shippingGuideDao.executeSpGenerateMovimentTransferVta(
+          req.getCabecera(), header.getIdMovimiento(), 12);
+    } catch (Exception e) {
+      throw new RuntimeException("Error al generar el movimiento de transferencia: " + e);
+    }
   }
 
   // @Transactional(rollbackFor = Exception.class)
@@ -70,22 +85,36 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
   }
 
   @Override
-  public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(String orderN, String newOrderN) {
+  public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(
+      String orderN, String newOrderN) {
     return shippingGuideDao.getAjusteGuideDispatchVtaDao(orderN, newOrderN);
   }
+
   @Override
-  public HeaderCheckGuideDispatchResponse checkAjusteGuideTransferVtaService(String orderN, String newOrderN, String origen, Integer idMovimiento) {
-    return shippingGuideDao.getAjusteGuideTransferVtaDao(orderN, newOrderN, origen, idMovimiento);
+  public HeaderCheckGuideDispatchResponse checkAjusteGuideTransferVtaService(
+      String orderN,
+      String newOrderN,
+      String origen,
+      Integer idGuiaRemision,
+      String guiaRemision) {
+    return shippingGuideDao.getAjusteGuideTransferVtaDao(
+        orderN, newOrderN, origen,  idGuiaRemision, guiaRemision);
   }
 
   @Override
-  public HeaderCheckGuideDispatchResponse checkAjusteGuideRepositionVtaService(String orderN, String origen, Integer idMovimiento) {
-    return shippingGuideDao.getAjusteGuideRepositionVtaDao(orderN, origen, idMovimiento);
+  public HeaderCheckGuideDispatchResponse checkAjusteGuideRepositionVtaService(
+      String orderN, String origen, Integer idMovimiento,Integer idGuiaRemision, String guiaRemision) {
+    return shippingGuideDao.getAjusteGuideRepositionVtaDao(orderN, origen, idMovimiento, idGuiaRemision, guiaRemision);
   }
 
-
   @Override
-  public DetailCheckGuideAnyResponse checkAjustmentDetailGuideService(String orderNumber, String newOrderNumber, String item, Integer idMovimiento, Integer cantidad) {
-    return shippingGuideDao.getAjustmentDetailGuide(orderNumber, newOrderNumber, item, idMovimiento, cantidad);
+  public DetailCheckGuideAnyResponse checkAjustmentDetailGuideService(
+      String orderNumber,
+      String newOrderNumber,
+      String item,
+      Integer idMovimiento,
+      Integer cantidad) {
+    return shippingGuideDao.getAjustmentDetailGuide(
+        orderNumber, newOrderNumber, item, idMovimiento, cantidad);
   }
 }

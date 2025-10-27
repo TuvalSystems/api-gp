@@ -1,74 +1,81 @@
 package tuval.api.web.models.dto.bodegas.guiaRemision;
 
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
 public class HeaderGuideTransferVtaRequest {
-    @NotBlank
-    private String idCompany;
-    @Valid
-    @NotBlank
-    private String pedido;
-    @Valid
-    @NotBlank
-    private String bodegaOrigen;
-    @Valid
-    @NotBlank
-    private String bodegaDestino;
- 
-    private String observacion;
-    @Valid
-    @NotBlank
-    private String usuario;
-   
+  @NotBlank private String idCompany;
+  @Valid @NotBlank private String pedido;
+  @Valid @NotBlank private String bodegaOrigen;
+  @Valid @NotBlank private String bodegaDestino;
 
+  private String observacion;
+  @Valid @NotBlank private String usuario;
 
-    public String getIdCompany() {
-        return idCompany;
-    }
+  private Integer idGuiaRemision;
+  private String guiaRemision;
 
-    public void setIdCompany(String idCompany) {
-        this.idCompany = idCompany;
-    }
+  public String getIdCompany() {
+    return idCompany;
+  }
 
-    public String getPedido() {
-        return pedido;
-    }
+  public void setIdCompany(String idCompany) {
+    this.idCompany = idCompany;
+  }
 
-    public void setPedido(String pedido) {
-        this.pedido = pedido;
-    }
+  public String getPedido() {
+    return pedido;
+  }
 
-    public String getBodegaOrigen() {
-        return bodegaOrigen;
-    }
+  public void setPedido(String pedido) {
+    this.pedido = pedido;
+  }
 
-    public void setBodegaOrigen(String bodegaOrigen) {
-        this.bodegaOrigen = bodegaOrigen;
-    }
+  public String getBodegaOrigen() {
+    return bodegaOrigen;
+  }
 
-    public String getBodegaDestino() {
-        return bodegaDestino;
-    }
+  public void setBodegaOrigen(String bodegaOrigen) {
+    this.bodegaOrigen = bodegaOrigen;
+  }
 
-    public void setBodegaDestino(String bodegaDestino) {
-        this.bodegaDestino = bodegaDestino;
-    }
+  public String getBodegaDestino() {
+    return bodegaDestino;
+  }
 
-    public String getObservacion() {
-        return observacion;
-    }
+  public void setBodegaDestino(String bodegaDestino) {
+    this.bodegaDestino = bodegaDestino;
+  }
 
-    public void setObservacion(String observacion) {
-        this.observacion = observacion;
-    }
+  public String getObservacion() {
+    return observacion;
+  }
 
-    public String getUsuario() {
-        return usuario;
-    }
+  public void setObservacion(String observacion) {
+    this.observacion = observacion;
+  }
 
-    public void setUsuario(String usuario) {
-        this.usuario = usuario;
-    }
+  public String getUsuario() {
+    return usuario;
+  }
+
+  public void setUsuario(String usuario) {
+    this.usuario = usuario;
+  }
+
+  public Integer getIdGuiaRemision() {
+    return idGuiaRemision;
+  }
+
+  public void setIdGuiaRemision(Integer idGuiaRemision) {
+    this.idGuiaRemision = idGuiaRemision;
+  }
+
+  public String getGuiaRemision() {
+    return guiaRemision;
+  }
+
+  public void setGuiaRemision(String guiaRemision) {
+    this.guiaRemision = guiaRemision;
+  }
 }

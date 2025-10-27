@@ -11,6 +11,8 @@ public class HeaderGuideDispatchShipmentRequest {
   @Valid @NotBlank private String bodegaOrigen;
   private String observacion;
   @Valid @NotBlank private String usuario;
+  private Integer idGuiaRemision;
+  private String guiaRemision;
 
   public String getIdCompany() {
     return idCompany;
@@ -58,5 +60,21 @@ public class HeaderGuideDispatchShipmentRequest {
 
   public void setUsuario(String usuario) {
     this.usuario = usuario;
+  }
+
+  public String getGuiaRemision() {
+    return guiaRemision;
+  }
+
+  public void setGuiaRemision(String guiaRemision) {
+    this.guiaRemision = guiaRemision;
+  }
+
+  public Integer getIdGuiaRemision() {
+    return idGuiaRemision;
+  }
+
+  public void setIdGuiaRemision(Integer idGuiaRemision) {
+    this.idGuiaRemision = idGuiaRemision;
   }
 }

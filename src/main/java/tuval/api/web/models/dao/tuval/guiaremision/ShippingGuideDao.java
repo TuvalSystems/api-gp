@@ -43,8 +43,8 @@ public interface ShippingGuideDao {
 
 
  public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(String orderNumber, String newOrderNumber);
- public HeaderCheckGuideDispatchResponse getAjusteGuideTransferVtaDao(String orderNumber, String newOrderNumber, String origen, Integer idMovimiento);
- public HeaderCheckGuideDispatchResponse getAjusteGuideRepositionVtaDao(String orderNumber, String origen, Integer idMovimiento);
+ public HeaderCheckGuideDispatchResponse getAjusteGuideTransferVtaDao(String orderNumber, String newOrderNumber, String origen,  Integer idGuiaRemision, String guiaRemision);
+ public HeaderCheckGuideDispatchResponse getAjusteGuideRepositionVtaDao(String orderNumber, String origen, Integer idMovimiento, Integer idGuiaRemision, String guiaRemision);
  public DetailCheckGuideAnyResponse getAjustmentDetailGuide(String orderNumber, String newOrderNumber, String item, Integer idMovimiento, Integer cantidad);
  
 }

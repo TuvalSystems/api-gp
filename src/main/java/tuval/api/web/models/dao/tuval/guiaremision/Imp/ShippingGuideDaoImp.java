@@ -71,7 +71,9 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
                 new SqlParameter("submodo", Types.SMALLINT),
                 new SqlParameter("equipo", Types.VARCHAR),
                 new SqlInOutParameter("codret", Types.INTEGER),
-                new SqlInOutParameter("msj", Types.VARCHAR));
+                new SqlInOutParameter("msj", Types.VARCHAR),
+                new SqlParameter("idguia", Types.INTEGER),
+                new SqlParameter("guia", Types.VARCHAR));
 
     this.spCheckCodeAccessDeliveryNote =
         new SimpleJdbcCall(jdbcTemplate)
@@ -156,8 +158,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             .addValue("equipo", "wserver")
             .addValue("codret", 0) // INOUT
             .addValue("msj", "")
-        // .addValue("docgp", "")
-        ;
+            .addValue("idguia", req.getIdGuiaRemision())
+            .addValue("guia", req.getGuiaRemision());
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
@@ -213,7 +215,9 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             .addValue("submodo", 0)
             .addValue("equipo", "wserver")
             .addValue("codret", 0)
-            .addValue("msj", "");
+            .addValue("msj", "")
+            .addValue("idguia", cab.getIdGuiaRemision())
+            .addValue("guia", cab.getGuiaRemision());
 
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
@@ -265,7 +269,9 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             .addValue("equipo", "wserver")
             .addValue("docgp", "") // INOUT
             .addValue("codret", 0) // INOUT
-            .addValue("msj", "");
+            .addValue("msj", "")
+            .addValue("idguia", "")
+            .addValue("guia", "");
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
@@ -323,8 +329,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             .addValue("equipo", "wserver")
             .addValue("codret", 0) // INOUT
             .addValue("msj", "")
-        // .addValue("docgp", "")
-        ;
+            .addValue("idguia", req.getIdGuiaRemision())
+            .addValue("guia", req.getGuiaRemision());
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
@@ -380,7 +386,9 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             .addValue("submodo", 0)
             .addValue("equipo", "wserver")
             .addValue("codret", 0)
-            .addValue("msj", "");
+            .addValue("msj", "")
+            .addValue("idguia", cab.getIdGuiaRemision())
+            .addValue("guia", cab.getGuiaRemision());
 
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
@@ -441,7 +449,9 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             .addValue("equipo", "wserver")
             .addValue("docgp", "") // INOUT
             .addValue("codret", 0) // INOUT
-            .addValue("msj", "");
+            .addValue("msj", "")
+            .addValue("idguia", "")
+            .addValue("guia", "");
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
@@ -478,7 +488,9 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             mc_origen  AS origen,
             RTRIM(mc_usring) AS userIngreso,
             mc_fecgp   AS fechaGp,
-            RTRIM(mc_docgp)  AS docGp
+            RTRIM(mc_docgp)  AS docGp,
+            mc_guia_remision_id as idGuiaRemision,
+            mc_guia_remision as guiaRemision
         FROM dbo.tbmsw_movimiento_cab
         WHERE mc_numdoc = ?
           AND mc_numdocori = ?
@@ -501,7 +513,11 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
 
   @Override
   public HeaderCheckGuideDispatchResponse getAjusteGuideTransferVtaDao(
-      String orderNumber, String newOrderNumber, String origen, Integer idMovimiento) {
+      String orderNumber,
+      String newOrderNumber,
+      String origen,
+      Integer idGuiaRemision,
+      String guiaRemision) {
     String SQL =
         """
           SELECT
@@ -512,14 +528,20 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             mc_destino        AS destino,
             RTRIM(mc_usring)  AS userIngreso,
             mc_fecgp          AS fechaGp,
-            RTRIM(mc_docgp)   AS docGp
+            RTRIM(mc_docgp)   AS docGp,
+            mc_guia_remision_id AS idGuiaRemision,
+            mc_guia_remision AS guiaRemision
         FROM dbo.tbmsw_movimiento_cab
         WHERE mc_numdoc   = ?
           AND mc_tipotrx  = 'TRD'
           AND mc_docgp IS NOT NULL
+          AND mc_guia_remision_id = ?
+          AND mc_guia_remision = ?
         """;
     List<Object> args = new ArrayList<>();
     args.add(orderNumber);
+    args.add(idGuiaRemision);
+    args.add(guiaRemision);
     if (newOrderNumber != null && !newOrderNumber.isBlank()) {
       SQL += " AND mc_numdocori = ?";
       args.add(newOrderNumber);
@@ -529,11 +551,6 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       SQL += " AND mc_origen = ?";
       args.add(origen);
     }
-    if (idMovimiento != null) {
-      SQL += " AND mc_id = ?";
-      args.add(idMovimiento);
-    }
-
     SQL += " ORDER BY mc_fecgp DESC";
 
     try {
@@ -548,7 +565,11 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
 
   @Override
   public HeaderCheckGuideDispatchResponse getAjusteGuideRepositionVtaDao(
-      String orderNumber, String origen, Integer idMovimiento) {
+      String orderNumber,
+      String origen,
+      Integer idMovimiento,
+      Integer idGuiaRemision,
+      String guiaRemision) {
     String SQL =
         """
             SELECT TOP (1)
@@ -558,14 +579,20 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
           mc_origen    AS origen,
           RTRIM(mc_usring) AS userIngreso,
           mc_fecgp     AS fechaGp,
-          RTRIM(mc_docgp)  AS docGp
+          RTRIM(mc_docgp)  AS docGp,
+          mc_guia_remision_id AS idGuiaRemision,
+          mc_guia_remision AS guiaRemision
         FROM dbo.tbmsw_movimiento_cab
         WHERE mc_numdoc = ?
           AND mc_tipotrx = 'TRR'
           AND mc_docgp IS NOT NULL
+          AND mc_guia_remision_id = ?
+          AND mc_guia_remision = ?
         """;
     List<Object> args = new ArrayList<>();
     args.add(orderNumber);
+    args.add(idGuiaRemision);
+    args.add(guiaRemision);
 
     if (idMovimiento != null) {
       SQL += " AND mc_id = ?";
@@ -575,7 +602,6 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       SQL += " AND mc_origen = ?";
       args.add(origen);
     }
-
     SQL += " ORDER BY mc_fecgp DESC";
 
     try {
@@ -610,7 +636,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         FROM dbo.tbmsw_movimiento_det
         WHERE md_numdoc = ?
           AND md_item = ?
-          AND md_docgp IS NOT NULL
+          AND md_docgp IS NOT NULL,
         """;
     List<Object> args = new ArrayList<>();
     args.add(orderNumber);

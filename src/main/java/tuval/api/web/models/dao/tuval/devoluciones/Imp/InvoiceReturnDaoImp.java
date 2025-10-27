@@ -21,7 +21,6 @@ import tuval.api.web.models.dao.tuval.devoluciones.InvoiceReturnDao;
 import tuval.api.web.models.dto.devolucion.DetailDevolutionRequest;
 import tuval.api.web.models.dto.devolucion.HeaderDevolutionRequest;
 import tuval.api.web.models.entity.tuval.devoluciones.DevolutionResponse;
-import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 
 @Repository
 public class InvoiceReturnDaoImp implements InvoiceReturnDao {
@@ -65,7 +64,9 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
                 new SqlParameter("submodo", Types.SMALLINT),
                 new SqlParameter("equipo", Types.VARCHAR),
                 new SqlInOutParameter("codret", Types.INTEGER),
-                new SqlInOutParameter("msj", Types.VARCHAR));
+                new SqlInOutParameter("msj", Types.VARCHAR),
+                new SqlParameter("idguia", Types.INTEGER),
+                new SqlParameter("guia", Types.VARCHAR));
   }
 
   public void validateConfiguration() {
@@ -579,7 +580,7 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
 
   public DevolutionResponse executeSpGenerateMovimentDevolution(
       HeaderDevolutionRequest req, int idmov, int modo) {
-         MapSqlParameterSource in =
+    MapSqlParameterSource in =
         new MapSqlParameterSource()
             .addValue("tipotrx", "")
             .addValue("numdoc", req.getDocumento())
@@ -626,7 +627,7 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
       e.printStackTrace();
       throw new RuntimeException(e.getMessage(), e);
     }
-      }
+  }
 
   @Override
   public ResponseEntity<Map<String, Object>> consultItemBin(
@@ -660,7 +661,9 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
                   new SqlParameter("submodo", Types.SMALLINT),
                   new SqlParameter("equipo", Types.VARCHAR),
                   new SqlInOutParameter("codret", Types.INTEGER),
-                  new SqlInOutParameter("msj", Types.VARCHAR));
+                  new SqlInOutParameter("msj", Types.VARCHAR),
+                  new SqlParameter("idguia", Types.INTEGER),
+                  new SqlParameter("guia", Types.VARCHAR));
 
       Map<String, Object> params = new HashMap<>();
       params.put("numdoc", "");
