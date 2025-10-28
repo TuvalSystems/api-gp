@@ -19,14 +19,22 @@ public interface ShippingGuideService {
 
   /** para obtener el ajuste de guias de despacho */
   public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(
-      String orderN, String newOrderN);
+      String orderN, String newOrderN, Integer idGuiaRemision, String guiaRemision);
 
   public HeaderCheckGuideDispatchResponse checkAjusteGuideTransferVtaService(
-      String orderN, String newOrderN, String origen,  Integer idGuiaRemision, String guiaRemision);
+      String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision);
 
   public HeaderCheckGuideDispatchResponse checkAjusteGuideRepositionVtaService(
-      String orderN, String origen, Integer idMovimiento , Integer idGuiaRemision, String guiaRemision);
+      String orderN,
+      String origen,
+      Integer idMovimiento,
+      Integer idGuiaRemision,
+      String guiaRemision);
 
   public DetailCheckGuideAnyResponse checkAjustmentDetailGuideService(
-      String orderNumber, String newOrderNumber, String item, Integer idMovimiento, Integer cantidad);
+      String orderNumber,
+      String newOrderNumber,
+      String item,
+      Integer idMovimiento,
+      Integer cantidad);
 }

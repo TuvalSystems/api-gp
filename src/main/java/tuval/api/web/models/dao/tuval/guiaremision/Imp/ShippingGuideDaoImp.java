@@ -478,7 +478,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
 
   @Override
   public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(
-      String orderNumber, String newOrderNumber) {
+      String orderNumber, String newOrderNumber, Integer idGuiaRemision, String guiaRemision) {
     String SQL =
         """
           SELECT TOP (1)
@@ -493,16 +493,24 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             mc_guia_remision as guiaRemision
         FROM dbo.tbmsw_movimiento_cab
         WHERE mc_numdoc = ?
-          AND mc_numdocori = ?
-          AND mc_tipotrx = 'DSP'
-          AND mc_docgp IS NOT NULL
-        ORDER BY mc_fecgp DESC
+        AND mc_docgp IS NOT NULL
+        AND mc_tipotrx = 'DSP'
+        AND mc_guia_remision_id = ?
+        AND mc_guia_remision = ?
         """;
+
+    List<Object> args = new ArrayList<>();
+    args.add(orderNumber);
+    args.add(idGuiaRemision);
+    args.add(guiaRemision);
+    if (newOrderNumber != null && !newOrderNumber.isBlank()) {
+      SQL += " AND mc_numdocori = ?";
+      args.add(newOrderNumber);
+    }
+    SQL += " ORDER BY mc_fecgp DESC";
     try {
-      var mapper =
-          new org.springframework.jdbc.core.BeanPropertyRowMapper<>(
-              HeaderCheckGuideDispatchResponse.class);
-      return jdbcTemplate.queryForObject(SQL, mapper, orderNumber, newOrderNumber);
+      var mapper = new BeanPropertyRowMapper<>(HeaderCheckGuideDispatchResponse.class);
+      return jdbcTemplate.queryForObject(SQL, mapper, args.toArray());
     } catch (EmptyResultDataAccessException e) {
       return null;
     } catch (DataAccessException e) {

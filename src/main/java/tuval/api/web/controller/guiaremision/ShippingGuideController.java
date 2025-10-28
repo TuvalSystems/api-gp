@@ -92,11 +92,14 @@ public class ShippingGuideController {
   @GetMapping("/inventario/validar-existencia-guia-despacho")
   public ResponseEntity<Map<String, Object>> obtenerMovimientoGuiaDespacho(
       @Valid @RequestParam String orderNumber,
-      @RequestParam(defaultValue = "") String newOrderNumber) {
+      @RequestParam(defaultValue = "") String newOrderNumber,
+      @Valid @RequestParam Integer idGuiaRemision,
+      @Valid @RequestParam String guiaRemision) {
 
     try {
       HeaderCheckGuideDispatchResponse resp =
-          shippingGuideService.checkAjusteGuideDispatchVtaService(orderNumber, newOrderNumber);
+          shippingGuideService.checkAjusteGuideDispatchVtaService(
+              orderNumber, newOrderNumber, idGuiaRemision, guiaRemision);
 
       if (resp == null) {
         return ResponseJsonUtils.buildNoFound("No existe guía para mc_numdoc=" + orderNumber);
@@ -115,13 +118,13 @@ public class ShippingGuideController {
       @Valid @RequestParam String orderNumber,
       @RequestParam(required = false) String newOrderNumber,
       @RequestParam(required = false) String origen,
-       @Valid @RequestParam Integer idGuiaRemision,
-       @Valid @RequestParam String guiaRemision) {
+      @Valid @RequestParam Integer idGuiaRemision,
+      @Valid @RequestParam String guiaRemision) {
 
     try {
       HeaderCheckGuideDispatchResponse resp =
           shippingGuideService.checkAjusteGuideTransferVtaService(
-              orderNumber, newOrderNumber, origen,  idGuiaRemision, guiaRemision);
+              orderNumber, newOrderNumber, origen, idGuiaRemision, guiaRemision);
 
       if (resp == null) {
         return ResponseJsonUtils.buildNoFound("No existe guía para mc_numdoc=" + orderNumber);

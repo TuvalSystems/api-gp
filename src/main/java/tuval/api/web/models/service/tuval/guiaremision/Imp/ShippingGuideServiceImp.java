@@ -86,8 +86,8 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
 
   @Override
   public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(
-      String orderN, String newOrderN) {
-    return shippingGuideDao.getAjusteGuideDispatchVtaDao(orderN, newOrderN);
+      String orderN, String newOrderN, Integer idGuiaRemision, String guiaRemision) {
+    return shippingGuideDao.getAjusteGuideDispatchVtaDao(orderN, newOrderN, idGuiaRemision, guiaRemision);
   }
 
   @Override
