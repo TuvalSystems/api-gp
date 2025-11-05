@@ -1,16 +1,19 @@
-package tuval.api.web.models.service.tuval.guiaremision.Imp;
+package tuval.api.web.models.service.tuval.guiaremision;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tuval.api.web.models.dao.tuval.guiaremision.ShippingGuideDao;
 import tuval.api.web.models.dto.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
 import tuval.api.web.models.dto.bodegas.guiaRemision.DispatchVtaRequest;
 import tuval.api.web.models.dto.bodegas.guiaRemision.TransferVtaRequest;
+import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DeliveryNoteRequest;
+import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DetailDeliveryNoteRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
-import tuval.api.web.models.service.tuval.guiaremision.ShippingGuideService;
+import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
 
 @Service
 public class ShippingGuideServiceImp implements ShippingGuideService {
@@ -87,24 +90,26 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
   @Override
   public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(
       String orderN, String newOrderN, Integer idGuiaRemision, String guiaRemision) {
-    return shippingGuideDao.getAjusteGuideDispatchVtaDao(orderN, newOrderN, idGuiaRemision, guiaRemision);
+    return shippingGuideDao.getAjusteGuideDispatchVtaDao(
+        orderN, newOrderN, idGuiaRemision, guiaRemision);
   }
 
   @Override
   public HeaderCheckGuideDispatchResponse checkAjusteGuideTransferVtaService(
-      String orderN,
-      String newOrderN,
-      String origen,
-      Integer idGuiaRemision,
-      String guiaRemision) {
+      String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision) {
     return shippingGuideDao.getAjusteGuideTransferVtaDao(
-        orderN, newOrderN, origen,  idGuiaRemision, guiaRemision);
+        orderN, newOrderN, origen, idGuiaRemision, guiaRemision);
   }
 
   @Override
   public HeaderCheckGuideDispatchResponse checkAjusteGuideRepositionVtaService(
-      String orderN, String origen, Integer idMovimiento,Integer idGuiaRemision, String guiaRemision) {
-    return shippingGuideDao.getAjusteGuideRepositionVtaDao(orderN, origen, idMovimiento, idGuiaRemision, guiaRemision);
+      String orderN,
+      String origen,
+      Integer idMovimiento,
+      Integer idGuiaRemision,
+      String guiaRemision) {
+    return shippingGuideDao.getAjusteGuideRepositionVtaDao(
+        orderN, origen, idMovimiento, idGuiaRemision, guiaRemision);
   }
 
   @Override
@@ -116,5 +121,55 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
       Integer cantidad) {
     return shippingGuideDao.getAjustmentDetailGuide(
         orderNumber, newOrderNumber, item, idMovimiento, cantidad);
+  }
+
+  @Override
+  @Transactional(rollbackFor = Exception.class)
+  public void createDeliveryNoteService(DeliveryNoteRequest req) {
+    try {
+      shippingGuideDao.executeSpStoreHeaderDeliveryNote(req.getCabecera());
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "No se pudo guardar la cabecera de la guía (createDeliveryNoteService): " + e);
+    }
+
+    try {
+      shippingGuideDao.executeSpStoreDestinationDeliveryNote(req.getDestinatario());
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "No se pudo guardar el destinatario de la guía (createDeliveryNoteService): " + e);
+    }
+
+    if (req.getDetalle() != null && !req.getDetalle().isEmpty()) {
+      for (DetailDeliveryNoteRequest det : req.getDetalle()) {
+        try {
+          shippingGuideDao.executeSpStoreDetailDeliveryNote(det);
+        } catch (Exception e) {
+          throw new RuntimeException(
+              "Error al guardar el detalle (createDeliveryNoteService): " + e);
+        }
+      }
+    }
+
+    try {
+      shippingGuideDao.executeSpCreateAccesoCodeDeliveryNote(req.getCabecera());
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "No se pudo guardar la cabecera de la guía (executeSpCreateAccesoCodeDeliveryNote): "
+              + e);
+    }
+
+    try {
+      shippingGuideDao.executeSpUpdateAccesoCodeDeliveryNote(req.getCabecera());
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "No se pudo guardar la cabecera de la guía (executeSpCreateAccesoCodeDeliveryNote): "
+              + e);
+    }
+  }
+
+  @Override
+  public ValidateExistsDeliveryNoteResponse checkExistenceDeliveryNoteService(String orderNumber) {
+    return shippingGuideDao.executeSpValidateExistsDeliveryNoteResponse(orderNumber);
   }
 }

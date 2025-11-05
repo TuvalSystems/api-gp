@@ -1,4 +1,4 @@
-package tuval.api.web.models.dao.tuval.guiaremision.Imp;
+package tuval.api.web.models.dao.tuval.guiaremision;
 
 import jakarta.annotation.PostConstruct;
 import java.sql.Types;
@@ -18,15 +18,18 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.models.Utils.CoerceHelperUtils;
-import tuval.api.web.models.dao.tuval.guiaremision.ShippingGuideDao;
 import tuval.api.web.models.dto.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
 import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideDispatchShipmentRequest;
 import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideTransferVtaRequest;
+import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DestinationDeliveryNoteRequest;
+import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DetailDeliveryNoteRequest;
+import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.HeaderDeliveryNoteRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
+import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
 
 @Repository
 public class ShippingGuideDaoImp implements ShippingGuideDao {
@@ -35,16 +38,112 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
   @Qualifier("tuvalJdbcTemplate")
   private JdbcTemplate jdbcTemplate;
 
+  private SimpleJdbcCall spCabeceraGuiaRemision;
+  private SimpleJdbcCall spDestinatarioGuiaRemision;
+  private SimpleJdbcCall spDetalleGuiaRemision;
+  private SimpleJdbcCall spCreateAccessCodeDeliveryNote;
+  private SimpleJdbcCall spUpdateAccessCodeDeliveryNote;
+  private SimpleJdbcCall spCheckExistsDeliverNote;
+
   private SimpleJdbcCall spMovimientosIv;
   private SimpleJdbcCall spCheckCodeAccessDeliveryNote;
 
   @PostConstruct
   public void init() {
     validateConfiguration();
+    // guardar cabecera guia remision
+    this.spCabeceraGuiaRemision =
+        new SimpleJdbcCall(jdbcTemplate)
+            .withProcedureName("MSW_SP_GUARDAR_GUIA_REMISION_CAB_jgms")
+            .withSchemaName("dbo")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("docu", Types.VARCHAR),
+                new SqlParameter("establecimiento", Types.VARCHAR),
+                new SqlParameter("punto_emision", Types.VARCHAR),
+                new SqlParameter("secuencial", Types.VARCHAR),
+                new SqlParameter("direccion_partida", Types.VARCHAR),
+                new SqlParameter("razon_social_transportista", Types.VARCHAR),
+                new SqlParameter("identificador_transportista", Types.VARCHAR),
+                new SqlParameter("tipo_identificador_transportista", Types.VARCHAR),
+                new SqlParameter("rise", Types.VARCHAR),
+                new SqlParameter("fecha_inicio", Types.TIMESTAMP),
+                new SqlParameter("fecha_fin", Types.TIMESTAMP),
+                new SqlParameter("placa", Types.VARCHAR),
+                new SqlParameter("correo_electronico", Types.VARCHAR),
+                new SqlParameter("observacion", Types.VARCHAR),
+                new SqlOutParameter("codret", Types.INTEGER));
+    // guardar destinatario guia remision
+
+    this.spDestinatarioGuiaRemision =
+        new SimpleJdbcCall(jdbcTemplate)
+            .withProcedureName("MSW_SP_GUARDAR_GUIA_REMISION_DESTINATARIO_jgms")
+            .withSchemaName("dbo")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("docu", Types.VARCHAR),
+                new SqlParameter("secuencial", Types.INTEGER),
+                new SqlParameter("identificador_destinatario", Types.VARCHAR),
+                new SqlParameter("razon_social_destinatario", Types.VARCHAR),
+                new SqlParameter("direccion_destinatario", Types.VARCHAR),
+                new SqlParameter("motivo_traslado", Types.VARCHAR),
+                new SqlParameter("documento_aduanero", Types.VARCHAR),
+                new SqlParameter("establecimiento_destino", Types.VARCHAR),
+                new SqlParameter("desc_establecimiento_destino", Types.VARCHAR),
+                new SqlParameter("ruta", Types.VARCHAR),
+                new SqlParameter("codigo_sustento", Types.VARCHAR),
+                new SqlParameter("docu_sustento", Types.VARCHAR),
+                new SqlParameter("nume_autorizacion", Types.VARCHAR),
+                new SqlParameter("fecha", Types.DATE),
+                new SqlOutParameter("codret", Types.INTEGER));
+
+    // guardar detalle guia remision
+    this.spDetalleGuiaRemision =
+        new SimpleJdbcCall(jdbcTemplate)
+            .withProcedureName("MSW_SP_GUARDAR_GUIA_REMISION_DET_jgms")
+            .withSchemaName("dbo")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("docu", Types.VARCHAR),
+                new SqlParameter("secuencial_destinatario", Types.INTEGER),
+                new SqlParameter("secuencial_detalle", Types.INTEGER),
+                new SqlParameter("identificacion_destinatario", Types.VARCHAR),
+                new SqlParameter("numero_docu_sustento", Types.VARCHAR),
+                new SqlParameter("codigo_producto", Types.VARCHAR),
+                new SqlParameter("codigo_adicional", Types.VARCHAR),
+                new SqlParameter("descripcion_producto", Types.NVARCHAR),
+                new SqlParameter("cantidad", Types.DECIMAL), // numeric(19,5)
+                new SqlParameter("unidad_medida", Types.VARCHAR),
+                new SqlParameter("bodega", Types.VARCHAR),
+                new SqlOutParameter("codret", Types.INTEGER));
+
+    // sp para generar las claves de acceso de la guia de remision
+    this.spCreateAccessCodeDeliveryNote =
+        new SimpleJdbcCall(jdbcTemplate)
+            .withProcedureName("MSW_SP_GENERAR_CLAVE_ACCESO_GUIA_REMISION")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(new SqlParameter("docu", Types.VARCHAR));
+
+    // sp para actualizar la guia de remision con la clave de acceso
+    this.spUpdateAccessCodeDeliveryNote =
+        new SimpleJdbcCall(jdbcTemplate)
+            .withProcedureName("MSW_SP_ACTUALIZAR_DOCU_GENERADO_GUIA_REMISION")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(new SqlParameter("docu", Types.VARCHAR));
+
+    // sp para validar la existencia de la guia de remision
+    this.spCheckExistsDeliverNote =
+        new SimpleJdbcCall(jdbcTemplate)
+            .withProcedureName("sp_validar_existencia_guia_remision_tuv_jgms")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("docu", Types.VARCHAR),
+                new SqlOutParameter("existe_cabecera", Types.BIT),
+                new SqlInOutParameter("codret", Types.INTEGER),
+                new SqlInOutParameter("msj", Types.VARCHAR));
+    // para movimientos
     this.spMovimientosIv =
         new SimpleJdbcCall(jdbcTemplate)
-            // .withSchemaName("dbo") // descomenta si tu SP está en dbo y tu usuario no
-            // tiene default schema
             .withProcedureName("sp_msw_movimientos_iv")
             .withoutProcedureColumnMetaDataAccess()
             .declareParameters(
@@ -106,7 +205,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       }
 
       var row = rows.get(0);
-      // Sugerencia: CLAVE_ACCESO suele ser de 49 dígitos (SRI) -> usa String en tu POJO
+      // Sugerencia: CLAVE_ACCESO suele ser de 49 dígitos (SRI) -> usa String en tu
+      // POJO
       String claveAcceso = CoerceHelperUtils.stringOrEmpty(row.get("CLAVE_ACCESO"));
       String documentoOrigen = CoerceHelperUtils.stringOrEmpty(row.get("I_vDOCU_ORIGEN"));
       int codigo =
@@ -671,6 +771,155 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       return null;
     } catch (DataAccessException e) {
       throw new IllegalStateException("Error al consultar la base de datos", e);
+    }
+  }
+
+  @Override
+  public void executeSpStoreHeaderDeliveryNote(HeaderDeliveryNoteRequest h) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("docu", h.getGuiaRemision())
+            .addValue("establecimiento", h.getEstablecimiento())
+            .addValue("punto_emision", h.getPtoEmision())
+            .addValue("secuencial", h.getSecuencial())
+            .addValue("direccion_partida", h.getDireccionPartida())
+            .addValue("razon_social_transportista", h.getDireccionPartida())
+            .addValue("identificador_transportista", h.getIdentificacionTransportista())
+            .addValue("tipo_identificador_transportista", h.getTipoIdentificacionTransportista())
+            .addValue("rise", CoerceHelperUtils.emptyIfNull(h.getRise()))
+            .addValue("fecha_inicio", h.getFechaInicio())
+            .addValue("fecha_fin", h.getFechaFin())
+            .addValue("placa", h.getPlaca())
+            .addValue("correo_electronico", h.getCorreoElectronico())
+            .addValue("observacion", h.getObservacion());
+
+    try {
+      Map<String, Object> out = spCabeceraGuiaRemision.execute(in);
+      Integer codret = (Integer) out.get("codret");
+      if (codret == 1) {
+        throw new RuntimeException("Cabecera ya existente (codret=" + h.getGuiaRemision() + ")");
+      }
+      if (codret == null || (codret != 0 && codret != 1)) {
+        throw new RuntimeException("Error al guardar la cabecera (codret=" + codret + ")");
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("SP executeSpStoreHeaderDeliveryNote falló: " + e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public void executeSpStoreDestinationDeliveryNote(DestinationDeliveryNoteRequest h) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("docu", h.getGuiaRemision())
+            .addValue("secuencial", h.getSecuencialDestinatario())
+            .addValue("identificador_destinatario", h.getIdentificacionDestinatario())
+            .addValue("razon_social_destinatario", h.getRazonSocialDestinatario())
+            .addValue("direccion_destinatario", h.getDireccionDestinatario())
+            .addValue("motivo_traslado", h.getMotivoTraslado())
+            .addValue("documento_aduanero", h.getDocAduanero())
+            .addValue("establecimiento_destino", h.getCodEstablecimientoDestino())
+            .addValue("desc_establecimiento_destino", h.getDescEstablecimientoDestino())
+            .addValue("ruta", h.getRuta())
+            .addValue("codigo_sustento", CoerceHelperUtils.emptyIfNull(h.getDocSustento()))
+            .addValue("docu_sustento", CoerceHelperUtils.emptyIfNull(h.getNumDocSustento()))
+            .addValue("nume_autorizacion", CoerceHelperUtils.emptyIfNull(h.getNumAutoDocSustento()))
+            .addValue("fecha", h.getFechaEmisionDocSustento());
+    try {
+      Map<String, Object> out = spDestinatarioGuiaRemision.execute(in);
+      Integer codret = (Integer) out.get("codret");
+      if (codret == null || (codret != 0 && codret != 1)) {
+        throw new RuntimeException("Error al guardar el destinatario (codret=" + codret + ")");
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("SP destinatario falló: " + e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public void executeSpStoreDetailDeliveryNote(DetailDeliveryNoteRequest d) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("docu", d.getGuiaRemision())
+            .addValue("secuencial_destinatario", d.getSecuencialDestinatario())
+            .addValue("secuencial_detalle", d.getSecuenciaDetalle())
+            .addValue("identificacion_destinatario", d.getIdentificacionDestinatario())
+            .addValue("numero_docu_sustento", CoerceHelperUtils.emptyIfNull(d.getDocSustento()))
+            .addValue("codigo_producto", d.getCodInterno())
+            .addValue("codigo_adicional", CoerceHelperUtils.emptyIfNull(d.getCodAdicional()))
+            .addValue("descripcion_producto", d.getDescripcion())
+            .addValue("cantidad", d.getCantidad())
+            .addValue("unidad_medida", d.getUnidadMedida())
+            .addValue("bodega", d.getGuiaBodega());
+
+    try {
+      Map<String, Object> out = spDetalleGuiaRemision.execute(in);
+      System.out.println("Guardado detalle de guia de remisión" + out);
+      Integer codret = (Integer) out.get("codret");
+      if (codret == null || (codret != 0 && codret != 1)) {
+        throw new RuntimeException(
+            "Error al guardar el DETALLE de guía: codret="
+                + codret
+                + " [docu="
+                + d.getGuiaRemision()
+                + ", secDest="
+                + d.getSecuencialDestinatario()
+                + ", secDet="
+                + d.getSecuenciaDetalle()
+                + "]");
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("SP executeSpStoreDetailDeliveryNote falló: " + e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public void executeSpCreateAccesoCodeDeliveryNote(HeaderDeliveryNoteRequest h) {
+    MapSqlParameterSource in = new MapSqlParameterSource().addValue("docu", h.getGuiaRemision());
+    try {
+      Map<String, Object> out = spCreateAccessCodeDeliveryNote.execute(in);
+      System.out.println("executeSpCreateAccesoCodeDeliveryNote guia de remisión" + out);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "SP executeSpCreateAccesoCodeDeliveryNote falló: " + e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public void executeSpUpdateAccesoCodeDeliveryNote(HeaderDeliveryNoteRequest h) {
+    MapSqlParameterSource in = new MapSqlParameterSource().addValue("docu", h.getGuiaRemision());
+    try {
+      Map<String, Object> out = spUpdateAccessCodeDeliveryNote.execute(in);
+      System.out.println("executeSpUpdateAccesoCodeDeliveryNote guia de remisión" + out);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "SP executeSpStoreAccesoCodeDeliveryNote falló: " + e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public ValidateExistsDeliveryNoteResponse executeSpValidateExistsDeliveryNoteResponse(
+      String docu) {
+    MapSqlParameterSource in = new MapSqlParameterSource().addValue("docu", docu);
+    try {
+      Map<String, Object> out = spCheckExistsDeliverNote.execute(in);
+      System.out.println("executeSpValidateExistsDeliveryNoteResponse guia de remisión" + out);
+      Integer codret = (Integer) out.get("codret");
+      String mensaje = (String) out.get("msj");
+      // Object exObj = out.get("existe_cabecera");
+      // Boolean existe = null;
+      // if (codret != 0) {
+      //   throw new RuntimeException(mensaje);
+      // }
+      if (codret == null || codret != 0) {
+        throw new RuntimeException(
+            "Error al obtener la información de la guía de remisión (codret=" + codret + ")");
+      }
+      return new ValidateExistsDeliveryNoteResponse(
+          codret != null ? codret : -1, mensaje != null ? mensaje : "");
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "SP executeSpValidateExistsDeliveryNoteResponse falló: " + e.getMessage(), e);
     }
   }
 }

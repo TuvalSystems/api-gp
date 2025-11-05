@@ -2,10 +2,12 @@ package tuval.api.web.models.service.tuval.guiaremision;
 
 import tuval.api.web.models.dto.bodegas.guiaRemision.DispatchVtaRequest;
 import tuval.api.web.models.dto.bodegas.guiaRemision.TransferVtaRequest;
+import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DeliveryNoteRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
+import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
 
 public interface ShippingGuideService {
 
@@ -37,4 +39,8 @@ public interface ShippingGuideService {
       String item,
       Integer idMovimiento,
       Integer cantidad);
+
+  public void createDeliveryNoteService(DeliveryNoteRequest req);
+
+  public ValidateExistsDeliveryNoteResponse checkExistenceDeliveryNoteService(String orderNumber);
 }
