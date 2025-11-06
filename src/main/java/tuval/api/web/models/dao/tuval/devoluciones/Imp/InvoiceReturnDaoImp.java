@@ -499,6 +499,8 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
             .addValue("equipo", "wserver")
             .addValue("codret", 0) // INOUT
             .addValue("msj", "")
+            .addValue("idguia", 0)
+            .addValue("guia", "")
         // .addValue("docgp", "")
         ;
     try {
@@ -553,7 +555,9 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
             .addValue("submodo", 0)
             .addValue("equipo", "wserver")
             .addValue("codret", 0)
-            .addValue("msj", "");
+            .addValue("msj", "")
+            .addValue("idguia", 0)
+            .addValue("guia", "");
 
     try {
       Map<String, Object> out = spDevolucionIv.execute(in);
@@ -605,7 +609,9 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
             .addValue("equipo", "wserver")
             .addValue("docgp", "") // INOUT
             .addValue("codret", 0) // INOUT
-            .addValue("msj", "");
+            .addValue("msj", "")
+            .addValue("idguia", 0)
+            .addValue("guia", "");
     try {
       Map<String, Object> out = spDevolucionIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
@@ -633,70 +639,37 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
   public ResponseEntity<Map<String, Object>> consultItemBin(
       String item, String bodegaOrigen, int modo) {
     Map<String, Object> response = new HashMap<>();
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("tipotrx", "")
+            .addValue("numdoc", "")
+            .addValue("numdocori", "")
+            .addValue("bodorigen", bodegaOrigen)
+            .addValue("boddestino", "")
+            .addValue("binitem", "")
+            .addValue("binori", "")
+            .addValue("bindes", "")
+            .addValue("observacion", "")
+            .addValue("item", item)
+            .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+            .addValue("secitem", 0)
+            .addValue("compartimento", null, Types.VARCHAR)
+            .addValue("idmov", 0)
+            .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+            .addValue("idfila", 0)
+            .addValue("fecpro", null, Types.TIMESTAMP)
+            .addValue("userid", "wserver")
+            .addValue("modo", modo) // 3
+            .addValue("submodo", 0)
+            .addValue("equipo", "wserver")
+            .addValue("docgp", "") // INOUT
+            .addValue("codret", 0) // INOUT
+            .addValue("msj", "")
+            .addValue("idguia", 0)
+            .addValue("guia", "");
     try {
-      SimpleJdbcCall jdbcCall =
-          new SimpleJdbcCall(jdbcTemplate)
-              .withProcedureName("sp_msw_movimientos_iv")
-              .declareParameters(
-                  new SqlParameter("numdoc", Types.VARCHAR),
-                  new SqlParameter("bodorigen", Types.VARCHAR),
-                  new SqlParameter("boddestino", Types.VARCHAR),
-                  new SqlParameter("observacion", Types.VARCHAR),
-                  new SqlInOutParameter("idmov", Types.INTEGER),
-                  new SqlInOutParameter("docgp", Types.VARCHAR),
-                  new SqlParameter("numdocori", Types.VARCHAR),
-                  new SqlParameter("userid", Types.CHAR),
-                  new SqlParameter("modo", Types.INTEGER),
-                  new SqlParameter("tipotrx", Types.VARCHAR),
-                  new SqlParameter("binitem", Types.VARCHAR),
-                  new SqlParameter("binori", Types.VARCHAR),
-                  new SqlParameter("bindes", Types.VARCHAR),
-                  new SqlParameter("item", Types.VARCHAR),
-                  new SqlParameter("cantidad", Types.REAL),
-                  new SqlParameter("secitem", Types.INTEGER),
-                  new SqlParameter("compartimento", Types.VARCHAR),
-                  new SqlParameter("numtran", Types.NUMERIC),
-                  new SqlParameter("idfila", Types.INTEGER),
-                  new SqlParameter("fecpro", Types.DATE),
-                  new SqlParameter("submodo", Types.SMALLINT),
-                  new SqlParameter("equipo", Types.VARCHAR),
-                  new SqlInOutParameter("codret", Types.INTEGER),
-                  new SqlInOutParameter("msj", Types.VARCHAR),
-                  new SqlParameter("idguia", Types.INTEGER),
-                  new SqlParameter("guia", Types.VARCHAR));
 
-      Map<String, Object> params = new HashMap<>();
-      params.put("numdoc", "");
-      params.put("bodorigen", bodegaOrigen);
-      params.put("boddestino", "");
-      params.put("observacion", "");
-      params.put("idmov", 0);
-      params.put("docgp", ""); // OUT
-      params.put("numdocori", "");
-      params.put("userid", "");
-      params.put("modo", modo); // normalmente 19
-
-      params.put("tipotrx", "");
-      params.put("binitem", "");
-      params.put("binori", "");
-      params.put("bindes", "");
-      params.put("item", item);
-      params.put("cantidad", 0);
-      params.put("secitem", 0);
-      params.put("compartimento", "");
-      params.put("numtran", 0);
-      params.put("idfila", 0);
-      params.put("fecpro", "");
-      params.put("submodo", 0);
-
-      params.put("equipo", "wserver");
-      params.put("codret", 0);
-      params.put("msj", "");
-
-      Map<String, Object> result = jdbcCall.execute(params);
-
-      // int codRet = (int) result.get("codret");
-      // String mensaje = (String) result.get("msj");
+      Map<String, Object> result = spDevolucionIv.execute(in);
 
       @SuppressWarnings("unchecked")
       List<Map<String, Object>> registros = (List<Map<String, Object>>) result.get("#result-set-1");
