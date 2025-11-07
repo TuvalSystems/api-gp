@@ -43,4 +43,19 @@ public interface ShippingGuideService {
   public void createDeliveryNoteService(DeliveryNoteRequest req);
 
   public ValidateExistsDeliveryNoteResponse checkExistenceDeliveryNoteService(String orderNumber);
+
+  /**
+   * 
+   * 
+   *  reservas
+   * 
+   * 
+   */
+
+   public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationService(
+      String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision);
+
+    
+  public HeaderGuideTransferVtaResponse generateGuideReservationService(TransferVtaRequest req);
+
 }

@@ -922,4 +922,55 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
           "SP executeSpValidateExistsDeliveryNoteResponse falló: " + e.getMessage(), e);
     }
   }
+
+  public HeaderCheckGuideDispatchResponse getAjusteGuideReservedDao(
+      String orderNumber,
+      String newOrderNumber,
+      String origen,
+      Integer idGuiaRemision,
+      String guiaRemision) {
+    String SQL =
+        """
+          SELECT
+            mc_id             AS idMovimiento,
+            mc_numdoc         AS numDoc,
+            mc_numdocori      AS numDocOri,
+            mc_origen         AS origen,
+            mc_destino        AS destino,
+            RTRIM(mc_usring)  AS userIngreso,
+            mc_fecgp          AS fechaGp,
+            RTRIM(mc_docgp)   AS docGp,
+            mc_guia_remision_id AS idGuiaRemision,
+            mc_guia_remision AS guiaRemision
+        FROM dbo.tbmsw_movimiento_cab
+        WHERE mc_numdoc   = ?
+          AND mc_tipotrx  = 'TRC'
+          AND mc_docgp IS NOT NULL
+          AND mc_guia_remision_id = ?
+          AND mc_guia_remision = ?
+        """;
+    List<Object> args = new ArrayList<>();
+    args.add(orderNumber);
+    args.add(idGuiaRemision);
+    args.add(guiaRemision);
+    if (newOrderNumber != null && !newOrderNumber.isBlank()) {
+      SQL += " AND mc_numdocori = ?";
+      args.add(newOrderNumber);
+    }
+
+    if (origen != null && !origen.isBlank()) {
+      SQL += " AND mc_origen = ?";
+      args.add(origen);
+    }
+    SQL += " ORDER BY mc_fecgp DESC";
+
+    try {
+      var mapper = new BeanPropertyRowMapper<>(HeaderCheckGuideDispatchResponse.class);
+      return jdbcTemplate.queryForObject(SQL, mapper, args.toArray());
+    } catch (EmptyResultDataAccessException e) {
+      return null;
+    } catch (DataAccessException e) {
+      throw new IllegalStateException("Error al consultar la base de datos", e);
+    }
+  }
 }

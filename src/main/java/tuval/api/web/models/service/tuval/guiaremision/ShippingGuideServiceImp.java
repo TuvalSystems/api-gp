@@ -172,4 +172,42 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
   public ValidateExistsDeliveryNoteResponse checkExistenceDeliveryNoteService(String orderNumber) {
     return shippingGuideDao.executeSpValidateExistsDeliveryNoteResponse(orderNumber);
   }
+
+  /** proceso de validacion de existencia de guia de remision - reservas */
+  @Override
+  public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationService(
+      String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision) {
+    return shippingGuideDao.getAjusteGuideReservedDao(
+        orderN, newOrderN, origen, idGuiaRemision, guiaRemision);
+  }
+
+  public HeaderGuideTransferVtaResponse generateGuideReservationService(TransferVtaRequest req) {
+  HeaderGuideTransferVtaResponse header;
+    try {
+      header = shippingGuideDao.executeSpStoreHeaderTransferVta(req.getCabecera(), 20);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "No se pudo guardar la cabecera de la guía de reserva: " + e);
+    }
+
+    if (req.getDetalle() != null && !req.getDetalle().isEmpty()) {
+      int secItem = 1;
+      for (DetailGuideTransferVtaRequest det : req.getDetalle()) {
+        try {
+          shippingGuideDao.executeSpStoreDetailGuideTransferVta(
+              det, req.getCabecera(), header.getIdMovimiento(), 1, 21);
+          secItem++;
+        } catch (Exception e) {
+          throw new RuntimeException("Error al guardar el detalle de la reserva (secItem=" + secItem + "): " + e);
+        }
+      }
+    }
+
+    try {
+      return shippingGuideDao.executeSpGenerateMovimentTransferVta(
+          req.getCabecera(), header.getIdMovimiento(), 22);
+    } catch (Exception e) {
+      throw new RuntimeException("Error al generar el movimiento de reserva: " + e);
+    }
+  }
 }

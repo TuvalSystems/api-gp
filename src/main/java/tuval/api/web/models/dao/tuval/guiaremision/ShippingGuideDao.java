@@ -75,7 +75,17 @@ public interface ShippingGuideDao {
   public void executeSpStoreDetailDeliveryNote(DetailDeliveryNoteRequest d);
 
   public void executeSpCreateAccesoCodeDeliveryNote(HeaderDeliveryNoteRequest h);
-   public void executeSpUpdateAccesoCodeDeliveryNote(HeaderDeliveryNoteRequest h);
+
+  public void executeSpUpdateAccesoCodeDeliveryNote(HeaderDeliveryNoteRequest h);
+
   public ValidateExistsDeliveryNoteResponse executeSpValidateExistsDeliveryNoteResponse(
-      String docu) ;
+      String docu);
+
+  /** reservas */
+  public HeaderCheckGuideDispatchResponse getAjusteGuideReservedDao(
+      String orderNumber,
+      String newOrderNumber,
+      String origen,
+      Integer idGuiaRemision,
+      String guiaRemision);
 }
