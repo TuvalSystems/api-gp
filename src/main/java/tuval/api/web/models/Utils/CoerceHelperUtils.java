@@ -8,10 +8,8 @@ import java.time.format.DateTimeFormatter;
 public class CoerceHelperUtils {
 
   public static int getInt(Object o, int dflt) {
-    if (o == null)
-      return dflt;
-    if (o instanceof Number n)
-      return n.intValue();
+    if (o == null) return dflt;
+    if (o instanceof Number n) return n.intValue();
     try {
       return Integer.parseInt(o.toString().trim());
     } catch (Exception e) {
@@ -20,10 +18,8 @@ public class CoerceHelperUtils {
   }
 
   public static int toInt(Object o, int dflt) {
-    if (o == null)
-      return dflt;
-    if (o instanceof Number n)
-      return n.intValue();
+    if (o == null) return dflt;
+    if (o instanceof Number n) return n.intValue();
     try {
       return Integer.parseInt(o.toString().trim());
     } catch (Exception ignored) {
@@ -36,52 +32,39 @@ public class CoerceHelperUtils {
   }
 
   public static double toDouble(Object v) {
-    if (v == null)
-      return 0d;
-    if (v instanceof java.math.BigDecimal bd)
-      return bd.doubleValue();
-    if (v instanceof Number n)
-      return n.doubleValue();
+    if (v == null) return 0d;
+    if (v instanceof java.math.BigDecimal bd) return bd.doubleValue();
+    if (v instanceof Number n) return n.doubleValue();
     return new java.math.BigDecimal(v.toString()).doubleValue();
   }
 
   public static int toIntObject(Object v) {
-    if (v == null)
-      return 0;
-    if (v instanceof Boolean b)
-      return b ? 1 : 0;
-    if (v instanceof Number n)
-      return n.intValue();
+    if (v == null) return 0;
+    if (v instanceof Boolean b) return b ? 1 : 0;
+    if (v instanceof Number n) return n.intValue();
     return Integer.parseInt(v.toString().trim());
   }
 
   public static LocalDate toLocalDate(Object v) {
-    if (v == null)
-      return null;
-    if (v instanceof LocalDate ld)
-      return ld;
-    if (v instanceof java.sql.Date d)
-      return d.toLocalDate();
-    if (v instanceof java.sql.Timestamp ts)
-      return ts.toLocalDateTime().toLocalDate();
-    if (v instanceof java.time.LocalDateTime ldt)
-      return ldt.toLocalDate();
-    if (v instanceof java.time.OffsetDateTime odt)
-      return odt.toLocalDate();
-    if (v instanceof java.time.ZonedDateTime zdt)
-      return zdt.toLocalDate();
+    if (v == null) return null;
+    if (v instanceof LocalDate ld) return ld;
+    if (v instanceof java.sql.Date d) return d.toLocalDate();
+    if (v instanceof java.sql.Timestamp ts) return ts.toLocalDateTime().toLocalDate();
+    if (v instanceof java.time.LocalDateTime ldt) return ldt.toLocalDate();
+    if (v instanceof java.time.OffsetDateTime odt) return odt.toLocalDate();
+    if (v instanceof java.time.ZonedDateTime zdt) return zdt.toLocalDate();
 
     if (v instanceof CharSequence cs) {
       String s = cs.toString().trim();
-      if (s.isEmpty())
-        return null;
+      if (s.isEmpty()) return null;
       // intenta formatos comunes
       try {
         return LocalDate.parse(s, DateTimeFormatter.ISO_LOCAL_DATE);
       } catch (Exception ignore) {
       }
       try {
-        return LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).toLocalDate();
+        return LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+            .toLocalDate();
       } catch (Exception ignore) {
       }
       try {
@@ -93,17 +76,15 @@ public class CoerceHelperUtils {
       } catch (Exception ignore) {
       }
     }
-    throw new IllegalArgumentException("No puedo convertir a LocalDate: " + v + " (" + v.getClass().getName() + ")");
+    throw new IllegalArgumentException(
+        "No puedo convertir a LocalDate: " + v + " (" + v.getClass().getName() + ")");
   }
 
   public static BigDecimal toBigDecimal(Object v) {
-    if (v == null)
-      return null;
+    if (v == null) return null;
 
-    if (v instanceof BigDecimal bd)
-      return bd;
-    if (v instanceof java.math.BigInteger bi)
-      return new BigDecimal(bi);
+    if (v instanceof BigDecimal bd) return bd;
+    if (v instanceof java.math.BigInteger bi) return new BigDecimal(bi);
 
     if (v instanceof Byte || v instanceof Short || v instanceof Integer || v instanceof Long) {
       return BigDecimal.valueOf(((Number) v).longValue());
@@ -115,8 +96,7 @@ public class CoerceHelperUtils {
 
     if (v instanceof CharSequence cs) {
       String s = cs.toString().trim();
-      if (s.isEmpty())
-        return null;
+      if (s.isEmpty()) return null;
       // normaliza posibles formatos "1.234,56" o "1,234.56"
       if (s.contains(",") && !s.contains(".")) {
         // caso latino: "1234,56" -> "1234.56"
@@ -133,4 +113,11 @@ public class CoerceHelperUtils {
     return new BigDecimal(v.toString().trim());
   }
 
+  public static String emptyIfNull(String s) {
+    return (s == null || s.trim().isEmpty()) ? "" : s.trim();
+  }
+
+  public static String defaultIfBlank(String s, String def) {
+    return (s == null || s.trim().isEmpty()) ? def : s.trim();
+  }
 }

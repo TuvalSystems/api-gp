@@ -8,10 +8,15 @@ public class HeaderCheckGuideDispatchResponse {
   private String numDoc;
   private String numDocOri;
   private String origen;
+  private String destino;
+
   private String userIngreso; // OK, no es palabra reservada en Java
   private Date fechaGp; // o Timestamp/LocalDate según tu config
   private String docGp;
+  private Integer idGuiaRemision;
+  private String guiaRemision;
 
+  
   public Long getIdMovimiento() {
     return idMovimiento;
   }
@@ -66,5 +71,29 @@ public class HeaderCheckGuideDispatchResponse {
 
   public void setNumDocOri(String numDocOri) {
     this.numDocOri = numDocOri;
+  }
+
+  public String getDestino() {
+    return destino;
+  }
+
+  public void setDestino(String destino) {
+    this.destino = destino;
+  }
+
+  public Integer getIdGuiaRemision() {
+    return idGuiaRemision;
+  }
+
+  public void setIdGuiaRemision(Integer idGuiaRemision) {
+    this.idGuiaRemision = idGuiaRemision;
+  }
+
+  public String getGuiaRemision() {
+    return guiaRemision;
+  }
+
+  public void setGuiaRemision(String guiaRemision) {
+    this.guiaRemision = guiaRemision;
   }
 }
