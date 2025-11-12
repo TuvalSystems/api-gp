@@ -88,4 +88,13 @@ public interface ShippingGuideDao {
       String origen,
       Integer idGuiaRemision,
       String guiaRemision);
+
+
+      /** VALIDAR EXISTENCIA DE AJUSTE DE RECIBIDO */
+public HeaderCheckGuideDispatchResponse getAjusttmentReceivedReservedDao(
+      String orderNumber,
+      String newOrderNumber,
+      String origen,
+      Integer idGuiaRemision,
+      String guiaRemision);
 }

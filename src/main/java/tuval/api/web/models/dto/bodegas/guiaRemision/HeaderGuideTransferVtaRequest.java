@@ -8,12 +8,11 @@ public class HeaderGuideTransferVtaRequest {
   @Valid @NotBlank private String pedido;
   @Valid @NotBlank private String bodegaOrigen;
   @Valid @NotBlank private String bodegaDestino;
-
-  private String observacion;
   @Valid @NotBlank private String usuario;
-
+  private String observacion;
   private Integer idGuiaRemision;
   private String guiaRemision;
+  private String numTranferencia;
 
   public String getIdCompany() {
     return idCompany;
@@ -77,5 +76,13 @@ public class HeaderGuideTransferVtaRequest {
 
   public void setGuiaRemision(String guiaRemision) {
     this.guiaRemision = guiaRemision;
+  }
+
+    public String getNumTranferencia() {
+    return numTranferencia;
+  }
+
+  public void setNumTranferencia(String numTranferencia) {
+    this.numTranferencia = numTranferencia;
   }
 }

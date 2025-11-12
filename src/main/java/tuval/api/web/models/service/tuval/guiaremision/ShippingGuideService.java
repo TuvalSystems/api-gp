@@ -44,18 +44,13 @@ public interface ShippingGuideService {
 
   public ValidateExistsDeliveryNoteResponse checkExistenceDeliveryNoteService(String orderNumber);
 
-  /**
-   * 
-   * 
-   *  reservas
-   * 
-   * 
-   */
-
-   public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationService(
+  /** reservas */
+  public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationService(
       String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision);
 
-    
   public HeaderGuideTransferVtaResponse generateGuideReservationService(TransferVtaRequest req);
 
+  /** reservas - recibir */
+  public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationReceivedService(
+      String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision);
 }

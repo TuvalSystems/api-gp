@@ -210,4 +210,15 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
       throw new RuntimeException("Error al generar el movimiento de reserva: " + e);
     }
   }
+
+
+
+  /** validar existencia de guia de reserva recibida */
+
+   @Override
+  public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationReceivedService(
+      String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision) {
+    return shippingGuideDao.getAjusttmentReceivedReservedDao(
+        orderN, newOrderN, origen, idGuiaRemision, guiaRemision);
+  }
 }

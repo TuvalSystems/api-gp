@@ -224,7 +224,7 @@ public class ShippingGuideController {
   /*** proceso de generacion de ajuste de guia de reserva y validacion de existencia de la misma */
 
     @CrossOrigin
-  @GetMapping("/inventario/validar-existencia-guia-reserva")
+  @GetMapping("/inventario/reservas/validar-existencia-guia")
   public ResponseEntity<Map<String, Object>> obtenerMovimientoGuiaReserva(
       @Valid @RequestParam String orderNumber,
       @RequestParam(required = false) String newOrderNumber,
@@ -252,7 +252,7 @@ public class ShippingGuideController {
 
   
   @CrossOrigin
-  @PostMapping("/inventario/guardar-generar-movimiento-reserva")
+  @PostMapping("/inventario/reservas/guardar-generar-movimiento/transferencia")
   public ResponseEntity<Map<String, Object>> generarTransferenciaReserva(
       @Valid @RequestBody TransferVtaRequest req) {
     try {
@@ -265,4 +265,50 @@ public class ShippingGuideController {
       return ResponseJsonUtils.buildException(e);
     }
   }
+
+
+  /*** procesar recibir transferencias de reservas */
+
+
+    @CrossOrigin
+  @GetMapping("/inventario/reservas/validar-existencia-ajuste-recibir")
+  public ResponseEntity<Map<String, Object>> obtenerMovimientoGuiaReservaRecibida(
+      @Valid @RequestParam String orderNumber,
+      @RequestParam(required = false) String newOrderNumber,
+      @RequestParam(required = false) String origen,
+      @Valid @RequestParam Integer idGuiaRemision,
+      @Valid @RequestParam String guiaRemision) {
+
+    try {
+      HeaderCheckGuideDispatchResponse resp =
+          shippingGuideService.checkAjusteGuideReservationReceivedService(
+              orderNumber, newOrderNumber, origen, idGuiaRemision, guiaRemision);
+
+      if (resp == null) {
+        return ResponseJsonUtils.buildNoFound("No existe ajuste de recibido para mc_numdoc = " + orderNumber);
+      }
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resp);
+
+    } catch (Exception e) {
+      // e.printStackTrace(); // para ver la traza completa
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+
+    @CrossOrigin
+  @PostMapping("/inventario/reservas/guardar-generar-movimiento/recibir")
+  public ResponseEntity<Map<String, Object>> recibirTransferenciaReserva(
+      @Valid @RequestBody TransferVtaRequest req) {
+    try {
+      // HeaderGuideTransferVtaResponse response =
+      //     shippingGuideService.receiveGuideReservationService(req);
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", req);
+
+    } catch (Exception e) {
+      // e.printStackTrace(); // para ver la traza completa
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
 }
