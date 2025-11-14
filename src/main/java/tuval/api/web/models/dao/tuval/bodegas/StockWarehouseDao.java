@@ -14,7 +14,6 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.models.dto.bodegas.StockWarehouseParamsRequest;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseEntity;
-import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseResponseEntity;
 
 @Repository
 public class StockWarehouseDao {

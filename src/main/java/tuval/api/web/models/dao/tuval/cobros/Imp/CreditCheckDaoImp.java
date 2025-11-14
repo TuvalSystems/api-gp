@@ -2,7 +2,6 @@ package tuval.api.web.models.dao.tuval.cobros.Imp;
 
 import jakarta.annotation.PostConstruct;
 
-import java.math.BigDecimal;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;

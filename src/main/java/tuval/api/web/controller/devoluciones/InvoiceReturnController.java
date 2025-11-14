@@ -14,11 +14,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.devolucion.DevolutionRequest;
 import tuval.api.web.models.entity.tuval.devoluciones.DevolutionResponse;
-import tuval.api.web.models.entity.tuval.devoluciones.ItemsDevolucionEntity;
-import tuval.api.web.models.entity.tuval.devoluciones.RetornoEntity;
 import tuval.api.web.models.service.tuval.devoluciones.InvoiceReturnService;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
