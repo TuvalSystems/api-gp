@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import tuval.api.web.models.dto.cliente.SellerRequest;
 import tuval.api.web.models.entity.dynamics.cliente.ListSegmentClientEntity;
 import tuval.api.web.models.entity.dynamics.cliente.ListSellerEntity;
+import tuval.api.web.models.entity.dynamics.cliente.TypeSellerEntity;
 
 @Repository
 public class ClientDynamicDao {
@@ -70,6 +71,22 @@ public class ClientDynamicDao {
       throw new IllegalStateException("Se obtuvo más de un resultado para tx_cli=" + txCli, e);
     } catch (org.springframework.dao.DataAccessException e) {
       throw new IllegalStateException("Ocurrió un error al consultar la base de datos", e);
+    }
+  }
+
+  public TypeSellerEntity getTypeSellerForTxUsr(String username) {
+    String SQL =
+        """
+        SELECT co_usr as coUsr, tx_usr  as txUsr, co_tipven as coTipVen, LTRIM(RTRIM(tx_descor)) as txDescor
+        FROM dbo.vw_Vendedores_TipVen
+        WHERE tx_usr = ?
+        """;
+    try {
+      var mapper =
+          new org.springframework.jdbc.core.BeanPropertyRowMapper<>(TypeSellerEntity.class);
+      return jdbcTemplate.queryForObject(SQL, mapper, username);
+    } catch (Exception e) {
+      throw new IllegalStateException("Ocurrio un error al consultar la base de datos", e);
     }
   }
 }

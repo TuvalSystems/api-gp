@@ -15,6 +15,7 @@ import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.cliente.SellerRequest;
 import tuval.api.web.models.entity.dynamics.cliente.ListSegmentClientEntity;
 import tuval.api.web.models.entity.dynamics.cliente.ListSellerEntity;
+import tuval.api.web.models.entity.dynamics.cliente.TypeSellerEntity;
 import tuval.api.web.models.service.dynamics.cliente.ClientService;
 
 @RestController
@@ -50,6 +51,17 @@ public class ClienteController {
 
     } catch (Exception e) {
       e.printStackTrace();
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @CrossOrigin
+  @GetMapping("/obtener-tipo-venededor-detalle")
+  public ResponseEntity<Map<String, Object>> getTipoVendedor(@RequestParam String username) {
+    try {
+       TypeSellerEntity response = clienteService.getTypeSellerForUserService(username);
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
+    } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
     }
   }
