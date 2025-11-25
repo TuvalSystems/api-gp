@@ -11,4 +11,5 @@ public class TypeSellerEntity {
     private String txUsr;
     private Integer coTipVen;
     private String txDescor;
+    private String territorio;
 }

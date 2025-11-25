@@ -77,7 +77,7 @@ public class ClientDynamicDao {
   public TypeSellerEntity getTypeSellerForTxUsr(String username) {
     String SQL =
         """
-        SELECT co_usr as coUsr, tx_usr  as txUsr, co_tipven as coTipVen, LTRIM(RTRIM(tx_descor)) as txDescor
+        SELECT co_usr as coUsr, tx_usr  as txUsr, co_tipven as coTipVen, LTRIM(RTRIM(tx_descor)) as txDescor, territorio
         FROM dbo.vw_Vendedores_TipVen
         WHERE tx_usr = ?
         """;
