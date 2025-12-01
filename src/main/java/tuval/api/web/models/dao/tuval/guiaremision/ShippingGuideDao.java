@@ -97,4 +97,20 @@ public HeaderCheckGuideDispatchResponse getAjusttmentReceivedReservedDao(
       String origen,
       Integer idGuiaRemision,
       String guiaRemision);
+
+
+    
+    public HeaderGuideTransferVtaResponse executeSpStoreHeaderReceivedGuideTransfered(
+      HeaderGuideTransferVtaRequest req, int modo);
+    
+       public DetailGuideTransferVtaResponse executeSpStoreDetailReceivedGuideTransfered(
+      DetailGuideTransferVtaRequest det,
+      HeaderGuideTransferVtaRequest cab,
+      int idmov,
+      int secitem,
+      int modo);
+
+
+    public HeaderGuideTransferVtaResponse executeSpGenerateMovimentReceivedGuideTransfered(
+      HeaderGuideTransferVtaRequest req, int idmov, int modo);
 }

@@ -301,9 +301,9 @@ public class ShippingGuideController {
   public ResponseEntity<Map<String, Object>> recibirTransferenciaReserva(
       @Valid @RequestBody TransferVtaRequest req) {
     try {
-      // HeaderGuideTransferVtaResponse response =
-      //     shippingGuideService.receiveGuideReservationService(req);
-      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", req);
+      HeaderGuideTransferVtaResponse response =
+          shippingGuideService.receiveGuideReservationService(req);
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {
       // e.printStackTrace(); // para ver la traza completa

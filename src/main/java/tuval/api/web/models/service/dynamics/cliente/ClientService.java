@@ -7,6 +7,7 @@ import tuval.api.web.models.dao.dynamics.cliente.ClientDynamicDao;
 import tuval.api.web.models.dto.cliente.SellerRequest;
 import tuval.api.web.models.entity.dynamics.cliente.ListSegmentClientEntity;
 import tuval.api.web.models.entity.dynamics.cliente.ListSellerEntity;
+import tuval.api.web.models.entity.dynamics.cliente.TypeSellerEntity;
 
 @Service
 public class ClientService {
@@ -20,6 +21,10 @@ public class ClientService {
 
     public ListSegmentClientEntity getListSegmentos(String tx_cli) {
         return clientDynamicDao.findSegmentByTxCli(tx_cli);
+    }
+
+    public TypeSellerEntity getTypeSellerForUserService(String username) {
+        return clientDynamicDao.getTypeSellerForTxUsr(username);
     }
 
 }

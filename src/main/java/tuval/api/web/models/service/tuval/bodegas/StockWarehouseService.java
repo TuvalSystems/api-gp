@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import tuval.api.web.models.dao.tuval.bodegas.StockWarehouseDao;
 import tuval.api.web.models.dto.bodegas.StockWarehouseParamsRequest;
+import tuval.api.web.models.entity.tuval.bodegas.ListPriceItemResponseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseResponseEntity;
 
@@ -40,6 +41,11 @@ public class StockWarehouseService {
         resp.setStockWarehouseList(acumulado);
         return resp;
 
+    }
+
+
+    public ListPriceItemResponseEntity getListPricesService(String item) {
+        return stockWarehouseDao.executeSpConsultListPrices(item);
     }
 
 }

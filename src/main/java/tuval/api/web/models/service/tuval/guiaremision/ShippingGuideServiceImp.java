@@ -182,12 +182,11 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
   }
 
   public HeaderGuideTransferVtaResponse generateGuideReservationService(TransferVtaRequest req) {
-  HeaderGuideTransferVtaResponse header;
+    HeaderGuideTransferVtaResponse header;
     try {
       header = shippingGuideDao.executeSpStoreHeaderTransferVta(req.getCabecera(), 20);
     } catch (Exception e) {
-      throw new RuntimeException(
-          "No se pudo guardar la cabecera de la guía de reserva: " + e);
+      throw new RuntimeException("No se pudo guardar la cabecera de la guía de reserva: " + e);
     }
 
     if (req.getDetalle() != null && !req.getDetalle().isEmpty()) {
@@ -198,7 +197,8 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
               det, req.getCabecera(), header.getIdMovimiento(), 1, 21);
           secItem++;
         } catch (Exception e) {
-          throw new RuntimeException("Error al guardar el detalle de la reserva (secItem=" + secItem + "): " + e);
+          throw new RuntimeException(
+              "Error al guardar el detalle de la reserva (secItem=" + secItem + "): " + e);
         }
       }
     }
@@ -211,14 +211,44 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
     }
   }
 
-
-
   /** validar existencia de guia de reserva recibida */
-
-   @Override
+  @Override
   public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationReceivedService(
       String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision) {
     return shippingGuideDao.getAjusttmentReceivedReservedDao(
         orderN, newOrderN, origen, idGuiaRemision, guiaRemision);
+  }
+
+  @Override
+  public HeaderGuideTransferVtaResponse receiveGuideReservationService(TransferVtaRequest req) {
+    HeaderGuideTransferVtaResponse header;
+    try {
+      header = shippingGuideDao.executeSpStoreHeaderReceivedGuideTransfered(req.getCabecera(), 23);
+    } catch (Exception e) {
+      throw new RuntimeException("No se puedo guardar la cabecera del ingreso de la guía: " + e);
+    }
+
+    if (req.getDetalle() != null && !req.getDetalle().isEmpty()) {
+      int secItem = 1;
+      for (DetailGuideTransferVtaRequest det : req.getDetalle()) {
+        try {
+          shippingGuideDao.executeSpStoreDetailReceivedGuideTransfered(
+              det, req.getCabecera(), header.getIdMovimiento(), 1, 24);
+          secItem++;
+        } catch (Exception e) {
+          throw new RuntimeException(
+              "Error al guardar la recepción del detalle de la reserva (secItem="
+                  + secItem
+                  + "): "
+                  + e);
+        }
+      }
+    }
+    try {
+      return shippingGuideDao.executeSpGenerateMovimentReceivedGuideTransfered(
+          req.getCabecera(), header.getIdMovimiento(), 25);
+    } catch (Exception e) {
+      throw new RuntimeException("Error al generar el movimiento de reserva: " + e);
+    }
   }
 }
