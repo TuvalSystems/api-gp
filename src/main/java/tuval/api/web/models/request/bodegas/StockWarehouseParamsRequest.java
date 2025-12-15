@@ -1,4 +1,4 @@
-package tuval.api.web.models.dto.bodegas;
+package tuval.api.web.models.request.bodegas;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

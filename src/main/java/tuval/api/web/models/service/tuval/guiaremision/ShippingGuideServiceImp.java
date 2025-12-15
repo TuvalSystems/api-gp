@@ -4,16 +4,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tuval.api.web.models.dao.tuval.guiaremision.ShippingGuideDao;
-import tuval.api.web.models.dto.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.DispatchVtaRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.TransferVtaRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DeliveryNoteRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DetailDeliveryNoteRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
+import tuval.api.web.models.request.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.DispatchVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.TransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DetailDeliveryNoteRequest;
 
 @Service
 public class ShippingGuideServiceImp implements ShippingGuideService {

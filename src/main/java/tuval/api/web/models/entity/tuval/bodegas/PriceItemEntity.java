@@ -1,7 +1,6 @@
 package tuval.api.web.models.entity.tuval.bodegas;
 
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 
 public class PriceItemEntity {
     private String item;

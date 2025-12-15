@@ -1,4 +1,4 @@
-package tuval.api.web.models.dto.bodegas.guiaRemision;
+package tuval.api.web.models.request.bodegas.guiaRemision;
 
 import java.util.List;
 
@@ -7,21 +7,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
-public class DispatchVtaRequest {
+public class TransferVtaRequest {
     @NotNull
     @JsonProperty("cabecera")
     @Valid
-    private HeaderGuideDispatchShipmentRequest cabecera;
+    private HeaderGuideTransferVtaRequest cabecera;
 
     @JsonProperty("detalle")
     @Valid
     private List<DetailGuideTransferVtaRequest> detalle = List.of();
 
-    public HeaderGuideDispatchShipmentRequest getCabecera() {
+    public HeaderGuideTransferVtaRequest getCabecera() {
         return cabecera;
     }
 
-    public void setCabecera(HeaderGuideDispatchShipmentRequest cabecera) {
+    public void setCabecera(HeaderGuideTransferVtaRequest cabecera) {
         this.cabecera = cabecera;
     }
 

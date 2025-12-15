@@ -7,10 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import tuval.api.web.models.dao.tuval.bodegas.StockWarehouseDao;
-import tuval.api.web.models.dto.bodegas.StockWarehouseParamsRequest;
 import tuval.api.web.models.entity.tuval.bodegas.ListPriceItemResponseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseResponseEntity;
+import tuval.api.web.models.request.bodegas.StockWarehouseParamsRequest;
 
 @Service
 public class StockWarehouseService {

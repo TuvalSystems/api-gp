@@ -1,4 +1,4 @@
-package tuval.api.web.models.dto.bodegas.guiaRemision;
+package tuval.api.web.models.request.bodegas.guiaRemision;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
