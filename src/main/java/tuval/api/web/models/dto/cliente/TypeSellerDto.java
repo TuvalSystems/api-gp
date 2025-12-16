@@ -1,4 +1,4 @@
-package tuval.api.web.models.entity.dynamics.cliente;
+package tuval.api.web.models.dto.cliente;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -6,7 +6,7 @@ import lombok.Setter;
 @Setter
 @Getter
 
-public class TypeSellerEntity {
+public class TypeSellerDto {
     private Integer  coUsr;
     private String txUsr;
     private Integer coTipVen;

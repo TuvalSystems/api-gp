@@ -1,9 +1,9 @@
-package tuval.api.web.models.entity.dynamics.cliente;
+package tuval.api.web.models.dto.cliente;
 
 
 // import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ListSellerEntity {
+public class ListSellerDto {
 
     private Integer coUsr;
 

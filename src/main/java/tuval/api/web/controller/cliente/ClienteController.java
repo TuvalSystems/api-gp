@@ -16,8 +16,8 @@ import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.cliente.ListAllSegmentsDto;
 import tuval.api.web.models.dto.cliente.ListAllSubsegmentsDto;
 import tuval.api.web.models.dto.cliente.ListSegmentClientDto;
-import tuval.api.web.models.entity.dynamics.cliente.ListSellerEntity;
-import tuval.api.web.models.entity.dynamics.cliente.TypeSellerEntity;
+import tuval.api.web.models.dto.cliente.ListSellerDto;
+import tuval.api.web.models.dto.cliente.TypeSellerDto;
 import tuval.api.web.models.request.cliente.ClientRequest;
 import tuval.api.web.models.request.cliente.ClientSubsegmentRucRequest;
 import tuval.api.web.models.request.cliente.SellerRequest;
@@ -34,7 +34,7 @@ public class ClienteController {
   public ResponseEntity<Map<String, Object>> getSellerListClient(
       @Valid @RequestBody SellerRequest req) {
     try {
-      ListSellerEntity response = clienteService.getListSeller(req);
+      ListSellerDto response = clienteService.getListSeller(req);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {
@@ -89,7 +89,7 @@ public class ClienteController {
   @GetMapping("/obtener-tipo-venededor-detalle")
   public ResponseEntity<Map<String, Object>> getTipoVendedor(@RequestParam String username) {
     try {
-      TypeSellerEntity response = clienteService.getTypeSellerForUserService(username);
+      TypeSellerDto response = clienteService.getTypeSellerForUserService(username);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);

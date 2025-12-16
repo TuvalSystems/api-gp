@@ -10,8 +10,8 @@ import tuval.api.web.models.dao.tuval.clientes.ClientTuvalDao;
 import tuval.api.web.models.dto.cliente.ListAllSegmentsDto;
 import tuval.api.web.models.dto.cliente.ListAllSubsegmentsDto;
 import tuval.api.web.models.dto.cliente.ListSegmentClientDto;
-import tuval.api.web.models.entity.dynamics.cliente.ListSellerEntity;
-import tuval.api.web.models.entity.dynamics.cliente.TypeSellerEntity;
+import tuval.api.web.models.dto.cliente.ListSellerDto;
+import tuval.api.web.models.dto.cliente.TypeSellerDto;
 import tuval.api.web.models.request.cliente.ClientRequest;
 import tuval.api.web.models.request.cliente.ClientSubsegmentRucRequest;
 import tuval.api.web.models.request.cliente.SellerRequest;
@@ -24,7 +24,7 @@ public class ClientService {
         
     @Autowired
     private ClientTuvalDao clientTuvalDao;
-    public ListSellerEntity getListSeller(SellerRequest req) {
+    public ListSellerDto getListSeller(SellerRequest req) {
         // return new ListSellerEntity(coUser, txUsr, coTipven);
         return clientDynamicDao.findByTxUsr(req);
     }
@@ -42,7 +42,7 @@ public class ClientService {
         return clientDynamicDao.findSegmentByTxCli(tx_cli);
     }
 
-    public TypeSellerEntity getTypeSellerForUserService(String username) {
+    public TypeSellerDto getTypeSellerForUserService(String username) {
         return clientDynamicDao.getTypeSellerForTxUsr(username);
     }
 

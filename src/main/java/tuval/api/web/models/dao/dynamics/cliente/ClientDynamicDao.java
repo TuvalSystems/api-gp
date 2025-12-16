@@ -10,8 +10,8 @@ import org.springframework.stereotype.Repository;
 import tuval.api.web.models.dto.cliente.ListAllSegmentsDto;
 import tuval.api.web.models.dto.cliente.ListAllSubsegmentsDto;
 import tuval.api.web.models.dto.cliente.ListSegmentClientDto;
-import tuval.api.web.models.entity.dynamics.cliente.ListSellerEntity;
-import tuval.api.web.models.entity.dynamics.cliente.TypeSellerEntity;
+import tuval.api.web.models.dto.cliente.ListSellerDto;
+import tuval.api.web.models.dto.cliente.TypeSellerDto;
 import tuval.api.web.models.request.cliente.ClientSubsegmentRucRequest;
 import tuval.api.web.models.request.cliente.SellerRequest;
 
@@ -32,7 +32,7 @@ public class ClientDynamicDao {
     }
   }
 
-  public ListSellerEntity findByTxUsr(SellerRequest req) {
+  public ListSellerDto findByTxUsr(SellerRequest req) {
     String SQL =
         """
         SELECT co_usr as coUsr, tx_usr  as txUsr, co_tipven as coTipVen
@@ -41,7 +41,7 @@ public class ClientDynamicDao {
         """;
     try {
       var mapper =
-          new org.springframework.jdbc.core.BeanPropertyRowMapper<>(ListSellerEntity.class);
+          new org.springframework.jdbc.core.BeanPropertyRowMapper<>(ListSellerDto.class);
       return jdbcTemplate.queryForObject(SQL, mapper, req.getUsuario());
     } catch (Exception e) {
       throw new IllegalStateException("Ocurrio un error al consultar la base de datos", e);
@@ -117,7 +117,7 @@ public class ClientDynamicDao {
     }
   }
 
-  public TypeSellerEntity getTypeSellerForTxUsr(String username) {
+  public TypeSellerDto getTypeSellerForTxUsr(String username) {
     String SQL =
         """
         SELECT co_usr as coUsr, tx_usr  as txUsr, co_tipven as coTipVen, LTRIM(RTRIM(tx_descor)) as txDescor, territorio
@@ -126,7 +126,7 @@ public class ClientDynamicDao {
         """;
     try {
       var mapper =
-          new org.springframework.jdbc.core.BeanPropertyRowMapper<>(TypeSellerEntity.class);
+          new org.springframework.jdbc.core.BeanPropertyRowMapper<>(TypeSellerDto.class);
       return jdbcTemplate.queryForObject(SQL, mapper, username);
     } catch (Exception e) {
       throw new IllegalStateException("Ocurrio un error al consultar la base de datos", e);
