@@ -7,6 +7,7 @@ import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchRe
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
 import tuval.api.web.models.request.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.DispatchDeliveryNoteMovementRequest;
 import tuval.api.web.models.request.bodegas.guiaRemision.HeaderGuideDispatchShipmentRequest;
 import tuval.api.web.models.request.bodegas.guiaRemision.HeaderGuideTransferVtaRequest;
 import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DestinationDeliveryNoteRequest;
@@ -42,6 +43,9 @@ public interface ShippingGuideDao {
 
   public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
       HeaderGuideDispatchShipmentRequest req, int idmov, int modo);
+
+  public HeaderGuideTransferVtaResponse executeFixSpGenerateMovementDispatchDeliveryNote(
+      DispatchDeliveryNoteMovementRequest req, int modo);
 
   public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(
       String orderNumber, String newOrderNumber, Integer idGuiaRemision, String guiaRemision);

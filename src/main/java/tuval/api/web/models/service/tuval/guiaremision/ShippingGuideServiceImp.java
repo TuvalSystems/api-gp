@@ -10,6 +10,7 @@ import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchRe
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
 import tuval.api.web.models.request.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.DispatchDeliveryNoteMovementRequest;
 import tuval.api.web.models.request.bodegas.guiaRemision.DispatchVtaRequest;
 import tuval.api.web.models.request.bodegas.guiaRemision.TransferVtaRequest;
 import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DeliveryNoteRequest;
@@ -85,6 +86,13 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
     }
     return shippingGuideDao.executeSpGenerateMovimentDispatchVta(
         req.getCabecera(), responseHeader.getIdMovimiento(), 9);
+  }
+
+
+  @Override
+  public HeaderGuideTransferVtaResponse generateMovementDispatchGuide(DispatchDeliveryNoteMovementRequest req){
+     return shippingGuideDao.executeFixSpGenerateMovementDispatchDeliveryNote(
+        req, 9);
   }
 
   @Override
