@@ -44,7 +44,7 @@ public class TuvalJpaConfig {
             @Qualifier("tuvalDataSource") DataSource dataSource) {
         Map<String, Object> properties = new HashMap<>();
         properties.put("hibernate.hbm2ddl.auto", "none");
-        properties.put("hibernate.dialect", "org.hibernate.dialect.SQLServerDialect");
+        // properties.put("hibernate.dialect", "org.hibernate.dialect.SQLServerDialect");
         properties.put("hibernate.show_sql", "true");
         return builder.dataSource(dataSource).properties(properties).packages("tuval.api.web.models.entity.tuval")
         .persistenceUnit("tuvalPU").build();
