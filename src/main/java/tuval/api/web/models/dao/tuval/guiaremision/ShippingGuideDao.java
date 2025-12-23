@@ -1,17 +1,18 @@
 package tuval.api.web.models.dao.tuval.guiaremision;
 
-import tuval.api.web.models.dto.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideDispatchShipmentRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideTransferVtaRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DestinationDeliveryNoteRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DetailDeliveryNoteRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.HeaderDeliveryNoteRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
+import tuval.api.web.models.request.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.DispatchDeliveryNoteMovementRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.HeaderGuideDispatchShipmentRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.HeaderGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DestinationDeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DetailDeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.HeaderDeliveryNoteRequest;
 
 public interface ShippingGuideDao {
 
@@ -42,6 +43,9 @@ public interface ShippingGuideDao {
 
   public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
       HeaderGuideDispatchShipmentRequest req, int idmov, int modo);
+
+  public HeaderGuideTransferVtaResponse executeFixSpGenerateMovementDispatchDeliveryNote(
+      DispatchDeliveryNoteMovementRequest req, int modo);
 
   public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(
       String orderNumber, String newOrderNumber, Integer idGuiaRemision, String guiaRemision);

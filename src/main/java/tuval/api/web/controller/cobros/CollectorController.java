@@ -4,8 +4,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import tuval.api.web.models.Utils.ResponseJsonUtils;
-import tuval.api.web.models.entity.tuval.cobros.CheckValidatorEntity;
-import tuval.api.web.models.entity.tuval.cobros.ClientOverdueDocumentEntity;
+import tuval.api.web.models.dto.cobros.CheckValidatorDto;
+import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountResponseEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListClientOverdueDocumentEntity;
@@ -41,7 +41,7 @@ public class CollectorController {
                 return ResponseJsonUtils.buildError("Falta el campo " + "idCompania" + "o está vacío.");
 
             }
-            CheckValidatorEntity result = creditCheckService.getConsultCreditValidation(ruc, idCompania);
+            CheckValidatorDto result = creditCheckService.getConsultCreditValidation(ruc, idCompania);
             return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
         } catch (Exception e) {
             e.printStackTrace();
@@ -65,7 +65,7 @@ public class CollectorController {
 
                 
             }
-            ClientOverdueDocumentEntity result = creditCheckService.getConsultExpiredClientDocument(ruc, idCompania);
+            ClientOverdueDocumentDto result = creditCheckService.getConsultExpiredClientDocument(ruc, idCompania);
             return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
         } catch (Exception e) {
             e.printStackTrace();

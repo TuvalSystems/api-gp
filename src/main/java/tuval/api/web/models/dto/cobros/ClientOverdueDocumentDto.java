@@ -1,9 +1,9 @@
-package tuval.api.web.models.entity.tuval.cobros;
+package tuval.api.web.models.dto.cobros;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class ClientOverdueDocumentEntity {
+public class ClientOverdueDocumentDto {
     private String ruc ;
     private int diasVencidos;
     private LocalDate  fEmision;

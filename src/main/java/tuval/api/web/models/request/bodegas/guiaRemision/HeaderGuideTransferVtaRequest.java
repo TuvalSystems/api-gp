@@ -1,4 +1,4 @@
-package tuval.api.web.models.dto.bodegas.guiaRemision;
+package tuval.api.web.models.request.bodegas.guiaRemision;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

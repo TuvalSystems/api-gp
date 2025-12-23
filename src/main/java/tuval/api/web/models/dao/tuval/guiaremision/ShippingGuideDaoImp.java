@@ -18,18 +18,19 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.models.Utils.CoerceHelperUtils;
-import tuval.api.web.models.dto.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideDispatchShipmentRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.HeaderGuideTransferVtaRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DestinationDeliveryNoteRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DetailDeliveryNoteRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.HeaderDeliveryNoteRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
+import tuval.api.web.models.request.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.DispatchDeliveryNoteMovementRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.HeaderGuideDispatchShipmentRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.HeaderGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DestinationDeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DetailDeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.HeaderDeliveryNoteRequest;
 
 @Repository
 public class ShippingGuideDaoImp implements ShippingGuideDao {
@@ -570,6 +571,61 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         }
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public HeaderGuideTransferVtaResponse executeFixSpGenerateMovementDispatchDeliveryNote(
+      DispatchDeliveryNoteMovementRequest req, int modo) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("tipotrx", "")
+            .addValue("numdoc", req.getPedido())
+            .addValue("numdocori", "")
+            .addValue("bodorigen", req.getBodegaOrigen())
+            .addValue("boddestino", "")
+            .addValue("binitem", "")
+            .addValue("binori", "")
+            .addValue("bindes", "")
+            .addValue("observacion", null, Types.VARCHAR)
+            .addValue("item", "")
+            .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+            .addValue("secitem", 0)
+            .addValue("compartimento", null, Types.VARCHAR)
+            .addValue("idmov", req.getIdMovimiento())
+            .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+            .addValue("idfila", 0)
+            .addValue("fecpro", null, Types.TIMESTAMP)
+            .addValue("userid", req.getUsuario())
+            .addValue("modo", modo) // 3
+            .addValue("submodo", 0)
+            .addValue("equipo", "wserver")
+            .addValue("docgp", "") // INOUT
+            .addValue("codret", 0) // INOUT
+            .addValue("msj", "")
+            .addValue("idguia", "")
+            .addValue("guia", "");
+    try {
+      Map<String, Object> out = spMovimientosIv.execute(in);
+      int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
+      String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
+      String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
+      if (codret != 0) {
+        if (codret != 0) {
+          throw new IllegalStateException(
+              String.format(
+                  "Error al generar el movimiento de despacho.\n"
+                      + "  Pedido: %s\n"
+                      + "  ID Movimiento: %d\n"
+                      + "  Código de retorno: %d\n"
+                      + "  Mensaje del sistema: %s",
+                  req.getPedido(), req.getIdMovimiento(), codret, msj));
+        }
+      }
+      return new HeaderGuideTransferVtaResponse(codret, msj, req.getIdMovimiento(), docgp);
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException(e.getMessage(), e);

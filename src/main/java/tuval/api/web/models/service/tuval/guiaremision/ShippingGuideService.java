@@ -1,13 +1,14 @@
 package tuval.api.web.models.service.tuval.guiaremision;
 
-import tuval.api.web.models.dto.bodegas.guiaRemision.DispatchVtaRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.TransferVtaRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DeliveryNoteRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
+import tuval.api.web.models.request.bodegas.guiaRemision.DispatchDeliveryNoteMovementRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.DispatchVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.TransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DeliveryNoteRequest;
 
 public interface ShippingGuideService {
 
@@ -18,6 +19,9 @@ public interface ShippingGuideService {
   public HeaderGuideTransferVtaResponse generateGuideReposicionService(TransferVtaRequest req);
 
   public HeaderGuideTransferVtaResponse generateGuideDispatchVtaService(DispatchVtaRequest req);
+
+  public HeaderGuideTransferVtaResponse generateMovementDispatchGuide(DispatchDeliveryNoteMovementRequest req);
+
 
   /** para obtener el ajuste de guias de despacho */
   public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(

@@ -1,4 +1,4 @@
-package tuval.api.web.models.dto.cliente;
+package tuval.api.web.models.request.cliente;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

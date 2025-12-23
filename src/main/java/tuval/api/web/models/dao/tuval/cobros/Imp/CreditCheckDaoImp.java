@@ -15,8 +15,8 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.models.Utils.CoerceHelperUtils;
 import tuval.api.web.models.dao.tuval.cobros.CreditCheckDao;
-import tuval.api.web.models.entity.tuval.cobros.CheckValidatorEntity;
-import tuval.api.web.models.entity.tuval.cobros.ClientOverdueDocumentEntity;
+import tuval.api.web.models.dto.cobros.CheckValidatorDto;
+import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountDetailEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountHeaderEntity;
@@ -79,7 +79,7 @@ public class CreditCheckDaoImp implements CreditCheckDao {
             new SqlParameter("msj", Types.VARCHAR));
   }
 
-  public ClientOverdueDocumentEntity executeSpConsultExpiredClientDocument(
+  public ClientOverdueDocumentDto executeSpConsultExpiredClientDocument(
       String ruc, String idCompania, int modo) {
 
     MapSqlParameterSource in = new MapSqlParameterSource()
@@ -101,7 +101,7 @@ public class CreditCheckDaoImp implements CreditCheckDao {
         throw new RuntimeException("SP no retornó filas para cliente=" + ruc);
       }
       Map<String, Object> row = rs.get(0);
-      ClientOverdueDocumentEntity e = new ClientOverdueDocumentEntity();
+      ClientOverdueDocumentDto e = new ClientOverdueDocumentDto();
       e.setRuc(CoerceHelperUtils.stringOrEmpty(row.get("RUC")));
       e.setFactura(CoerceHelperUtils.stringOrEmpty(row.get("FACTURA")));
       e.setfEmision(CoerceHelperUtils.toLocalDate(row.get("F_EMISION")));
@@ -136,9 +136,9 @@ public class CreditCheckDaoImp implements CreditCheckDao {
       if (rs == null || rs.isEmpty()) {
         throw new RuntimeException("SP no retornó filas para cliente=" + ruc);
       }
-      List<ClientOverdueDocumentEntity> lista = new ArrayList<>();
+      List<ClientOverdueDocumentDto> lista = new ArrayList<>();
       for (Map<String, Object> row : rs) {
-        ClientOverdueDocumentEntity e = new ClientOverdueDocumentEntity();
+        ClientOverdueDocumentDto e = new ClientOverdueDocumentDto();
         e.setRuc(CoerceHelperUtils.stringOrEmpty(row.get("RUC")));
         e.setFactura(CoerceHelperUtils.stringOrEmpty(row.get("FACTURA")));
         e.setfEmision(CoerceHelperUtils.toLocalDate(row.get("F_EMISION")));
@@ -156,7 +156,7 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
-  public CheckValidatorEntity getConsultCreditValidation(String ruc, String idCompania, int modo) {
+  public CheckValidatorDto getConsultCreditValidation(String ruc, String idCompania, int modo) {
     MapSqlParameterSource in = new MapSqlParameterSource()
         .addValue("idcliente", ruc)
         .addValue("userid", "wsrvmc")
@@ -177,7 +177,7 @@ public class CreditCheckDaoImp implements CreditCheckDao {
       }
 
       Map<String, Object> row = rs.get(0);
-      CheckValidatorEntity e = new CheckValidatorEntity();
+      CheckValidatorDto e = new CheckValidatorDto();
       e.setRuc(CoerceHelperUtils.stringOrEmpty(row.get("RUC")));
       e.setCupoAsignado(CoerceHelperUtils.toDouble(row.get("CUPO")));
       e.setCupoDisponibleGp(CoerceHelperUtils.toDouble(row.get("CUPO_PERMITIDO")));

@@ -2,7 +2,6 @@ package tuval.api.web.models.dao.tuval.bodegas;
 
 import jakarta.annotation.PostConstruct;
 import java.sql.Types;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,10 +16,10 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 
 import tuval.api.web.models.Utils.CoerceHelperUtils;
-import tuval.api.web.models.dto.bodegas.StockWarehouseParamsRequest;
 import tuval.api.web.models.entity.tuval.bodegas.ListPriceItemResponseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.PriceItemEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseEntity;
+import tuval.api.web.models.request.bodegas.StockWarehouseParamsRequest;
 
 @Repository
 public class StockWarehouseDao {

@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
-import tuval.api.web.models.dto.bodegas.StockWarehouseParamsRequest;
 import tuval.api.web.models.entity.tuval.bodegas.ListPriceItemResponseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseResponseEntity;
+import tuval.api.web.models.request.bodegas.StockWarehouseParamsRequest;
 import tuval.api.web.models.service.tuval.bodegas.StockWarehouseService;
 
 @RestController

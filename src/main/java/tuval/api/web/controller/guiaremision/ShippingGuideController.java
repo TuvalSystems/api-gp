@@ -12,14 +12,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
-import tuval.api.web.models.dto.bodegas.guiaRemision.DispatchVtaRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.TransferVtaRequest;
-import tuval.api.web.models.dto.bodegas.guiaRemision.crearGuia.DeliveryNoteRequest;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
+import tuval.api.web.models.request.bodegas.guiaRemision.DispatchDeliveryNoteMovementRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.DispatchVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.TransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DeliveryNoteRequest;
 import tuval.api.web.models.service.tuval.guiaremision.ShippingGuideService;
 
 @RestController
@@ -303,6 +304,26 @@ public class ShippingGuideController {
     try {
       HeaderGuideTransferVtaResponse response =
           shippingGuideService.receiveGuideReservationService(req);
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
+
+    } catch (Exception e) {
+      // e.printStackTrace(); // para ver la traza completa
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+
+
+
+  /** FIX  PARA GENERAR LOS MOVIMIENTOS DE GUIAS  */
+
+  @CrossOrigin
+  @PostMapping("/inventario/despacho-generar-movimiento")
+  public ResponseEntity<Map<String, Object>> generarMovimientoGuiaDespacho(
+      @Valid @RequestBody DispatchDeliveryNoteMovementRequest req) {
+    try {
+      HeaderGuideTransferVtaResponse response =
+          shippingGuideService.generateMovementDispatchGuide(req);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {

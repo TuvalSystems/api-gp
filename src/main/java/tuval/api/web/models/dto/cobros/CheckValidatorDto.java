@@ -1,7 +1,7 @@
-package tuval.api.web.models.entity.tuval.cobros;
+package tuval.api.web.models.dto.cobros;
 
 
-public class CheckValidatorEntity {
+public class CheckValidatorDto {
 
     private String ruc;
     private double cupoAsignado;
