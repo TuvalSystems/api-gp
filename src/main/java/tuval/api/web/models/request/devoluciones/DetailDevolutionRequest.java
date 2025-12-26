@@ -1,4 +1,4 @@
-package tuval.api.web.models.dto.devolucion;
+package tuval.api.web.models.request.devoluciones;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;

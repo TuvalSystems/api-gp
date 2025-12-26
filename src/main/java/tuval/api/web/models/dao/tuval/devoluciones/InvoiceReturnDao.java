@@ -2,10 +2,10 @@ package tuval.api.web.models.dao.tuval.devoluciones;
 
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
-
-import tuval.api.web.models.dto.devolucion.DetailDevolutionRequest;
-import tuval.api.web.models.dto.devolucion.HeaderDevolutionRequest;
+import tuval.api.web.models.dto.devolucion.ItemBinResponseDto;
 import tuval.api.web.models.entity.tuval.devoluciones.DevolutionResponse;
+import tuval.api.web.models.request.devoluciones.DetailDevolutionRequest;
+import tuval.api.web.models.request.devoluciones.HeaderDevolutionRequest;
 
 public interface InvoiceReturnDao {
 
@@ -57,19 +57,15 @@ public interface InvoiceReturnDao {
 
   ResponseEntity<Map<String, Object>> respuestaNotaCredito(String docu, String tipo);
 
-  
   public DevolutionResponse executeSpStoreHeaderDevolution(HeaderDevolutionRequest req, int modo);
 
-   public DevolutionResponse executeSpStoreDetaillDevolution(
-      DetailDevolutionRequest det,
-      HeaderDevolutionRequest cab,
-      int idmov,
-      int secitem,
-      int modo);
- public DevolutionResponse executeSpGenerateMovimentDevolution(
+  public DevolutionResponse executeSpStoreDetaillDevolution(
+      DetailDevolutionRequest det, HeaderDevolutionRequest cab, int idmov, int secitem, int modo);
+
+  public DevolutionResponse executeSpGenerateMovimentDevolution(
       HeaderDevolutionRequest req, int idmov, int modo);
 
-  ResponseEntity<Map<String, Object>> consultItemBin(String item, String bodega, int modo);
+  public ItemBinResponseDto consultItemBin(String item, String bodega, int modo);
 
   ResponseEntity<Map<String, Object>> getGroupEconomicCLiente(String ruc);
 }

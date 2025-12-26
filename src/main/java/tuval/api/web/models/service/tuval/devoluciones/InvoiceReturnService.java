@@ -3,8 +3,10 @@ package tuval.api.web.models.service.tuval.devoluciones;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
-import tuval.api.web.models.dto.devolucion.DevolutionRequest;
+
+import tuval.api.web.models.dto.devolucion.ItemBinResponseDto;
 import tuval.api.web.models.entity.tuval.devoluciones.DevolutionResponse;
+import tuval.api.web.models.request.devoluciones.DevolutionRequest;
 
 public interface InvoiceReturnService {
 
@@ -15,7 +17,7 @@ public interface InvoiceReturnService {
 
   public DevolutionResponse generateAjustmentDevolutionService(DevolutionRequest request);
 
-  ResponseEntity<Map<String, Object>> getResponseItemBin(String item, String bodega);
+  ItemBinResponseDto getResponseItemBin(String item, String bodega);
 
   ResponseEntity<Map<String, Object>> getClientGroupEconomicService(String ruc);
 }
