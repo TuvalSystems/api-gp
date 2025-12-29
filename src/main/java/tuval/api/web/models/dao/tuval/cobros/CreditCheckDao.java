@@ -1,6 +1,7 @@
 package tuval.api.web.models.dao.tuval.cobros;
 import java.util.List;
 
+import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
 import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
@@ -25,4 +26,6 @@ public interface CreditCheckDao {
     public ClientStatusAccountHeaderEntity executeSpConsultClientStatusAccountHeader(String ruc, int modo);
     public List<ClientStatusAccountDetailEntity> executeSpConsultClientStatusAccountDetail(String ruc, int modo);
     
+
+    public BusinessDaysDto executeSpGetBusinessDaysCheck(String fecha, int modo);
 }
