@@ -1,4 +1,4 @@
-package tuval.api.web.models.dto.devolucion;
+package tuval.api.web.models.request.devoluciones;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
