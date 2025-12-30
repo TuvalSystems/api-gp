@@ -162,7 +162,7 @@ public class CollectorController {
   @GetMapping("/consultar-dias-feriado")
   public ResponseEntity<Map<String, Object>> consutarDiaFeriado(
       @RequestParam(required = true) String fecha,
-      @RequestParam(required = true) String idCompania) {
+      @RequestParam(required = true) String idCompany) {
     try {
       BusinessDaysDto result = creditCheckService.getBusinessDaysCheck(fecha);
       return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
