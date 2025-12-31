@@ -18,8 +18,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.devolucion.ItemBinResponseDto;
+import tuval.api.web.models.dto.devolucion.notaCredito.DocumentNcDto;
 import tuval.api.web.models.entity.tuval.devoluciones.DevolutionResponse;
 import tuval.api.web.models.request.devoluciones.DevolutionRequest;
+import tuval.api.web.models.request.devoluciones.NoteCreditRequest;
 import tuval.api.web.models.service.tuval.devoluciones.InvoiceReturnService;
 
 @RestController
@@ -73,6 +75,19 @@ public class InvoiceReturnController {
       response.put("message", "Error interno al procesar la solicitud.");
       response.put("error", e.getMessage());
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+  }
+
+
+  @PostMapping("/devoluciones/generar-nota-credito-test")
+  public ResponseEntity<Map<String, Object>> generarNotaCreditoTest(@RequestBody NoteCreditRequest data) {
+    try {
+      DocumentNcDto respDto = invoiceReturnService.generateNoteCreditService(data.getCabecera(), data.getDetalle());
+      return ResponseJsonUtils.buildSuccessWithData("Repsuesta exitosa", respDto);
+      } catch (IllegalArgumentException e) {
+      return ResponseJsonUtils.buildNoFound( e.getMessage());
+    } catch (Exception e) {
+     return ResponseJsonUtils.buildException(e);
     }
   }
 

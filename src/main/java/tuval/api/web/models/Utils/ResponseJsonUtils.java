@@ -37,10 +37,10 @@ public class ResponseJsonUtils {
     return ResponseEntity.ok(response);
   }
 
-    public static ResponseEntity<Map<String, Object>> buildNoFound(String message) {
+  public static ResponseEntity<Map<String, Object>> buildNoFound(String message) {
     Map<String, Object> response = new HashMap<>();
     response.put("success", false);
     response.put("message", message);
-    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
   }
 }

@@ -3,9 +3,11 @@ package tuval.api.web.models.dao.tuval.devoluciones;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import tuval.api.web.models.dto.devolucion.ItemBinResponseDto;
+import tuval.api.web.models.dto.devolucion.notaCredito.DocumentNcDto;
 import tuval.api.web.models.entity.tuval.devoluciones.DevolutionResponse;
 import tuval.api.web.models.request.devoluciones.DetailDevolutionRequest;
 import tuval.api.web.models.request.devoluciones.HeaderDevolutionRequest;
+import tuval.api.web.models.request.devoluciones.HeaderNoteCreditRequest;
 
 public interface InvoiceReturnDao {
 
@@ -68,4 +70,8 @@ public interface InvoiceReturnDao {
   public ItemBinResponseDto consultItemBin(String item, String bodega, int modo);
 
   ResponseEntity<Map<String, Object>> getGroupEconomicCLiente(String ruc);
+
+  /** pruebas para generacion de nota de credito */
+  DocumentNcDto executeSpValidateExistsNc(HeaderNoteCreditRequest header);
+  void executeSpDeleteExistenceNc(HeaderNoteCreditRequest header);
 }

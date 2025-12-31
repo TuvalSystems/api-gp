@@ -8,9 +8,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import tuval.api.web.models.dao.tuval.devoluciones.InvoiceReturnDao;
 import tuval.api.web.models.dto.devolucion.ItemBinResponseDto;
+import tuval.api.web.models.dto.devolucion.notaCredito.DocumentNcDto;
 import tuval.api.web.models.entity.tuval.devoluciones.DevolutionResponse;
 import tuval.api.web.models.request.devoluciones.DetailDevolutionRequest;
+import tuval.api.web.models.request.devoluciones.DetailNoteCreditRequest;
 import tuval.api.web.models.request.devoluciones.DevolutionRequest;
+import tuval.api.web.models.request.devoluciones.HeaderNoteCreditRequest;
 import tuval.api.web.models.service.tuval.devoluciones.InvoiceReturnService;
 import tuval.api.web.models.service.tuval.devoluciones.Utils.InvoiceReturnUtils;
 
@@ -295,5 +298,16 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
   @Override
   public ResponseEntity<Map<String, Object>> getClientGroupEconomicService(String ruc) {
     return invoiceReturnDao.getGroupEconomicCLiente(ruc);
+  }
+
+
+  @Override
+  public DocumentNcDto generateNoteCreditService(HeaderNoteCreditRequest cab, List<DetailNoteCreditRequest> det) {
+    DocumentNcDto hasDoc =  invoiceReturnDao.executeSpValidateExistsNc(cab);
+    if (!hasDoc.getDocGenerado().isEmpty() || !hasDoc.getDocGenerado().isBlank()) {
+       throw new RuntimeException("Ya existe un numero de Documento Generado para la devolución : " + cab.getDocOrigen() + " y numero de documento : " + hasDoc.getDocGenerado());
+    }
+     invoiceReturnDao.executeSpDeleteExistenceNc(cab);
+    return hasDoc;
   }
 }

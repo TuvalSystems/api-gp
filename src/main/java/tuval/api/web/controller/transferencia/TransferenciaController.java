@@ -1,27 +1,32 @@
 package tuval.api.web.controller.transferencia;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.RequiredArgsConstructor;
+import tuval.api.web.models.Utils.ResponseJsonUtils;
+import tuval.api.web.models.dto.tranferencias.TransfersCompartmentsOrderDto;
 import tuval.api.web.models.entity.tuval.transferencia.TransferDetailEntity;
 import tuval.api.web.models.entity.tuval.transferencia.TransferHeaderEntity;
+import tuval.api.web.models.request.bodegas.transferencias.TransferCompartmentOrdersRequest;
 import tuval.api.web.models.service.tuval.transferencia.TransferenciaService;
 
 @RestController
 @RequestMapping("/api")
+@RequiredArgsConstructor
 public class TransferenciaController {
 
-    @Autowired
-    private TransferenciaService transferenciaService;
+    private final TransferenciaService transferenciaService;
+
 
     @CrossOrigin
     @GetMapping("/consultar-cabecera-transferencia")
@@ -44,29 +49,13 @@ public class TransferenciaController {
     }
 
     @CrossOrigin
-    @GetMapping("/transferencia-compartimento")
-    public ResponseEntity<Map<String, Object>> transferenciaCompartimento(@RequestParam String fecha,
-            @RequestParam String item, @RequestParam String bodega, @RequestParam Double cantidad,
-            @RequestParam String BinOrigen, @RequestParam String BinDestino) {
-        Map<String, Object> response = new HashMap<>();
-
+    @PostMapping("/transferencia-compartimento")
+    public ResponseEntity<Map<String, Object>> transferenciaCompartimento( @RequestBody TransferCompartmentOrdersRequest transfers) {
         try {
-            ResponseEntity<Map<String, Object>> result = transferenciaService.transferenciaCompartimentoService(fecha,
-                    item, bodega, cantidad,
-                    BinOrigen, BinDestino);
-            Map<String, Object> resultBody = result.getBody();
-         
-            response.put("success", true);
-            response.put("message", "Transferencia procesada correctamente.");
-            response.put("data", resultBody != null ? resultBody.get("data") : null);
-
-            return ResponseEntity.ok(response);
+           TransfersCompartmentsOrderDto result = transferenciaService.transferenciaCompartimentoService(transfers);
+            return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", result);
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            response.put("data", null);
-
-            return ResponseEntity.badRequest().body(response);
+            return ResponseJsonUtils.buildException(e);
         }
     }
 
