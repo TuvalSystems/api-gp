@@ -92,7 +92,7 @@ public class InvoiceReturnController {
     }
   }
 
-  @PostMapping("/devoluciones/respuesta-nota-credito")
+  @GetMapping("/devoluciones/respuesta-nota-credito")
   public ResponseEntity<Map<String, Object>> respuestaExistenciaNotaCredito(
       @RequestParam String document, @RequestParam String tipo) {
     try {
