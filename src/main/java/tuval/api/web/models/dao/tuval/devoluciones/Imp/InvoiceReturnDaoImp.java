@@ -753,6 +753,48 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
 
   /*** proceso de generacion de nota de credito pruebas */
 
+   @Override
+  public DocumentNcDto executeSpExistenceNoteCreditDao( String document, String tipo) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("@docu", document)
+            .addValue("@tipo", tipo);
+
+    try {
+      Map<String, Object> out = spValidadGeneracionNc.execute(in);
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> rs = (List<Map<String, Object>>) out.get("#result-set-1");
+      if (rs == null || rs.isEmpty()) {
+        throw new RuntimeException("SP no retornó filas para cliente=" + document);
+      }
+      Map<String, Object> row = rs.get(0);
+      DocumentNcDto dto = new DocumentNcDto();
+      dto.setDocOrigen(CoerceHelperUtils.stringOrEmpty(row.get("I_vDOCU_ORIGEN")));
+      dto.setIdTipo(CoerceHelperUtils.stringOrEmpty(row.get("I_vID_TIPO")));
+      dto.setCodigo(CoerceHelperUtils.stringOrEmpty(row.get("I_vCODIGO")));
+      dto.setMensaje(CoerceHelperUtils.stringOrEmpty(row.get("I_vMENSAJE")));
+      dto.setTipoDocGenerado(CoerceHelperUtils.stringOrEmpty(row.get("TIPO_DOC_GENERADO")));
+      dto.setDocGenerado(CoerceHelperUtils.stringOrEmpty(row.get("DOC_GENERADO")));
+      // dto.setFecha(CoerceHelperUtils.stringOrEmpty(out.get("I_vFECHA")));
+
+      Object fechaObj = row.get("I_vFECHA");
+      if (fechaObj != null) {
+        if (fechaObj instanceof java.sql.Timestamp) {
+          dto.setFecha(((java.sql.Timestamp) fechaObj).toLocalDateTime());
+        } else if (fechaObj instanceof java.time.LocalDateTime) {
+          dto.setFecha((java.time.LocalDateTime) fechaObj);
+        }
+      }
+
+      return dto;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(
+          "Error en la validacion de existencia de Nota de Credito: " + e.getMessage(), e);
+    }
+  }
+
   @Override
   public DocumentNcDto executeSpValidateExistsNc(HeaderNoteCreditRequest header) {
     MapSqlParameterSource in =

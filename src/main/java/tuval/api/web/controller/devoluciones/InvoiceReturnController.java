@@ -78,23 +78,31 @@ public class InvoiceReturnController {
     }
   }
 
-
   @PostMapping("/devoluciones/generar-nota-credito-test")
-  public ResponseEntity<Map<String, Object>> generarNotaCreditoTest(@RequestBody NoteCreditRequest data) {
+  public ResponseEntity<Map<String, Object>> generarNotaCreditoTest(
+      @RequestBody NoteCreditRequest data) {
     try {
-      DocumentNcDto respDto = invoiceReturnService.generateNoteCreditService(data.getCabecera(), data.getDetalle());
+      DocumentNcDto respDto =
+          invoiceReturnService.generateNoteCreditService(data.getCabecera(), data.getDetalle());
       return ResponseJsonUtils.buildSuccessWithData("Repsuesta exitosa", respDto);
-      } catch (IllegalArgumentException e) {
-      return ResponseJsonUtils.buildNoFound( e.getMessage());
+    } catch (IllegalArgumentException e) {
+      return ResponseJsonUtils.buildNoFound(e.getMessage());
     } catch (Exception e) {
-     return ResponseJsonUtils.buildException(e);
+      return ResponseJsonUtils.buildException(e);
     }
   }
 
   @PostMapping("/devoluciones/respuesta-nota-credito")
-  public ResponseEntity<?> respuestaNotaCredito(
+  public ResponseEntity<Map<String, Object>> respuestaExistenciaNotaCredito(
       @RequestParam String document, @RequestParam String tipo) {
-    return invoiceReturnService.getResponseCreditNote(document, tipo);
+    try {
+      DocumentNcDto respDto = invoiceReturnService.getExistenceNoteCreditService(document, tipo);
+      return ResponseJsonUtils.buildSuccessWithData("Repsuesta exitosa", respDto);
+    } catch (IllegalArgumentException e) {
+      return ResponseJsonUtils.buildNoFound(e.getMessage());
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
   }
 
   @PostMapping("/devoluciones/generar-devolucion-venta")

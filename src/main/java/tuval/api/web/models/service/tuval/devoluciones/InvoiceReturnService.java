@@ -15,7 +15,7 @@ public interface InvoiceReturnService {
   ResponseEntity<Map<String, Object>> generacionNotaCreditoVTA(
       Map<String, Object> cabecera, List<Map<String, Object>> detalle);
 
-  ResponseEntity<Map<String, Object>> getResponseCreditNote(String document, String tipo);
+  // ResponseEntity<Map<String, Object>> getResponseCreditNote(String document, String tipo);
 
   public DevolutionResponse generateAjustmentDevolutionService(DevolutionRequest request);
 
@@ -24,5 +24,8 @@ public interface InvoiceReturnService {
   ResponseEntity<Map<String, Object>> getClientGroupEconomicService(String ruc);
 
   /** pruebas generacion de nota de credito */
-  DocumentNcDto generateNoteCreditService(HeaderNoteCreditRequest cab, List<DetailNoteCreditRequest> det);
+  DocumentNcDto getExistenceNoteCreditService(String document, String tipo);
+
+  DocumentNcDto generateNoteCreditService(
+      HeaderNoteCreditRequest cab, List<DetailNoteCreditRequest> det);
 }

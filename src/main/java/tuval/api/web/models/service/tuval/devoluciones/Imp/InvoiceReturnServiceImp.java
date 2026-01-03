@@ -227,20 +227,9 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
     }
   }
 
-  public ResponseEntity<Map<String, Object>> getResponseCreditNote(String document, String tipo) {
-    // Map<String, Object> response = new HashMap<>();
-    try {
-      ResponseEntity<Map<String, Object>> respuesta =
-          invoiceReturnDao.respuestaNotaCredito(document, tipo);
-      if (respuesta.getBody() != null && respuesta.getBody().get("success") != null) {
-        return respuesta;
-      } else {
-        return InvoiceReturnUtils.buildError(
-            "Error al obtener la respuesta de la nota de crédito.");
-      }
-    } catch (Exception e) {
-      return InvoiceReturnUtils.buildException(e);
-    }
+  @Override
+  public DocumentNcDto getExistenceNoteCreditService(String document, String tipo) {
+    return invoiceReturnDao.executeSpExistenceNoteCreditDao(document, tipo);
   }
 
   private double parseDoubleOrFail(
@@ -300,14 +289,18 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
     return invoiceReturnDao.getGroupEconomicCLiente(ruc);
   }
 
-
   @Override
-  public DocumentNcDto generateNoteCreditService(HeaderNoteCreditRequest cab, List<DetailNoteCreditRequest> det) {
-    DocumentNcDto hasDoc =  invoiceReturnDao.executeSpValidateExistsNc(cab);
+  public DocumentNcDto generateNoteCreditService(
+      HeaderNoteCreditRequest cab, List<DetailNoteCreditRequest> det) {
+    DocumentNcDto hasDoc = invoiceReturnDao.executeSpValidateExistsNc(cab);
     if (!hasDoc.getDocGenerado().isEmpty() || !hasDoc.getDocGenerado().isBlank()) {
-       throw new RuntimeException("Ya existe un numero de Documento Generado para la devolución : " + cab.getDocOrigen() + " y numero de documento : " + hasDoc.getDocGenerado());
+      throw new RuntimeException(
+          "Ya existe un numero de Documento Generado para la devolución : "
+              + cab.getDocOrigen()
+              + " y numero de documento : "
+              + hasDoc.getDocGenerado());
     }
-     invoiceReturnDao.executeSpDeleteExistenceNc(cab);
+    invoiceReturnDao.executeSpDeleteExistenceNc(cab);
     return hasDoc;
   }
 }

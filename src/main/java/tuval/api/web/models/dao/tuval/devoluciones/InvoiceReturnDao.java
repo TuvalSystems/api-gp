@@ -72,6 +72,9 @@ public interface InvoiceReturnDao {
   ResponseEntity<Map<String, Object>> getGroupEconomicCLiente(String ruc);
 
   /** pruebas para generacion de nota de credito */
+  DocumentNcDto executeSpExistenceNoteCreditDao(String document, String tipo);
+
   DocumentNcDto executeSpValidateExistsNc(HeaderNoteCreditRequest header);
+
   void executeSpDeleteExistenceNc(HeaderNoteCreditRequest header);
 }
