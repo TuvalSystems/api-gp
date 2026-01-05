@@ -5,10 +5,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import tuval.api.web.models.dao.tuval.transacciones.transactionDao;
-import tuval.api.web.models.entity.tuval.transacciones.facturacionVenta.responseInvoiceVtaEntity;
-import tuval.api.web.models.entity.tuval.transacciones.facturacionVenta.validateGenerateInvoiceResponseEntity;
-import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateReceivedLResponseEntity;
-import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateResponseEntity;
+import tuval.api.web.models.dto.transacciones.facturacionVenta.responseInvoiceVtaDto;
+import tuval.api.web.models.dto.transacciones.facturacionVenta.validateGenerateInvoiceDto;
+import tuval.api.web.models.dto.transacciones.reciboCompraL.validateReceivedLDto;
+import tuval.api.web.models.dto.transacciones.reciboCompraL.validateDto;
 import tuval.api.web.models.request.transacciones.facturacionVenta.ReceivedInvoiceRequest;
 import tuval.api.web.models.request.transacciones.facturacionVenta.ResponseConsultInvoiceRequest;
 import tuval.api.web.models.request.transacciones.reciboCompraL.DetailReceivedLRequest;
@@ -21,16 +21,16 @@ public class transactionService {
 
     private transactionDao transactionDao;
 
-    public validateResponseEntity validateReceivedL(validateReceidLRequest request) {
+    public validateDto validateReceivedL(validateReceidLRequest request) {
         return transactionDao.executeSpValidateGenerateReceivedItemL(request);
     }
 
-    public validateResponseEntity deleteReceivedL(validateReceidLRequest request) {
+    public validateDto deleteReceivedL(validateReceidLRequest request) {
         return transactionDao.executeSpDeleteReceivedHeaderAndDetail(request);
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public validateReceivedLResponseEntity storeReceivedL(ReceivedSalesLRequest request) {
+    public validateReceivedLDto storeReceivedL(ReceivedSalesLRequest request) {
 
         transactionDao.executeSpStoreHeaderReceivedL(request.getCabecera());
         if (request.getDetalle() != null) {
@@ -39,21 +39,21 @@ public class transactionService {
 
             }
         }
-        var resp = new validateReceivedLResponseEntity();
+        var resp = new validateReceivedLDto();
         resp.setCodigo("0");
         resp.setMensaje("Recibo guardado correctamente");
         return resp;
     }
 
-    public validateReceivedLResponseEntity processReceivedL(validateReceidLRequest request) {
+    public validateReceivedLDto processReceivedL(validateReceidLRequest request) {
         transactionDao.executeSpGenerateProcessReceivedL(request);
-        var resp = new validateReceivedLResponseEntity();
+        var resp = new validateReceivedLDto();
         resp.setCodigo("0");
         resp.setMensaje("Recibo procesado correctamente");
         return resp;
     }
 
-    public validateResponseEntity responseReceivedL(validateReceidLRequest request) {
+    public validateDto responseReceivedL(validateReceidLRequest request) {
         return transactionDao.executeSpResponseReceivedL(request);
 
     }
@@ -65,7 +65,7 @@ public class transactionService {
      */
 
     @Transactional(rollbackFor = Exception.class)
-    public validateGenerateInvoiceResponseEntity storeInvoice(ReceivedInvoiceRequest request) {
+    public validateGenerateInvoiceDto storeInvoice(ReceivedInvoiceRequest request) {
         transactionDao.executeSpStoreHeaderInvoice(request.getCabecera());
         if (request.getDetalle() != null) {
             for (var det : request.getDetalle()) {
@@ -73,20 +73,20 @@ public class transactionService {
             }
         }
         transactionDao.executSpGenerateInvoiceVta(request.getCabecera());
-        var resp = new validateGenerateInvoiceResponseEntity();
+        var resp = new validateGenerateInvoiceDto();
         resp.setMensaje("Factura guardada correctamente");
         return resp;
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public responseInvoiceVtaEntity consultInvoiceVta(ResponseConsultInvoiceRequest request) {
+    public responseInvoiceVtaDto consultInvoiceVta(ResponseConsultInvoiceRequest request) {
         return transactionDao.executeSpResponseInvoiceVta(request);
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public validateGenerateInvoiceResponseEntity deleteInvoiceVta(ResponseConsultInvoiceRequest request) {
+    public validateGenerateInvoiceDto deleteInvoiceVta(ResponseConsultInvoiceRequest request) {
         transactionDao.executeSpDeleteInvoiceVta(request);
-        var resp = new validateGenerateInvoiceResponseEntity();
+        var resp = new validateGenerateInvoiceDto();
         resp.setMensaje("Factura eliminada correctamente");
         return resp;
     }

@@ -13,8 +13,8 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.models.Utils.InvoiceHelperUtils;
-import tuval.api.web.models.entity.tuval.transacciones.facturacionVenta.responseInvoiceVtaEntity;
-import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateResponseEntity;
+import tuval.api.web.models.dto.transacciones.facturacionVenta.responseInvoiceVtaDto;
+import tuval.api.web.models.dto.transacciones.reciboCompraL.validateDto;
 import tuval.api.web.models.request.transacciones.facturacionVenta.DetailInvoiceRequest;
 import tuval.api.web.models.request.transacciones.facturacionVenta.HeaderInvoiceRequest;
 import tuval.api.web.models.request.transacciones.facturacionVenta.ResponseConsultInvoiceRequest;
@@ -40,7 +40,7 @@ public class transactionDao {
         }
     }
 
-    public validateResponseEntity executeSpValidateGenerateReceivedItemL(
+    public validateDto executeSpValidateGenerateReceivedItemL(
             validateReceidLRequest request) {
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
@@ -52,7 +52,7 @@ public class transactionDao {
                     .returningResultSet(
                             "resultados",
                             (rs, rowNum) -> {
-                                validateResponseEntity response = new validateResponseEntity();
+                                validateDto response = new validateDto();
                                 response.setCodigo(
                                         (rs.getString("I_vCODIGO") != null
                                                 && !rs.getString("I_vCODIGO").trim().isEmpty())
@@ -78,7 +78,7 @@ public class transactionDao {
             params.put("tipo", request.getTipo() != null ? request.getTipo().trim() : "");
             Map<String, Object> out = jdbcCall.execute(params);
             @SuppressWarnings("unchecked")
-            List<validateResponseEntity> resultados = (List<validateResponseEntity>) out.get("resultados");
+            List<validateDto> resultados = (List<validateDto>) out.get("resultados");
 
             if (resultados == null || resultados.isEmpty()) {
                 // Lanza excepción si no hay registros
@@ -91,7 +91,7 @@ public class transactionDao {
         }
     }
 
-    public validateResponseEntity executeSpDeleteReceivedHeaderAndDetail(
+    public validateDto executeSpDeleteReceivedHeaderAndDetail(
             validateReceidLRequest request) {
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
@@ -106,7 +106,7 @@ public class transactionDao {
             params.put("tipo", request.getTipo() != null ? request.getTipo().trim() : "");
             jdbcCall.execute(params);
 
-            validateResponseEntity response = new validateResponseEntity();
+            validateDto response = new validateDto();
             response.setCodigo("0"); // por convención, código 0 = OK
             response.setMensaje("Recibo eliminado correctamente");
             response.setTipoDocGenerado(""); // opcional
@@ -188,7 +188,7 @@ public class transactionDao {
         jdbcCall.execute(params);
     }
 
-    public validateResponseEntity executeSpResponseReceivedL(validateReceidLRequest request) {
+    public validateDto executeSpResponseReceivedL(validateReceidLRequest request) {
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                     .withProcedureName("MSW_SP_VALIDAR_GENERACION_RECEPCION")
@@ -199,7 +199,7 @@ public class transactionDao {
                     .returningResultSet(
                             "resultados",
                             (rs, rowNum) -> {
-                                validateResponseEntity response = new validateResponseEntity();
+                                validateDto response = new validateDto();
                                 response.setCodigo(
                                         (rs.getString("I_vCODIGO") != null
                                                 && !rs.getString("I_vCODIGO").trim().isEmpty())
@@ -225,7 +225,7 @@ public class transactionDao {
             params.put("tipo", request.getTipo() != null ? request.getTipo().trim() : "");
             Map<String, Object> out = jdbcCall.execute(params);
             @SuppressWarnings("unchecked")
-            List<validateResponseEntity> resultados = (List<validateResponseEntity>) out.get("resultados");
+            List<validateDto> resultados = (List<validateDto>) out.get("resultados");
 
             if (resultados == null || resultados.isEmpty()) {
                 // Lanza excepción si no hay registros
@@ -327,7 +327,7 @@ public class transactionDao {
         }
     }
 
-    public responseInvoiceVtaEntity executeSpResponseInvoiceVta(
+    public responseInvoiceVtaDto executeSpResponseInvoiceVta(
             ResponseConsultInvoiceRequest request) {
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
@@ -338,7 +338,7 @@ public class transactionDao {
                     .returningResultSet(
                             "response",
                             (rs, rowNum) -> {
-                                responseInvoiceVtaEntity response = new responseInvoiceVtaEntity();
+                                responseInvoiceVtaDto response = new responseInvoiceVtaDto();
                                 response.setDocumentoOrigen(
                                         rs.getString("I_vDOCU_ORIGEN") != null
                                                 ? rs.getString("I_vDOCU_ORIGEN").trim()
@@ -369,7 +369,7 @@ public class transactionDao {
             Map<String, Object> out = jdbcCall.execute(p);
 
             @SuppressWarnings("unchecked")
-            List<responseInvoiceVtaEntity> resultados = (List<responseInvoiceVtaEntity>) out.get("response");
+            List<responseInvoiceVtaDto> resultados = (List<responseInvoiceVtaDto>) out.get("response");
             if (resultados == null || resultados.isEmpty()) {
                 // Lanza excepción si no hay registros
                 throw new RuntimeException("No existe registro para los parámetros proporcionados");
