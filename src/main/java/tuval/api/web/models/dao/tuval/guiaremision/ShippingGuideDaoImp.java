@@ -56,7 +56,6 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     this.spCabeceraGuiaRemision =
         new SimpleJdbcCall(jdbcTemplate)
             .withProcedureName("MSW_SP_GUARDAR_GUIA_REMISION_CAB_jgms")
-            .withSchemaName("dbo")
             .withoutProcedureColumnMetaDataAccess()
             .declareParameters(
                 new SqlParameter("docu", Types.VARCHAR),

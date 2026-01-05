@@ -1,20 +1,24 @@
 package tuval.api.web.models.dao.tuval.cobros.Imp;
 
 import jakarta.annotation.PostConstruct;
-
+import java.sql.Timestamp;
 import java.sql.Types;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.models.Utils.CoerceHelperUtils;
 import tuval.api.web.models.dao.tuval.cobros.CreditCheckDao;
+import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
 import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
@@ -45,54 +49,57 @@ public class CreditCheckDaoImp implements CreditCheckDao {
   @PostConstruct
   public void init() {
     validateConfiguration();
-    this.spValidacionCrediticia = new SimpleJdbcCall(jdbcTemplate)
-        .withProcedureName("sp_mc_validacion_creditica")
-        .withoutProcedureColumnMetaDataAccess()
-        .declareParameters(
-            new SqlParameter("modo", Types.INTEGER),
-            new SqlParameter("idcliente", Types.VARCHAR),
-            new SqlParameter("idvendedor", Types.VARCHAR),
-            new SqlParameter("documento", Types.VARCHAR),
-            new SqlParameter("fecini", Types.DATE),
-            new SqlParameter("fecfin", Types.DATE),
-            new SqlParameter("userid", Types.VARCHAR),
-            new SqlParameter("equipo", Types.VARCHAR),
-            new SqlParameter("codret", Types.INTEGER),
-            new SqlParameter("msj", Types.VARCHAR));
+    this.spValidacionCrediticia =
+        new SimpleJdbcCall(jdbcTemplate)
+            .withProcedureName("sp_mc_validacion_creditica")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("modo", Types.INTEGER),
+                new SqlParameter("idcliente", Types.VARCHAR),
+                new SqlParameter("idvendedor", Types.VARCHAR),
+                new SqlParameter("documento", Types.VARCHAR),
+                new SqlParameter("fecini", Types.DATE),
+                new SqlParameter("fecfin", Types.DATE),
+                new SqlParameter("userid", Types.VARCHAR),
+                new SqlParameter("equipo", Types.VARCHAR),
+                new SqlParameter("codret", Types.INTEGER),
+                new SqlParameter("msj", Types.VARCHAR));
 
-    this.spConsultaDocSaldo = new SimpleJdbcCall(jdbcTemplate)
-        .withProcedureName("sp_mc_consulta_docsaldo")
-        .withoutProcedureColumnMetaDataAccess()
-        .declareParameters(
-            new SqlParameter("modo", Types.INTEGER),
-            new SqlParameter("fecpro", Types.TIMESTAMP),
-            new SqlParameter("idcliente", Types.VARCHAR),
-            new SqlParameter("idvendedor", Types.VARCHAR),
-            new SqlParameter("documento", Types.VARCHAR),
-            new SqlParameter("numcobro", Types.VARCHAR),
-            new SqlParameter("factura", Types.VARCHAR),
-            new SqlParameter("fecini", Types.TIMESTAMP),
-            new SqlParameter("saldofac", Types.DECIMAL),
-            new SqlParameter("userid", Types.VARCHAR),
-            new SqlParameter("equipo", Types.VARCHAR),
-            new SqlParameter("codret", Types.INTEGER),
-            new SqlParameter("msj", Types.VARCHAR));
+    this.spConsultaDocSaldo =
+        new SimpleJdbcCall(jdbcTemplate)
+            .withProcedureName("sp_mc_consulta_docsaldo")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("modo", Types.INTEGER),
+                new SqlParameter("fecpro", Types.TIMESTAMP),
+                new SqlParameter("idcliente", Types.VARCHAR),
+                new SqlParameter("idvendedor", Types.VARCHAR),
+                new SqlParameter("documento", Types.VARCHAR),
+                new SqlParameter("numcobro", Types.VARCHAR),
+                new SqlParameter("factura", Types.VARCHAR),
+                new SqlParameter("fecini", Types.TIMESTAMP),
+                new SqlParameter("saldofac", Types.DECIMAL),
+                new SqlParameter("userid", Types.VARCHAR),
+                new SqlParameter("equipo", Types.VARCHAR),
+                new SqlOutParameter("codret", Types.INTEGER),
+                new SqlOutParameter("msj", Types.VARCHAR));
   }
 
   public ClientOverdueDocumentDto executeSpConsultExpiredClientDocument(
       String ruc, String idCompania, int modo) {
 
-    MapSqlParameterSource in = new MapSqlParameterSource()
-        .addValue("idcliente", ruc)
-        .addValue("userid", "wsrvmc")
-        .addValue("modo", modo)
-        .addValue("equipo", "wserver")
-        .addValue("idvendedor", "")
-        .addValue("documento", "")
-        .addValue("fecini", "")
-        .addValue("fecfin", "")
-        .addValue("codret", "")
-        .addValue("msj", "");
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("idcliente", ruc)
+            .addValue("userid", "wsrvmc")
+            .addValue("modo", modo)
+            .addValue("equipo", "wserver")
+            .addValue("idvendedor", "")
+            .addValue("documento", "")
+            .addValue("fecini", "")
+            .addValue("fecfin", "")
+            .addValue("codret", "")
+            .addValue("msj", "");
     try {
       Map<String, Object> out = spValidacionCrediticia.execute(in);
       @SuppressWarnings("unchecked")
@@ -118,17 +125,18 @@ public class CreditCheckDaoImp implements CreditCheckDao {
   public ListClientOverdueDocumentEntity executeSpConsultExpiredClientDocumentList(
       String ruc, String idCompania, int modo) {
 
-    MapSqlParameterSource in = new MapSqlParameterSource()
-        .addValue("idcliente", ruc)
-        .addValue("userid", "wsrvmc")
-        .addValue("modo", modo)
-        .addValue("equipo", "wserver")
-        .addValue("idvendedor", "")
-        .addValue("documento", "")
-        .addValue("fecini", "")
-        .addValue("fecfin", "")
-        .addValue("codret", "")
-        .addValue("msj", "");
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("idcliente", ruc)
+            .addValue("userid", "wsrvmc")
+            .addValue("modo", modo)
+            .addValue("equipo", "wserver")
+            .addValue("idvendedor", "")
+            .addValue("documento", "")
+            .addValue("fecini", "")
+            .addValue("fecfin", "")
+            .addValue("codret", "")
+            .addValue("msj", "");
     try {
       Map<String, Object> out = spValidacionCrediticia.execute(in);
       @SuppressWarnings("unchecked")
@@ -157,17 +165,18 @@ public class CreditCheckDaoImp implements CreditCheckDao {
   }
 
   public CheckValidatorDto getConsultCreditValidation(String ruc, String idCompania, int modo) {
-    MapSqlParameterSource in = new MapSqlParameterSource()
-        .addValue("idcliente", ruc)
-        .addValue("userid", "wsrvmc")
-        .addValue("modo", modo)
-        .addValue("equipo", "wserver")
-        .addValue("idvendedor", "")
-        .addValue("documento", "")
-        .addValue("fecini", "")
-        .addValue("fecfin", "")
-        .addValue("codret", "")
-        .addValue("msj", "");
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("idcliente", ruc)
+            .addValue("userid", "wsrvmc")
+            .addValue("modo", modo)
+            .addValue("equipo", "wserver")
+            .addValue("idvendedor", "")
+            .addValue("documento", "")
+            .addValue("fecini", "")
+            .addValue("fecfin", "")
+            .addValue("codret", "")
+            .addValue("msj", "");
     try {
       Map<String, Object> out = spValidacionCrediticia.execute(in);
       @SuppressWarnings("unchecked")
@@ -199,17 +208,18 @@ public class CreditCheckDaoImp implements CreditCheckDao {
   public ClientSinSoporteEntity executeSpConsultDocumentClientDontSupport(
       String ruc, String idCompania, int modo) {
 
-    MapSqlParameterSource in = new MapSqlParameterSource()
-        .addValue("idcliente", ruc)
-        .addValue("userid", "wsrvmc")
-        .addValue("modo", modo)
-        .addValue("equipo", "wserver")
-        .addValue("idvendedor", "")
-        .addValue("documento", "")
-        .addValue("fecini", "")
-        .addValue("fecfin", "")
-        .addValue("codret", "")
-        .addValue("msj", "");
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("idcliente", ruc)
+            .addValue("userid", "wsrvmc")
+            .addValue("modo", modo)
+            .addValue("equipo", "wserver")
+            .addValue("idvendedor", "")
+            .addValue("documento", "")
+            .addValue("fecini", "")
+            .addValue("fecfin", "")
+            .addValue("codret", "")
+            .addValue("msj", "");
     try {
       Map<String, Object> out = spValidacionCrediticia.execute(in);
       @SuppressWarnings("unchecked")
@@ -234,17 +244,18 @@ public class CreditCheckDaoImp implements CreditCheckDao {
   public ListaClientSinSoporteEntity executeSpConsultDocumentClientDontSupport2(
       String ruc, String idCompania, int modo) {
 
-    MapSqlParameterSource in = new MapSqlParameterSource()
-        .addValue("idcliente", ruc)
-        .addValue("userid", "wsrvmc")
-        .addValue("modo", modo)
-        .addValue("equipo", "wserver")
-        .addValue("idvendedor", "")
-        .addValue("documento", "")
-        .addValue("fecini", "")
-        .addValue("fecfin", "")
-        .addValue("codret", "")
-        .addValue("msj", "");
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("idcliente", ruc)
+            .addValue("userid", "wsrvmc")
+            .addValue("modo", modo)
+            .addValue("equipo", "wserver")
+            .addValue("idvendedor", "")
+            .addValue("documento", "")
+            .addValue("fecini", "")
+            .addValue("fecfin", "")
+            .addValue("codret", "")
+            .addValue("msj", "");
     try {
       Map<String, Object> out = spValidacionCrediticia.execute(in);
       @SuppressWarnings("unchecked")
@@ -274,21 +285,23 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
-  public ClientStatusAccountHeaderEntity executeSpConsultClientStatusAccountHeader(String ruc, int modo) {
-    MapSqlParameterSource in = new MapSqlParameterSource()
-        .addValue("modo", modo)
-        .addValue("fecpro", "")
-        .addValue("idcliente", ruc)
-        .addValue("idvendedor", "")
-        .addValue("documento", "")
-        .addValue("factura", "")
-        .addValue("numcobro", "")
-        .addValue("fecini", "")
-        .addValue("saldofac", null)
-        .addValue("userid", "wsrvmc")
-        .addValue("equipo", "wserver")
-        .addValue("codret", null)
-        .addValue("msj", "");
+  public ClientStatusAccountHeaderEntity executeSpConsultClientStatusAccountHeader(
+      String ruc, int modo) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("modo", modo)
+            .addValue("fecpro", "")
+            .addValue("idcliente", ruc)
+            .addValue("idvendedor", "")
+            .addValue("documento", "")
+            .addValue("factura", "")
+            .addValue("numcobro", "")
+            .addValue("fecini", "")
+            .addValue("saldofac", null)
+            .addValue("userid", "wsrvmc")
+            .addValue("equipo", "wserver")
+            .addValue("codret", null)
+            .addValue("msj", "");
     try {
       Map<String, Object> out = spConsultaDocSaldo.execute(in);
       @SuppressWarnings("unchecked")
@@ -297,8 +310,14 @@ public class CreditCheckDaoImp implements CreditCheckDao {
       if (rows == null || rows.isEmpty()) {
         Integer codret = (Integer) out.get("codret");
         String msj = (String) out.get("msj");
-        throw new RuntimeException("SP no retornó filas para cliente=" + ruc +
-            " (codret=" + codret + ", msj=" + msj + ")");
+        throw new RuntimeException(
+            "SP no retornó filas para cliente="
+                + ruc
+                + " (codret="
+                + codret
+                + ", msj="
+                + msj
+                + ")");
       }
 
       ClientStatusAccountHeaderEntity e = new ClientStatusAccountHeaderEntity();
@@ -313,21 +332,23 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
-  public List<ClientStatusAccountDetailEntity> executeSpConsultClientStatusAccountDetail(String ruc, int modo) {
-    MapSqlParameterSource in = new MapSqlParameterSource()
-        .addValue("modo", modo)
-        .addValue("fecpro", null, Types.TIMESTAMP)
-        .addValue("idcliente", ruc)
-        .addValue("idvendedor", null, Types.VARCHAR)
-        .addValue("documento", null, Types.VARCHAR)
-        .addValue("numcobro", null, Types.VARCHAR)
-        .addValue("factura", null, Types.VARCHAR)
-        .addValue("fecini", null, Types.TIMESTAMP)
-        .addValue("saldofac", null, Types.DECIMAL)
-        .addValue("userid", "wsrvmc")
-        .addValue("equipo", "wserver")
-        .addValue("codret", null)
-        .addValue("msj", "");
+  public List<ClientStatusAccountDetailEntity> executeSpConsultClientStatusAccountDetail(
+      String ruc, int modo) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("modo", modo)
+            .addValue("fecpro", null, Types.TIMESTAMP)
+            .addValue("idcliente", ruc)
+            .addValue("idvendedor", null, Types.VARCHAR)
+            .addValue("documento", null, Types.VARCHAR)
+            .addValue("numcobro", null, Types.VARCHAR)
+            .addValue("factura", null, Types.VARCHAR)
+            .addValue("fecini", null, Types.TIMESTAMP)
+            .addValue("saldofac", null, Types.DECIMAL)
+            .addValue("userid", "wsrvmc")
+            .addValue("equipo", "wserver")
+            .addValue("codret", null)
+            .addValue("msj", "");
     try {
       Map<String, Object> out = spConsultaDocSaldo.execute(in);
       @SuppressWarnings("unchecked")
@@ -355,6 +376,38 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
 
+  public BusinessDaysDto executeSpGetBusinessDaysCheck(String fecha, int modo) {
+
+    Timestamp fechaTimestamp = null;
+    try {
+      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+      Date parsedDate = dateFormat.parse(fecha);
+      fechaTimestamp = new Timestamp(parsedDate.getTime());
+      MapSqlParameterSource in =
+          new MapSqlParameterSource()
+              .addValue("modo", modo)
+              .addValue("fecpro", fechaTimestamp, Types.TIMESTAMP)
+              .addValue("idcliente", null, Types.VARCHAR)
+              .addValue("idvendedor", null, Types.VARCHAR)
+              .addValue("documento", null, Types.VARCHAR)
+              .addValue("numcobro", null, Types.VARCHAR)
+              .addValue("factura", null, Types.VARCHAR)
+              .addValue("fecini", null, Types.TIMESTAMP)
+              .addValue("saldofac", null, Types.DECIMAL)
+              .addValue("userid", "wsrvmc")
+              .addValue("equipo", "wserver")
+              .addValue("codret", null)
+              .addValue("msj", null);
+
+     Map<String, Object> out = spConsultaDocSaldo.execute(in);
+        BusinessDaysDto response = new BusinessDaysDto();
+        response.setCodigo(CoerceHelperUtils.toIntObject(out.get("codret"))); 
+        response.setDescripcion(CoerceHelperUtils.stringOrEmpty(out.get("msj")));
+        return response;
+    } catch (Exception e) {
+      throw new RuntimeException("Error en executeSpGetBusinessDaysCheck: " + e.getMessage(), e);
+    }
   }
 }

@@ -1,11 +1,12 @@
 package tuval.api.web.models.dao.tuval.devoluciones.Imp;
 
-import jakarta.annotation.PostConstruct;
 import java.sql.Types;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,26 +19,26 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.models.Utils.CoerceHelperUtils;
 import tuval.api.web.models.dao.tuval.devoluciones.InvoiceReturnDao;
-import tuval.api.web.models.dto.devolucion.DetailDevolutionRequest;
-import tuval.api.web.models.dto.devolucion.HeaderDevolutionRequest;
+import tuval.api.web.models.dto.devolucion.ItemBinDevolutionDto;
+import tuval.api.web.models.dto.devolucion.ItemBinResponseDto;
+import tuval.api.web.models.dto.devolucion.notaCredito.DocumentNcDto;
 import tuval.api.web.models.entity.tuval.devoluciones.DevolutionResponse;
+import tuval.api.web.models.request.devoluciones.DetailDevolutionRequest;
+import tuval.api.web.models.request.devoluciones.HeaderDevolutionRequest;
+import tuval.api.web.models.request.devoluciones.HeaderNoteCreditRequest;
 
 @Repository
 public class InvoiceReturnDaoImp implements InvoiceReturnDao {
 
-  @Autowired
-  @Qualifier("tuvalJdbcTemplate")
-  private JdbcTemplate jdbcTemplate;
+  private final JdbcTemplate jdbcTemplate;
+  private final SimpleJdbcCall spDevolucionIv;
+  private final SimpleJdbcCall spValidadGeneracionNc;
+  private final SimpleJdbcCall spDeleteNc;
 
-  private SimpleJdbcCall spDevolucionIv;
-
-  @PostConstruct
-  public void init() {
-    validateConfiguration();
+  public InvoiceReturnDaoImp(@Qualifier("tuvalJdbcTemplate") JdbcTemplate jdbcTemplate) {
+    this.jdbcTemplate = Objects.requireNonNull(jdbcTemplate, "El JdbcTemplate no puede ser null");
     this.spDevolucionIv =
         new SimpleJdbcCall(jdbcTemplate)
-            // .withSchemaName("dbo") // descomenta si tu SP está en dbo y tu usuario no
-            // tiene default schema
             .withProcedureName("sp_msw_movimientos_iv")
             .withoutProcedureColumnMetaDataAccess()
             .declareParameters(
@@ -67,12 +68,20 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
                 new SqlInOutParameter("msj", Types.VARCHAR),
                 new SqlParameter("idguia", Types.INTEGER),
                 new SqlParameter("guia", Types.VARCHAR));
-  }
 
-  public void validateConfiguration() {
-    if (jdbcTemplate == null) {
-      throw new IllegalStateException("JdbcTemplate no ha sido inyectado correctamente");
-    }
+    this.spValidadGeneracionNc =
+        new SimpleJdbcCall(jdbcTemplate)
+            .withProcedureName("MSW_SP_VALIDAR_GENERACION_NC_VTA")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("@docu", Types.VARCHAR), new SqlParameter("@tipo", Types.VARCHAR));
+
+    this.spDeleteNc =
+        new SimpleJdbcCall(jdbcTemplate)
+            .withProcedureName("MSW_SP_ELIMINACION_NC_VTA_CAB_DET")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("@docu", Types.VARCHAR), new SqlParameter("@tipo", Types.VARCHAR));
   }
 
   @Override
@@ -636,8 +645,7 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
   }
 
   @Override
-  public ResponseEntity<Map<String, Object>> consultItemBin(
-      String item, String bodegaOrigen, int modo) {
+  public ItemBinResponseDto consultItemBin(String item, String bodegaOrigen, int modo) {
     Map<String, Object> response = new HashMap<>();
     MapSqlParameterSource in =
         new MapSqlParameterSource()
@@ -672,33 +680,32 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
       Map<String, Object> result = spDevolucionIv.execute(in);
 
       @SuppressWarnings("unchecked")
-      List<Map<String, Object>> registros = (List<Map<String, Object>>) result.get("#result-set-1");
+      List<Map<String, Object>> resultList =
+          (List<Map<String, Object>>) result.get("#result-set-1");
 
-      // ✅ Ordenar de forma descendente por "bodega"
-      registros.sort(
-          (a, b) -> {
-            // 📌 Obtener los valores de "bodega", si no existe el valor, se usa un string
-            // vacío
-            String bodegaA = (String) a.getOrDefault("bodega", "");
-            String bodegaB = (String) b.getOrDefault("bodega", "");
-
-            // 🔄 Orden descendente (de Z a A)
-            return bodegaB.compareTo(bodegaA);
-          });
-
-      if (registros != null && !registros.isEmpty()) {
-        Map<String, Object> registro = registros.get(0); // 👈 Tomamos el primer elemento
-        response.put("success", true);
-        response.put("message", "Compartimento generado correctamente");
-        response.put("data", registro);
-        response.put("lista", registros);
-        return ResponseEntity.ok(response);
-      } else {
-        return buildError("No se encontraron resultados para el compartimento.");
+      if (resultList == null || resultList.isEmpty()) {
+        throw new IllegalStateException(
+            "No se encontraron resultados para el item y bodega proporcionados.");
       }
+      List<ItemBinDevolutionDto> dtos =
+          resultList.stream()
+              .map(
+                  row ->
+                      new ItemBinDevolutionDto(
+                          CoerceHelperUtils.stringOrEmpty(row.getOrDefault("Item", "")),
+                          CoerceHelperUtils.stringOrEmpty(row.getOrDefault("bodega", "")),
+                          CoerceHelperUtils.stringOrEmpty(row.getOrDefault("bin", ""))))
+              .collect(Collectors.toList());
 
+      dtos.sort(
+          Comparator.comparing(
+              ItemBinDevolutionDto::getBodega, Comparator.nullsLast(Comparator.reverseOrder())));
+      ItemBinResponseDto responseDto = new ItemBinResponseDto();
+      responseDto.setDetalle(dtos.get(0));
+      responseDto.setLista(dtos);
+      return responseDto;
     } catch (Exception e) {
-      return buildException(e);
+      throw new RuntimeException("Error al consultar el item bin: " + e.getMessage(), e);
     }
   }
 
@@ -742,5 +749,105 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
     response.put("success", false);
     response.put("message", e.getMessage());
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+  }
+
+  /*** proceso de generacion de nota de credito pruebas */
+
+   @Override
+  public DocumentNcDto executeSpExistenceNoteCreditDao( String document, String tipo) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("@docu", document)
+            .addValue("@tipo", tipo);
+
+    try {
+      Map<String, Object> out = spValidadGeneracionNc.execute(in);
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> rs = (List<Map<String, Object>>) out.get("#result-set-1");
+      if (rs == null || rs.isEmpty()) {
+        throw new RuntimeException("SP no retornó filas para cliente=" + document);
+      }
+      Map<String, Object> row = rs.get(0);
+      DocumentNcDto dto = new DocumentNcDto();
+      dto.setDocOrigen(CoerceHelperUtils.stringOrEmpty(row.get("I_vDOCU_ORIGEN")));
+      dto.setIdTipo(CoerceHelperUtils.stringOrEmpty(row.get("I_vID_TIPO")));
+      dto.setCodigo(CoerceHelperUtils.stringOrEmpty(row.get("I_vCODIGO")));
+      dto.setMensaje(CoerceHelperUtils.stringOrEmpty(row.get("I_vMENSAJE")));
+      dto.setTipoDocGenerado(CoerceHelperUtils.stringOrEmpty(row.get("TIPO_DOC_GENERADO")));
+      dto.setDocGenerado(CoerceHelperUtils.stringOrEmpty(row.get("DOC_GENERADO")));
+      // dto.setFecha(CoerceHelperUtils.stringOrEmpty(out.get("I_vFECHA")));
+
+      Object fechaObj = row.get("I_vFECHA");
+      if (fechaObj != null) {
+        if (fechaObj instanceof java.sql.Timestamp) {
+          dto.setFecha(((java.sql.Timestamp) fechaObj).toLocalDateTime());
+        } else if (fechaObj instanceof java.time.LocalDateTime) {
+          dto.setFecha((java.time.LocalDateTime) fechaObj);
+        }
+      }
+
+      return dto;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(
+          "Error en la validacion de existencia de Nota de Credito: " + e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public DocumentNcDto executeSpValidateExistsNc(HeaderNoteCreditRequest header) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("@docu", header.getDocOrigen())
+            .addValue("@tipo", header.getIdTipo());
+
+    try {
+      Map<String, Object> out = spValidadGeneracionNc.execute(in);
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> rs = (List<Map<String, Object>>) out.get("#result-set-1");
+      if (rs == null || rs.isEmpty()) {
+        throw new RuntimeException("SP no retornó filas para cliente=" + header.getDocOrigen());
+      }
+      Map<String, Object> row = rs.get(0);
+      DocumentNcDto dto = new DocumentNcDto();
+      dto.setDocOrigen(CoerceHelperUtils.stringOrEmpty(row.get("I_vDOCU_ORIGEN")));
+      dto.setIdTipo(CoerceHelperUtils.stringOrEmpty(row.get("I_vID_TIPO")));
+      dto.setCodigo(CoerceHelperUtils.stringOrEmpty(row.get("I_vCODIGO")));
+      dto.setMensaje(CoerceHelperUtils.stringOrEmpty(row.get("I_vMENSAJE")));
+      dto.setTipoDocGenerado(CoerceHelperUtils.stringOrEmpty(row.get("TIPO_DOC_GENERADO")));
+      dto.setDocGenerado(CoerceHelperUtils.stringOrEmpty(row.get("DOC_GENERADO")));
+      // dto.setFecha(CoerceHelperUtils.stringOrEmpty(out.get("I_vFECHA")));
+
+      Object fechaObj = row.get("I_vFECHA");
+      if (fechaObj != null) {
+        if (fechaObj instanceof java.sql.Timestamp) {
+          dto.setFecha(((java.sql.Timestamp) fechaObj).toLocalDateTime());
+        } else if (fechaObj instanceof java.time.LocalDateTime) {
+          dto.setFecha((java.time.LocalDateTime) fechaObj);
+        }
+      }
+
+      return dto;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(
+          "Error en la validacion de existencia de Nota de Credito: " + e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public void executeSpDeleteExistenceNc(HeaderNoteCreditRequest header) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("@docu", header.getDocOrigen())
+            .addValue("@tipo", header.getIdTipo());
+    try {
+      spDeleteNc.execute(in);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Error en la eliminacion de Nota de Credito: " + e.getMessage(), e);
+    }
   }
 }
