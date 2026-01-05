@@ -8,6 +8,7 @@ import tuval.api.web.models.dao.tuval.transacciones.transactionDao;
 import tuval.api.web.models.dto.transacciones.facturacionVenta.responseInvoiceVtaDto;
 import tuval.api.web.models.dto.transacciones.facturacionVenta.validateGenerateInvoiceDto;
 import tuval.api.web.models.dto.transacciones.reciboCompraL.validateReceivedLDto;
+import tuval.api.web.models.dto.transacciones.reciboCompraL.StatusReceptionOrderItemLDto;
 import tuval.api.web.models.dto.transacciones.reciboCompraL.validateDto;
 import tuval.api.web.models.request.transacciones.facturacionVenta.ReceivedInvoiceRequest;
 import tuval.api.web.models.request.transacciones.facturacionVenta.ResponseConsultInvoiceRequest;
@@ -56,6 +57,11 @@ public class transactionService {
     public validateDto responseReceivedL(validateReceidLRequest request) {
         return transactionDao.executeSpResponseReceivedL(request);
 
+    }
+
+
+    public StatusReceptionOrderItemLDto stateReceivedLService(validateReceidLRequest request) {
+        return transactionDao.executeSpRepsonseStatusReceptionOrderItemLDao(request);
     }
 
     /***

@@ -15,6 +15,7 @@ import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.transacciones.facturacionVenta.responseInvoiceVtaDto;
 import tuval.api.web.models.dto.transacciones.facturacionVenta.validateGenerateInvoiceDto;
 import tuval.api.web.models.dto.transacciones.reciboCompraL.validateReceivedLDto;
+import tuval.api.web.models.dto.transacciones.reciboCompraL.StatusReceptionOrderItemLDto;
 import tuval.api.web.models.dto.transacciones.reciboCompraL.validateDto;
 import tuval.api.web.models.request.transacciones.facturacionVenta.ReceivedInvoiceRequest;
 import tuval.api.web.models.request.transacciones.facturacionVenta.ResponseConsultInvoiceRequest;
@@ -96,11 +97,11 @@ public class TransactionController {
 
 
     @CrossOrigin
-    @PostMapping("/estado-recibo-compra-l")
+    @PostMapping("/estado-recepcion-recibo-compra-l")
     public ResponseEntity<Map<String, Object>> estadoReciboCompraL(@RequestBody validateReceidLRequest request){
         try {
-            // validateResponseEntity resultado = transactionService.stateReceivedLService();
-            return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", request);
+            StatusReceptionOrderItemLDto resultado = transactionService.stateReceivedLService(request);
+            return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resultado);
         } catch (Exception e) {
             e.printStackTrace(); // para ver la traza completa
             return ResponseJsonUtils.buildException(e);

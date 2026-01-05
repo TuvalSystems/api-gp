@@ -10,5 +10,4 @@ public class StatusReceptionOrderItemLDto {
     private String docuOrigen;
     private String idTipo;
     private String estado;
-    
 }
