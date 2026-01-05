@@ -13,14 +13,14 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.models.Utils.InvoiceHelperUtils;
-import tuval.api.web.models.dto.transacciones.facturacionVenta.DetailInvoiceRequest;
-import tuval.api.web.models.dto.transacciones.facturacionVenta.HeaderInvoiceRequest;
-import tuval.api.web.models.dto.transacciones.facturacionVenta.ResponseConsultInvoiceRequest;
-import tuval.api.web.models.dto.transacciones.reciboCompraL.DetailReceivedLRequest;
-import tuval.api.web.models.dto.transacciones.reciboCompraL.HeaderReceivedLRequest;
-import tuval.api.web.models.dto.transacciones.reciboCompraL.validateReceidLRequestEntity;
 import tuval.api.web.models.entity.tuval.transacciones.facturacionVenta.responseInvoiceVtaEntity;
 import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateResponseEntity;
+import tuval.api.web.models.request.transacciones.facturacionVenta.DetailInvoiceRequest;
+import tuval.api.web.models.request.transacciones.facturacionVenta.HeaderInvoiceRequest;
+import tuval.api.web.models.request.transacciones.facturacionVenta.ResponseConsultInvoiceRequest;
+import tuval.api.web.models.request.transacciones.reciboCompraL.DetailReceivedLRequest;
+import tuval.api.web.models.request.transacciones.reciboCompraL.HeaderReceivedLRequest;
+import tuval.api.web.models.request.transacciones.reciboCompraL.validateReceidLRequest;
 
 @Repository
 public class transactionDao {
@@ -41,7 +41,7 @@ public class transactionDao {
     }
 
     public validateResponseEntity executeSpValidateGenerateReceivedItemL(
-            validateReceidLRequestEntity request) {
+            validateReceidLRequest request) {
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                     .withProcedureName("MSW_SP_VALIDAR_GENERACION_RECEPCION")
@@ -92,7 +92,7 @@ public class transactionDao {
     }
 
     public validateResponseEntity executeSpDeleteReceivedHeaderAndDetail(
-            validateReceidLRequestEntity request) {
+            validateReceidLRequest request) {
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                     .withProcedureName("MSW_SP_ELIMINACION_RECEPCION_CAB_DET")
@@ -175,7 +175,7 @@ public class transactionDao {
         jdbcCall.execute(params);
     }
 
-    public void executeSpGenerateProcessReceivedL(validateReceidLRequestEntity request) {
+    public void executeSpGenerateProcessReceivedL(validateReceidLRequest request) {
 
         SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("MSW_SP_CREACION_RECEPCION_OC")
@@ -188,7 +188,7 @@ public class transactionDao {
         jdbcCall.execute(params);
     }
 
-    public validateResponseEntity executeSpResponseReceivedL(validateReceidLRequestEntity request) {
+    public validateResponseEntity executeSpResponseReceivedL(validateReceidLRequest request) {
         try {
             SimpleJdbcCall jdbcCall = new SimpleJdbcCall(jdbcTemplate)
                     .withProcedureName("MSW_SP_VALIDAR_GENERACION_RECEPCION")
@@ -238,6 +238,9 @@ public class transactionDao {
         }
     }
 
+
+
+    
     /** proceso de facturacion */
     public void executeSpStoreHeaderInvoice(HeaderInvoiceRequest req) {
         try {

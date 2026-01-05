@@ -5,15 +5,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import tuval.api.web.models.dao.tuval.transacciones.transactionDao;
-import tuval.api.web.models.dto.transacciones.facturacionVenta.ReceivedInvoiceRequest;
-import tuval.api.web.models.dto.transacciones.facturacionVenta.ResponseConsultInvoiceRequest;
-import tuval.api.web.models.dto.transacciones.reciboCompraL.DetailReceivedLRequest;
-import tuval.api.web.models.dto.transacciones.reciboCompraL.ReceivedSalesLRequest;
-import tuval.api.web.models.dto.transacciones.reciboCompraL.validateReceidLRequestEntity;
 import tuval.api.web.models.entity.tuval.transacciones.facturacionVenta.responseInvoiceVtaEntity;
 import tuval.api.web.models.entity.tuval.transacciones.facturacionVenta.validateGenerateInvoiceResponseEntity;
 import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateReceivedLResponseEntity;
 import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateResponseEntity;
+import tuval.api.web.models.request.transacciones.facturacionVenta.ReceivedInvoiceRequest;
+import tuval.api.web.models.request.transacciones.facturacionVenta.ResponseConsultInvoiceRequest;
+import tuval.api.web.models.request.transacciones.reciboCompraL.DetailReceivedLRequest;
+import tuval.api.web.models.request.transacciones.reciboCompraL.ReceivedSalesLRequest;
+import tuval.api.web.models.request.transacciones.reciboCompraL.validateReceidLRequest;
 
 @Service
 public class transactionService {
@@ -21,11 +21,11 @@ public class transactionService {
 
     private transactionDao transactionDao;
 
-    public validateResponseEntity validateReceivedL(validateReceidLRequestEntity request) {
+    public validateResponseEntity validateReceivedL(validateReceidLRequest request) {
         return transactionDao.executeSpValidateGenerateReceivedItemL(request);
     }
 
-    public validateResponseEntity deleteReceivedL(validateReceidLRequestEntity request) {
+    public validateResponseEntity deleteReceivedL(validateReceidLRequest request) {
         return transactionDao.executeSpDeleteReceivedHeaderAndDetail(request);
     }
 
@@ -45,7 +45,7 @@ public class transactionService {
         return resp;
     }
 
-    public validateReceivedLResponseEntity processReceivedL(validateReceidLRequestEntity request) {
+    public validateReceivedLResponseEntity processReceivedL(validateReceidLRequest request) {
         transactionDao.executeSpGenerateProcessReceivedL(request);
         var resp = new validateReceivedLResponseEntity();
         resp.setCodigo("0");
@@ -53,7 +53,7 @@ public class transactionService {
         return resp;
     }
 
-    public validateResponseEntity responseReceivedL(validateReceidLRequestEntity request) {
+    public validateResponseEntity responseReceivedL(validateReceidLRequest request) {
         return transactionDao.executeSpResponseReceivedL(request);
 
     }

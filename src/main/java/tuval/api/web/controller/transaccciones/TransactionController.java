@@ -12,14 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
-import tuval.api.web.models.dto.transacciones.facturacionVenta.ReceivedInvoiceRequest;
-import tuval.api.web.models.dto.transacciones.facturacionVenta.ResponseConsultInvoiceRequest;
-import tuval.api.web.models.dto.transacciones.reciboCompraL.ReceivedSalesLRequest;
-import tuval.api.web.models.dto.transacciones.reciboCompraL.validateReceidLRequestEntity;
 import tuval.api.web.models.entity.tuval.transacciones.facturacionVenta.responseInvoiceVtaEntity;
 import tuval.api.web.models.entity.tuval.transacciones.facturacionVenta.validateGenerateInvoiceResponseEntity;
 import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateReceivedLResponseEntity;
 import tuval.api.web.models.entity.tuval.transacciones.reciboCompraL.validateResponseEntity;
+import tuval.api.web.models.request.transacciones.facturacionVenta.ReceivedInvoiceRequest;
+import tuval.api.web.models.request.transacciones.facturacionVenta.ResponseConsultInvoiceRequest;
+import tuval.api.web.models.request.transacciones.reciboCompraL.ReceivedSalesLRequest;
+import tuval.api.web.models.request.transacciones.reciboCompraL.validateReceidLRequest;
 import tuval.api.web.models.service.tuval.transacciones.transactionService;
 
 @RestController
@@ -32,7 +32,7 @@ public class TransactionController {
     @CrossOrigin
     @PostMapping("/validar-generacion-documento-recibo-compra-l")
     public ResponseEntity<Map<String, Object>> validarGeneracionRecepcion(
-            @RequestBody validateReceidLRequestEntity request) {
+            @RequestBody validateReceidLRequest request) {
         try {
             validateResponseEntity resultado = transactionService.validateReceivedL(request);
             return ResponseJsonUtils.buildSuccessWithData("Validacion exitosa", resultado);
@@ -45,7 +45,7 @@ public class TransactionController {
 
     @CrossOrigin
     @PostMapping("/eliminar-documento-recibo-compra-l")
-    public ResponseEntity<Map<String, Object>> eliminarReciboItemL(@RequestBody validateReceidLRequestEntity request) {
+    public ResponseEntity<Map<String, Object>> eliminarReciboItemL(@RequestBody validateReceidLRequest request) {
         try {
             validateResponseEntity resultado = transactionService.deleteReceivedL(request);
             return ResponseJsonUtils.buildSuccessWithData("Eliminacion exitosa", resultado);
@@ -71,7 +71,7 @@ public class TransactionController {
     @CrossOrigin
     @PostMapping("/generar-documento-recibo-compra-l")
     public ResponseEntity<Map<String, Object>> procesarReciboCompraL(
-            @RequestBody validateReceidLRequestEntity request) {
+            @RequestBody validateReceidLRequest request) {
         try {
             validateReceivedLResponseEntity resultado = transactionService.processReceivedL(request);
             return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resultado);
@@ -84,7 +84,7 @@ public class TransactionController {
     @CrossOrigin
     @PostMapping("/respuesta-documento-recibo-compra-l")
     public ResponseEntity<Map<String, Object>> respuestaReciboCompraL(
-            @RequestBody validateReceidLRequestEntity request) {
+            @RequestBody validateReceidLRequest request) {
         try {
           validateResponseEntity resultado = transactionService.responseReceivedL(request);
             return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resultado);
@@ -94,6 +94,18 @@ public class TransactionController {
         }
     }
 
+
+    @CrossOrigin
+    @PostMapping("/estado-recibo-compra-l")
+    public ResponseEntity<Map<String, Object>> estadoReciboCompraL(@RequestBody validateReceidLRequest request){
+        try {
+            // validateResponseEntity resultado = transactionService.stateReceivedLService();
+            return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", request);
+        } catch (Exception e) {
+            e.printStackTrace(); // para ver la traza completa
+            return ResponseJsonUtils.buildException(e);
+        }
+    }
 
     /** proceso de generacion de factura - apis  */
 
