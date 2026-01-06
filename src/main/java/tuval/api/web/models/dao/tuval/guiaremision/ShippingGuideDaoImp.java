@@ -875,7 +875,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             .addValue("documento_aduanero", h.getDocAduanero())
             .addValue("establecimiento_destino", h.getCodEstablecimientoDestino())
             .addValue("desc_establecimiento_destino", h.getDescEstablecimientoDestino())
-            .addValue("ruta", h.getRuta() == null ? "" : h.getRuta())
+            .addValue("ruta", h.getRuta() == null ? "ruta" : h.getRuta())
             .addValue("codigo_sustento", CoerceHelperUtils.emptyIfNull(h.getDocSustento()))
             .addValue("docu_sustento", CoerceHelperUtils.emptyIfNull(h.getNumDocSustento()))
             .addValue("nume_autorizacion", CoerceHelperUtils.emptyIfNull(h.getNumAutoDocSustento()))
