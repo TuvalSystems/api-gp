@@ -1,12 +1,13 @@
 package tuval.api.web.models.Utils;
 
 import jakarta.validation.ValidationException;
+import tuval.api.web.models.request.transacciones.facturacionVenta.DetailInvoiceRequest;
+import tuval.api.web.models.request.transacciones.facturacionVenta.HeaderInvoiceRequest;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
-import tuval.api.web.models.dto.transacciones.facturacionVenta.DetailInvoiceRequest;
-import tuval.api.web.models.dto.transacciones.facturacionVenta.HeaderInvoiceRequest;
 
 public class InvoiceHelperUtils {
 
