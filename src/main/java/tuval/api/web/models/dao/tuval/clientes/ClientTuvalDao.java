@@ -1,39 +1,31 @@
 package tuval.api.web.models.dao.tuval.clientes;
 
-import jakarta.annotation.PostConstruct;
 import java.sql.Types;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
+
+import tuval.api.web.models.dto.cliente.NewAddressStatusDto;
 import tuval.api.web.models.request.cliente.ClientRequest;
+import tuval.api.web.models.request.cliente.NewAddressRequest;
 
 @Repository
 public class ClientTuvalDao {
 
-  @Autowired
-  @Qualifier("tuvalJdbcTemplate")
-  private JdbcTemplate jdbcTemplate;
+  private final JdbcTemplate jdbcTemplate;
+  private final SimpleJdbcCall spClienteTuval;
+  private final SimpleJdbcCall spModifyClientTuval;
 
-  private SimpleJdbcCall spClienteTuval;
-
-
-  public void validateConfiguration() {
-    if (jdbcTemplate == null) {
-      throw new IllegalStateException("JdbcTemplate no ha sido inyectado correctamente");
-    }
-  }
-
-  @PostConstruct
-  public void init() {
-    validateConfiguration();
-
+  public ClientTuvalDao(@Qualifier("tuvalJdbcTemplate") JdbcTemplate jdbcTemplate) {
+    this.jdbcTemplate = jdbcTemplate;
     this.spClienteTuval =
         new SimpleJdbcCall(jdbcTemplate)
             .withProcedureName("MSW_SP_CREACION_MODIFICACION_CLIENTE")
@@ -66,7 +58,30 @@ public class ClientTuvalDao {
                 new SqlParameter("lista_precio", Types.VARCHAR),
                 new SqlParameter("punto_venta", Types.VARCHAR),
                 new SqlParameter("tipo_id", Types.VARCHAR))
-                .returningResultSet("resultados", new ColumnMapRowMapper());
+            .returningResultSet("resultados", new ColumnMapRowMapper());
+
+    this.spModifyClientTuval =
+        new SimpleJdbcCall(jdbcTemplate)
+            .withProcedureName("MSW_SP_CREACION_MODIFICACION_DIRECCION_CLIENTE")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("@RUC", Types.VARCHAR),
+                new SqlParameter("@VENDEDOR", Types.VARCHAR),
+                new SqlParameter("@CONTACTO", Types.VARCHAR),
+                new SqlParameter("@ID_DIRECCION", Types.VARCHAR),
+                new SqlParameter("@DIRECCION_1", Types.VARCHAR),
+                new SqlParameter("@DIRECCION_2", Types.VARCHAR),
+                new SqlParameter("@PAIS", Types.VARCHAR),
+                new SqlParameter("@CIUDAD", Types.VARCHAR),
+                new SqlParameter("@PROVINCIA", Types.VARCHAR),
+                new SqlParameter("@TELEFONO1", Types.VARCHAR),
+                new SqlParameter("@TELEFONO2", Types.VARCHAR),
+                new SqlParameter("@TELEFONO3", Types.VARCHAR),
+                new SqlParameter("@TELEFONO4", Types.VARCHAR),
+                new SqlParameter("@TERRITORIO", Types.VARCHAR),
+                new SqlParameter("@CORREO_ELECTRONICO_SRI", Types.VARCHAR),
+                new SqlParameter("@CORREO_ELECTRONICO_NOTIFICACION_INTERNA", Types.VARCHAR),
+                new SqlParameter("@punto_venta", Types.VARCHAR));
   }
 
   public void executeSpCreateOrModifyClient(ClientRequest cli) {
@@ -114,6 +129,68 @@ public class ClientTuvalDao {
       }
     } catch (Exception e) {
       throw new RuntimeException("SP executeSpStoreHeaderDeliveryNote falló: " + e.getMessage(), e);
+    }
+  }
+
+  public NewAddressStatusDto executeSpCreateOrModifyAddress(NewAddressRequest request) {
+    try {
+      MapSqlParameterSource in =
+          new MapSqlParameterSource()
+              .addValue("@RUC", request.getRuc())
+              .addValue("@VENDEDOR", request.getVendedor())
+              .addValue("@CONTACTO", request.getContacto())
+              .addValue("@ID_DIRECCION", request.getDireccionId())
+              .addValue("@DIRECCION_1", request.getDireccion1())
+              .addValue("@DIRECCION_2", request.getDireccion2())
+              .addValue("@PAIS", request.getPais())
+              .addValue("@CIUDAD", request.getCiudad())
+              .addValue("@PROVINCIA", request.getProvincia())
+              .addValue("@TELEFONO1", request.getTelefono1())
+              .addValue("@TELEFONO2", request.getTelefono2())
+              .addValue("@TELEFONO3", request.getTelefono3())
+              .addValue("@TELEFONO4", request.getTelefono4())
+              .addValue("@TERRITORIO", request.getTerritorio())
+              .addValue("@CORREO_ELECTRONICO_SRI", request.getCorreoSri())
+              .addValue("@CORREO_ELECTRONICO_NOTIFICACION_INTERNA", request.getCorreoNotificacion())
+              .addValue("@punto_venta", request.getPuntoVenta());
+
+      Map<String, Object> out = spModifyClientTuval.execute(in);
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> resultList = (List<Map<String, Object>>) out.get("#result-set-1");
+     if (resultList != null && !resultList.isEmpty()) {
+            String rawMessage = (String) resultList.get(0).get("ESTADO_TRANSACCION");
+
+            if (rawMessage != null) {
+                // VALIDACIÓN: Si NO empieza con EXITOSO, es un error de negocio del SP
+                if (!rawMessage.startsWith("EXITOSO")) {
+                    
+                    // Limpiamos el mensaje (quitamos el código *1234 si existe)
+                    String cleanError = rawMessage;
+                    if (rawMessage.contains("*")) {
+                        cleanError = rawMessage.split("\\*")[0].trim();
+                    }
+                    
+                    // LANZAMOS EXCEPCIÓN DE JAVA (El DAO aborta aquí)
+                    throw new RuntimeException(cleanError);
+                }
+
+                // ÉXITO: Parseamos y retornamos
+                String[] parts = rawMessage.split("-");
+                String mensaje = parts[0].trim();
+                String identificador = (parts.length > 1) ? parts[1].trim() : null;
+
+                return new NewAddressStatusDto(mensaje, identificador);
+            }
+        }
+      
+        throw new RuntimeException( "Error: Respuesta vacía o nula del SP");
+
+    } catch (ResponseStatusException e) {
+        // Si ya es una excepción controlada (la que lanzamos arriba), la dejamos pasar
+        throw e;
+    } catch (Exception e) {
+        // Errores de conexión, base de datos caída, etc.
+        throw new RuntimeException("Fallo técnico en SP executeSpCreateOrModifyAddress: " + e.getMessage(), e);
     }
   }
 }

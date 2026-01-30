@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
+import tuval.api.web.models.dto.cliente.SegmentsAbcDto;
 import tuval.api.web.models.entity.tuval.bodegas.ListPriceItemResponseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseResponseEntity;
+import tuval.api.web.models.request.bodegas.ItemRequest;
 import tuval.api.web.models.request.bodegas.StockWarehouseParamsRequest;
 import tuval.api.web.models.service.tuval.bodegas.StockWarehouseService;
 
@@ -75,11 +77,27 @@ public class StockWarehouseController {
       @Valid @RequestParam String item) {
 
     if (item.isEmpty()) {
-      return ResponseJsonUtils.buildError("Falta el campo " + "ruc" + "o está vacío.");
+      return ResponseJsonUtils.buildError("El campo de items no puede estar vacio.");
     }
     try {
       ListPriceItemResponseEntity response = stockWarehouseService.getListPricesService(item);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response.getData());
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @CrossOrigin
+  @PostMapping("consultar-lista-segmentacion-articulo-abc")
+  public ResponseEntity<Map<String, Object>> getMethodName(@Valid @RequestBody ItemRequest request) {
+    if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+      return ResponseJsonUtils.buildError("El campo de items no puede estar vacío.");
+    }
+    try {
+      List<SegmentsAbcDto> response = stockWarehouseService.getListSegmentacionAbcService(request.getItems());
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {
       e.printStackTrace();

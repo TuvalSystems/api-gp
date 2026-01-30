@@ -21,6 +21,7 @@ import tuval.api.web.models.dao.tuval.cobros.CreditCheckDao;
 import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
 import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
+import tuval.api.web.models.dto.cobros.CollectionSummaryDTO;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountDetailEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountHeaderEntity;
@@ -401,11 +402,52 @@ public class CreditCheckDaoImp implements CreditCheckDao {
               .addValue("codret", null)
               .addValue("msj", null);
 
-     Map<String, Object> out = spConsultaDocSaldo.execute(in);
-        BusinessDaysDto response = new BusinessDaysDto();
-        response.setCodigo(CoerceHelperUtils.toIntObject(out.get("codret"))); 
-        response.setDescripcion(CoerceHelperUtils.stringOrEmpty(out.get("msj")));
-        return response;
+      Map<String, Object> out = spConsultaDocSaldo.execute(in);
+      BusinessDaysDto response = new BusinessDaysDto();
+      response.setCodigo(CoerceHelperUtils.toIntObject(out.get("codret")));
+      response.setDescripcion(CoerceHelperUtils.stringOrEmpty(out.get("msj")));
+      return response;
+    } catch (Exception e) {
+      throw new RuntimeException("Error en executeSpGetBusinessDaysCheck: " + e.getMessage(), e);
+    }
+  }
+
+  public List<CollectionSummaryDTO> executeSpGetCollectionSumaryClientDao(String ruc, int modo) {
+    List<CollectionSummaryDTO> lista = new ArrayList<>();
+    try {
+      MapSqlParameterSource in =
+          new MapSqlParameterSource()
+              .addValue("modo", modo)
+              .addValue("fecpro", null, Types.TIMESTAMP)
+              .addValue("idcliente", ruc)
+              .addValue("idvendedor", null, Types.VARCHAR)
+              .addValue("documento", null, Types.VARCHAR)
+              .addValue("numcobro", null, Types.VARCHAR)
+              .addValue("factura", null, Types.VARCHAR)
+              .addValue("fecini", null, Types.TIMESTAMP)
+              .addValue("saldofac", null, Types.DECIMAL)
+              .addValue("userid", "wsrvmc")
+              .addValue("equipo", "wserver")
+              .addValue("codret", null)
+              .addValue("msj", null);
+
+      Map<String, Object> out = spConsultaDocSaldo.execute(in);
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> rs = (List<Map<String, Object>>) out.get("#result-set-1");
+      if (rs != null && !rs.isEmpty()) {
+        for (Map<String, Object> row : rs) {
+          CollectionSummaryDTO e = new CollectionSummaryDTO();
+          e.setRuc(CoerceHelperUtils.stringOrEmpty(row.get("Identificacion")));
+          e.setDocumento(CoerceHelperUtils.stringOrEmpty(row.get("Documento")));
+          e.setTipo(CoerceHelperUtils.stringOrEmpty(row.get("Tipo")));
+          e.setObservacion(CoerceHelperUtils.stringOrEmpty(row.get("Observacion")));
+          e.setFechaEmision(CoerceHelperUtils.toLocalDate(row.get("Fecha_Emision")));
+          e.setMontoOriginal(CoerceHelperUtils.toBigDecimal(row.get("Monto_Original")));
+          e.setSaldoCliente(CoerceHelperUtils.toBigDecimal(row.get("Saldo_Cliente")));
+          lista.add(e);
+        }
+      }
+      return lista;
     } catch (Exception e) {
       throw new RuntimeException("Error en executeSpGetBusinessDaysCheck: " + e.getMessage(), e);
     }

@@ -145,4 +145,7 @@ public class ClientDynamicDao {
       throw new RuntimeException("Error crítico insertando segmento: " + e.getMessage(), e);
     }
   }
+
+
+ 
 }

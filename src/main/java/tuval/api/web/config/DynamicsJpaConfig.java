@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -44,6 +45,12 @@ public class DynamicsJpaConfig {
         JdbcTemplate template = new JdbcTemplate(dataSource);
         template.setFetchSize(100); // Configuración opcional para mejor rendimiento
         return template;
+    }
+
+    @Primary
+    @Bean(name = "dynamicsNamedParameterJdbcTemplate")
+    public NamedParameterJdbcTemplate dynamicsNamedParameterJdbcTemplate(@Qualifier("dynamicsDataSource") DataSource dataSource) {
+        return new NamedParameterJdbcTemplate(dataSource);
     }
 
     @Primary
