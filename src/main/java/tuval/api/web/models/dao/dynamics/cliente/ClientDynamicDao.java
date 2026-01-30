@@ -13,7 +13,6 @@ import tuval.api.web.models.dto.cliente.ListSegmentClientDto;
 import tuval.api.web.models.dto.cliente.ListSellerDto;
 import tuval.api.web.models.dto.cliente.TypeSellerDto;
 import tuval.api.web.models.request.cliente.ClientSubsegmentRucRequest;
-import tuval.api.web.models.request.cliente.NewAddressRequest;
 import tuval.api.web.models.request.cliente.SellerRequest;
 
 @Repository

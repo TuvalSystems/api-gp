@@ -1,5 +1,6 @@
 package tuval.api.web.controller.cobros;
 
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
 import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
+import tuval.api.web.models.dto.cobros.CollectionSummaryDTO;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountResponseEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListClientOverdueDocumentEntity;
@@ -171,4 +173,17 @@ public class CollectorController {
       return ResponseJsonUtils.buildException(e);
     }
   }
+
+  @GetMapping("consultar-cobros-sin-aplicar")
+  public ResponseEntity<Map<String, Object>> obtenerConsultaCobrosSinAplicar(
+      @RequestParam(required = true) String ruc,
+      @RequestParam(required = true) String idCompania) {
+          try {
+      List<CollectionSummaryDTO> result = creditCheckService.getConsultCollectionSummaryService(ruc, idCompania);
+      return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
+    } catch (Exception e) {
+      e.printStackTrace();
+      return ResponseJsonUtils.buildException(e);
+    }
+      }
 }
