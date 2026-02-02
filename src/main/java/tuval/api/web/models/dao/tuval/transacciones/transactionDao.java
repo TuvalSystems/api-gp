@@ -289,24 +289,16 @@ public class transactionDao {
               .addValue("documento_compra", InvoiceHelperUtils.str(req.getFactVtaDocuCompra(), 30))
               .addValue("tipo_despacho", InvoiceHelperUtils.str(req.getFacVtaTipoDespacho(), 30))
               .addValue("nota_docu", InvoiceHelperUtils.str(req.getFacVtaNotaDocu(), 8000))
-              .addValue(
-                  "fecha", InvoiceHelperUtils.ts(req.getFacVtaDateDocu()), java.sql.Types.TIMESTAMP)
+              .addValue("fecha", InvoiceHelperUtils.ts(req.getFacVtaDateDocu()), java.sql.Types.TIMESTAMP)
               .addValue("bodega", InvoiceHelperUtils.str(req.getFacVtaBodega(), 10))
-              .addValue(
-                  "subtotal",
-                  InvoiceHelperUtils.dec(req.getFacVtaSubtotal()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "desc_comercial",
-                  InvoiceHelperUtils.dec(req.getFacVtaDescuentoComercial()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "impuesto",
-                  InvoiceHelperUtils.dec(req.getFacVtaImpuesto()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "total", InvoiceHelperUtils.dec(req.getFacVtaTotal()), java.sql.Types.DECIMAL)
-              .addValue("nota_cliente", InvoiceHelperUtils.str(req.getFacVtaNotaCliente(), 300));
+              .addValue("subtotal",  InvoiceHelperUtils.dec(req.getFacVtaSubtotal()), java.sql.Types.DECIMAL)
+              .addValue( "desc_comercial", InvoiceHelperUtils.dec(req.getFacVtaDescuentoComercial()), java.sql.Types.DECIMAL)
+              .addValue("impuesto",InvoiceHelperUtils.dec(req.getFacVtaImpuesto()), java.sql.Types.DECIMAL)
+              .addValue("total", InvoiceHelperUtils.dec(req.getFacVtaTotal()), java.sql.Types.DECIMAL)
+              .addValue("nota_cliente", InvoiceHelperUtils.str(req.getFacVtaNotaCliente(), 300))
+              .addValue("userid", InvoiceHelperUtils.str(req.getUserIdCreator(), 100))
+              .addValue("cond_pago_org", InvoiceHelperUtils.str(req.getCondIdOriginal(), 100)
+            );
 
       call.execute(p);
     } catch (jakarta.validation.ValidationException ve) {
@@ -329,42 +321,21 @@ public class transactionDao {
       MapSqlParameterSource p =
           new MapSqlParameterSource()
               .addValue("docu", InvoiceHelperUtils.str(req.getFacVtaDetDocuOrigen(), 30))
-              .addValue(
-                  "tipo",
-                  InvoiceHelperUtils.str(req.getFacVtaDetIdTipo(), 15)) // usa el mismo nombre
-              .addValue(
-                  "linea",
-                  InvoiceHelperUtils.str(req.getFacVtaDetLinea(), 5)) // o Types.INTEGER si el SP
+              .addValue("tipo", InvoiceHelperUtils.str(req.getFacVtaDetIdTipo(), 15)) // usa el mismo nombre
+              .addValue( "linea", InvoiceHelperUtils.str(req.getFacVtaDetLinea(), 5)) // o Types.INTEGER si el SP
               .addValue("articulo", InvoiceHelperUtils.str(req.getFacVtaDetArticulo(), 30))
-              .addValue(
-                  "descripcion_articulo",
-                  InvoiceHelperUtils.str(req.getFacVtaDetDescArticulo(), 255))
-              .addValue(
-                  "unidad",
-                  InvoiceHelperUtils.str(req.getFacVtaDetUnidadMedida(), 10)) // verifica tipo
+              .addValue("descripcion_articulo", InvoiceHelperUtils.str(req.getFacVtaDetDescArticulo(), 255))
+              .addValue( "unidad", InvoiceHelperUtils.str(req.getFacVtaDetUnidadMedida(), 10)) // verifica tipo
               .addValue("bodega", InvoiceHelperUtils.str(req.getFacVtadetBodega(), 10))
-              .addValue(
-                  "cantidad",
-                  InvoiceHelperUtils.dec(req.getFacVtaDetCantidad()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "costo",
-                  InvoiceHelperUtils.dec(req.getFacVtaCostoUnitario()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "precio",
-                  InvoiceHelperUtils.dec(req.getFacVtaDetPrecioUnitario()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "descuento",
-                  InvoiceHelperUtils.dec(req.getFacVtaDetDescuento()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "impuesto",
-                  InvoiceHelperUtils.dec(req.getFacVtaDetImpuestoIva()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "total", InvoiceHelperUtils.dec(req.getFacVtaDetTotal()), java.sql.Types.DECIMAL);
+              .addValue("cantidad",InvoiceHelperUtils.dec(req.getFacVtaDetCantidad()), java.sql.Types.DECIMAL)
+              .addValue( "costo", InvoiceHelperUtils.dec(req.getFacVtaCostoUnitario()), java.sql.Types.DECIMAL)
+              .addValue("precio", InvoiceHelperUtils.dec(req.getFacVtaDetPrecioUnitario()), java.sql.Types.DECIMAL)
+              .addValue( "descuento", InvoiceHelperUtils.dec(req.getFacVtaDetDescuento()),java.sql.Types.DECIMAL)
+              .addValue( "impuesto", InvoiceHelperUtils.dec(req.getFacVtaDetImpuestoIva()),java.sql.Types.DECIMAL)
+              .addValue( "total", InvoiceHelperUtils.dec(req.getFacVtaDetTotal()), java.sql.Types.DECIMAL)
+              .addValue( "descripcion_org", InvoiceHelperUtils.str(req.getDescripcionOrginal(),300))
+              .addValue( "valor_org", InvoiceHelperUtils.dec(req.getValorOrginal()),java.sql.Types.DECIMAL)
+              .addValue( "descuento_org", InvoiceHelperUtils.dec(req.getDescuentoOrginal()),java.sql.Types.DECIMAL);
 
       call.execute(p);
     } catch (jakarta.validation.ValidationException ve) {

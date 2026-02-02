@@ -39,7 +39,6 @@ public class InvoiceHelperUtils {
     checkBlank(r.getFacVtaIdDireccionEnvio(), "FAC_VTA_ID_DIRECCION_ENVIO", faltantes);
     checkBlank(r.getFacVtaCondPago(), "FAC_VTA_COND_PAGO", faltantes);
     checkBlank(r.getFacVtaFormaPago(), "FAC_VTA_FORMA_PAGO", faltantes);
-    // checkBlank(r.getFactVtaDocuCompra(), "FAC_VTA_DOC_COMPRA", faltantes);
     checkBlank(r.getFacVtaTipoDespacho(), "FAC_VTA_TIPO_DESPACHO", faltantes);
     checkBlank(r.getFacVtaBodega(), "FAC_VTA_BODEGA", faltantes);
 
@@ -48,15 +47,10 @@ public class InvoiceHelperUtils {
 
     // DECIMAL(19,5) requeridos
     checkNull(r.getFacVtaSubtotal(), "FAC_VTA_SUBTOTAL", faltantes);
-    // checkNull(r.getFacVtaDescuentoComercial(), "FAC_VTA_DESCUENTO_COMERCIAL", faltantes);
     checkNull(r.getFacVtaImpuesto(), "FAC_VTA_IMPUESTO", faltantes);
     checkNull(r.getFacVtaTotal(), "FAC_VTA_TOTAL", faltantes);
 
-    // Opcionales: nota_docu / nota_cliente (comenta estas dos si quieres que sean
-    // obligatorias)
-    // checkBlank(r.getFacVtaNotaDocu(), "FAC_VTA_NOTA_DOCU", faltantes);
-    // checkBlank(r.getFacVtaNotaCliente(), "FAC_VTA_NOTA_CLIENTE", faltantes);
-
+  
     if (!faltantes.isEmpty()) {
       throw new ValidationException(
           "Campos requeridos vacíos o nulos: " + String.join(", ", faltantes));
@@ -66,8 +60,7 @@ public class InvoiceHelperUtils {
   public static void validateDetailInvoiceRequired(DetailInvoiceRequest r) {
     List<String> faltantes = new ArrayList<>();
 
-    // VARCHAR requeridos (no nulos ni en blanco)
-    // checkBlank(r.getFacVtaDetLinea(), "FAC_VTA_DET_LINEA", faltantes);
+    
     checkBlank(r.getFacVtaDetDocuOrigen(), "FAC_VTA_DET_DOCU_ORIGEN", faltantes);
     // INT requerido
     if (r.getFacVtaDetIdTipo() == null) {
