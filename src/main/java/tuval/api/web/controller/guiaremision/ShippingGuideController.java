@@ -27,7 +27,8 @@ import tuval.api.web.models.service.tuval.guiaremision.ShippingGuideService;
 @RequestMapping(value = "/api", produces = "application/json")
 public class ShippingGuideController {
 
-  @Autowired private ShippingGuideService shippingGuideService;
+  @Autowired
+  private ShippingGuideService shippingGuideService;
 
   @CrossOrigin
   @GetMapping("/inventario/guia-remision-obtener-claveacceso")
@@ -36,22 +37,23 @@ public class ShippingGuideController {
       return ResponseJsonUtils.buildError("El documento es requerido.");
     }
     try {
-      CheckCodeAccessDeliveryNoteResponse result =
-          shippingGuideService.checkGuiaRemisionService(numDoc);
+      CheckCodeAccessDeliveryNoteResponse result = shippingGuideService.checkGuiaRemisionService(numDoc);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", result);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
     }
   }
 
-  /** proceso de guias de remision - traslado de inventario --- pendiente de programar */
+  /**
+   * proceso de guias de remision - traslado de inventario --- pendiente de
+   * programar
+   */
   @CrossOrigin
   @PostMapping("/inventario/guardar-generar-movimiento-transferencia-venta")
   public ResponseEntity<Map<String, Object>> generarTranasferenciaVenta(
       @Valid @RequestBody TransferVtaRequest req) {
     try {
-      HeaderGuideTransferVtaResponse response =
-          shippingGuideService.generateGuideTransferVtaService(req);
+      HeaderGuideTransferVtaResponse response = shippingGuideService.generateGuideTransferVtaService(req);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {
@@ -65,8 +67,7 @@ public class ShippingGuideController {
   public ResponseEntity<Map<String, Object>> generarDepachoReposicion(
       @Valid @RequestBody TransferVtaRequest req) {
     try {
-      HeaderGuideTransferVtaResponse response =
-          shippingGuideService.generateGuideReposicionService(req);
+      HeaderGuideTransferVtaResponse response = shippingGuideService.generateGuideReposicionService(req);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {
@@ -80,8 +81,7 @@ public class ShippingGuideController {
   public ResponseEntity<Map<String, Object>> generarDespachoVta(
       @Valid @RequestBody DispatchVtaRequest req) {
     try {
-      HeaderGuideTransferVtaResponse response =
-          shippingGuideService.generateGuideDispatchVtaService(req);
+      HeaderGuideTransferVtaResponse response = shippingGuideService.generateGuideDispatchVtaService(req);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {
@@ -100,9 +100,8 @@ public class ShippingGuideController {
       @Valid @RequestParam String guiaRemision) {
 
     try {
-      HeaderCheckGuideDispatchResponse resp =
-          shippingGuideService.checkAjusteGuideDispatchVtaService(
-              orderNumber, newOrderNumber, idGuiaRemision, guiaRemision);
+      HeaderCheckGuideDispatchResponse resp = shippingGuideService.checkAjusteGuideDispatchVtaService(
+          orderNumber, newOrderNumber, idGuiaRemision, guiaRemision);
 
       if (resp == null) {
         return ResponseJsonUtils.buildNoFound("No existe guía para mc_numdoc=" + orderNumber);
@@ -125,9 +124,8 @@ public class ShippingGuideController {
       @Valid @RequestParam String guiaRemision) {
 
     try {
-      HeaderCheckGuideDispatchResponse resp =
-          shippingGuideService.checkAjusteGuideTransferVtaService(
-              orderNumber, newOrderNumber, origen, idGuiaRemision, guiaRemision);
+      HeaderCheckGuideDispatchResponse resp = shippingGuideService.checkAjusteGuideTransferVtaService(
+          orderNumber, newOrderNumber, origen, idGuiaRemision, guiaRemision);
 
       if (resp == null) {
         return ResponseJsonUtils.buildNoFound("No existe guía para mc_numdoc=" + orderNumber);
@@ -150,9 +148,8 @@ public class ShippingGuideController {
       @RequestParam(required = false) String guiaRemision) {
 
     try {
-      HeaderCheckGuideDispatchResponse resp =
-          shippingGuideService.checkAjusteGuideRepositionVtaService(
-              orderNumber, origen, idMovimiento, idGuiaRemision, guiaRemision);
+      HeaderCheckGuideDispatchResponse resp = shippingGuideService.checkAjusteGuideRepositionVtaService(
+          orderNumber, origen, idMovimiento, idGuiaRemision, guiaRemision);
 
       if (resp == null) {
         return ResponseJsonUtils.buildNoFound("No existe guía para mc_numdoc=" + orderNumber);
@@ -175,9 +172,8 @@ public class ShippingGuideController {
       @RequestParam(required = false) Integer cantidad) {
 
     try {
-      DetailCheckGuideAnyResponse resp =
-          shippingGuideService.checkAjustmentDetailGuideService(
-              orderNumber, newOrderNumber, item, idMovimiento, cantidad);
+      DetailCheckGuideAnyResponse resp = shippingGuideService.checkAjustmentDetailGuideService(
+          orderNumber, newOrderNumber, item, idMovimiento, cantidad);
 
       if (resp == null) {
         return ResponseJsonUtils.buildNoFound(
@@ -214,17 +210,19 @@ public class ShippingGuideController {
   public ResponseEntity<Map<String, Object>> validarExistenciaGuiaRemision(
       @Valid @RequestParam String numDoc) {
     try {
-      ValidateExistsDeliveryNoteResponse resp =
-          shippingGuideService.checkExistenceDeliveryNoteService(numDoc);
+      ValidateExistsDeliveryNoteResponse resp = shippingGuideService.checkExistenceDeliveryNoteService(numDoc);
       return ResponseJsonUtils.buildSuccessWithData("Validacion exitosa", resp);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
     }
   }
 
-  /*** proceso de generacion de ajuste de guia de reserva y validacion de existencia de la misma */
+  /***
+   * proceso de generacion de ajuste de guia de reserva y validacion de existencia
+   * de la misma
+   */
 
-    @CrossOrigin
+  @CrossOrigin
   @GetMapping("/inventario/reservas/validar-existencia-guia")
   public ResponseEntity<Map<String, Object>> obtenerMovimientoGuiaReserva(
       @Valid @RequestParam String orderNumber,
@@ -234,9 +232,8 @@ public class ShippingGuideController {
       @Valid @RequestParam String guiaRemision) {
 
     try {
-      HeaderCheckGuideDispatchResponse resp =
-          shippingGuideService.checkAjusteGuideReservationService(
-              orderNumber, newOrderNumber, origen, idGuiaRemision, guiaRemision);
+      HeaderCheckGuideDispatchResponse resp = shippingGuideService.checkAjusteGuideReservationService(
+          orderNumber, newOrderNumber, origen, idGuiaRemision, guiaRemision);
 
       if (resp == null) {
         return ResponseJsonUtils.buildNoFound("No existe guía para mc_numdoc=" + orderNumber);
@@ -249,16 +246,12 @@ public class ShippingGuideController {
     }
   }
 
-
-
-  
   @CrossOrigin
   @PostMapping("/inventario/reservas/guardar-generar-movimiento/transferencia")
   public ResponseEntity<Map<String, Object>> generarTransferenciaReserva(
       @Valid @RequestBody TransferVtaRequest req) {
     try {
-      HeaderGuideTransferVtaResponse response =
-          shippingGuideService.generateGuideReservationService(req);
+      HeaderGuideTransferVtaResponse response = shippingGuideService.generateGuideReservationService(req);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {
@@ -267,11 +260,9 @@ public class ShippingGuideController {
     }
   }
 
-
   /*** procesar recibir transferencias de reservas */
 
-
-    @CrossOrigin
+  @CrossOrigin
   @GetMapping("/inventario/reservas/validar-existencia-ajuste-recibir")
   public ResponseEntity<Map<String, Object>> obtenerMovimientoGuiaReservaRecibida(
       @Valid @RequestParam String orderNumber,
@@ -281,9 +272,8 @@ public class ShippingGuideController {
       @Valid @RequestParam String guiaRemision) {
 
     try {
-      HeaderCheckGuideDispatchResponse resp =
-          shippingGuideService.checkAjusteGuideReservationReceivedService(
-              orderNumber, newOrderNumber, origen, idGuiaRemision, guiaRemision);
+      HeaderCheckGuideDispatchResponse resp = shippingGuideService.checkAjusteGuideReservationReceivedService(
+          orderNumber, newOrderNumber, origen, idGuiaRemision, guiaRemision);
 
       if (resp == null) {
         return ResponseJsonUtils.buildNoFound("No existe ajuste de recibido para mc_numdoc = " + orderNumber);
@@ -296,14 +286,12 @@ public class ShippingGuideController {
     }
   }
 
-
-    @CrossOrigin
+  @CrossOrigin
   @PostMapping("/inventario/reservas/guardar-generar-movimiento/recibir")
   public ResponseEntity<Map<String, Object>> recibirTransferenciaReserva(
       @Valid @RequestBody TransferVtaRequest req) {
     try {
-      HeaderGuideTransferVtaResponse response =
-          shippingGuideService.receiveGuideReservationService(req);
+      HeaderGuideTransferVtaResponse response = shippingGuideService.receiveGuideReservationService(req);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {
@@ -312,18 +300,14 @@ public class ShippingGuideController {
     }
   }
 
-
-
-
-  /** FIX  PARA GENERAR LOS MOVIMIENTOS DE GUIAS  */
+  /** FIX PARA GENERAR LOS MOVIMIENTOS DE GUIAS */
 
   @CrossOrigin
   @PostMapping("/inventario/despacho-generar-movimiento")
   public ResponseEntity<Map<String, Object>> generarMovimientoGuiaDespacho(
       @Valid @RequestBody DispatchDeliveryNoteMovementRequest req) {
     try {
-      HeaderGuideTransferVtaResponse response =
-          shippingGuideService.generateMovementDispatchGuide(req);
+      HeaderGuideTransferVtaResponse response = shippingGuideService.generateMovementDispatchGuide(req);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {

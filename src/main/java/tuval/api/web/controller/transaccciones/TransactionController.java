@@ -116,7 +116,6 @@ public class TransactionController {
        try {
         validateGenerateInvoiceDto resultado = transactionService.storeInvoice(request);
         return ResponseJsonUtils.buildSuccess(resultado.getMensaje());
-            // return ResponseJsonUtils.buildSuccessWithData("Validacion exitosa", request);
 
        } catch (Exception e) {
          e.printStackTrace(); // para ver la traza completa

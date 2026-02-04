@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @Configuration
 @EnableTransactionManagement
@@ -39,15 +40,22 @@ public class TuvalJpaConfig {
         return template;
     }
 
+    @Bean(name = "tuvalNamedParameterJdbcTemplate")
+    public NamedParameterJdbcTemplate tuvalNamedParameterJdbcTemplate(
+            @Qualifier("tuvalDataSource") DataSource dataSource) {
+        return new NamedParameterJdbcTemplate(dataSource);
+    }
+
     @Bean(name = "tuvalEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean tuvallEntityManagerFactoryBean(EntityManagerFactoryBuilder builder,
             @Qualifier("tuvalDataSource") DataSource dataSource) {
         Map<String, Object> properties = new HashMap<>();
         properties.put("hibernate.hbm2ddl.auto", "none");
-        // properties.put("hibernate.dialect", "org.hibernate.dialect.SQLServerDialect");
+        // properties.put("hibernate.dialect",
+        // "org.hibernate.dialect.SQLServerDialect");
         properties.put("hibernate.show_sql", "true");
         return builder.dataSource(dataSource).properties(properties).packages("tuval.api.web.models.entity.tuval")
-        .persistenceUnit("tuvalPU").build();
+                .persistenceUnit("tuvalPU").build();
 
     }
 
