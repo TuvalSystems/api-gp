@@ -52,5 +52,9 @@ public class DetailInvoiceRequest {
     @JsonProperty("FAC_VTA_DET_TOTAL")
     private BigDecimal facVtaDetTotal;
 
+    private String descripcionOrginal;
+    private BigDecimal valorOrginal;
+    private BigDecimal descuentoOrginal;
+
     
 }

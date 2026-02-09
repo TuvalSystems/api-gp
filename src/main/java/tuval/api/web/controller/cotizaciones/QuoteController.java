@@ -1,5 +1,6 @@
 package tuval.api.web.controller.cotizaciones;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import tuval.api.web.models.Utils.ResponseJsonUtils;
+import tuval.api.web.models.dto.cotizaciones.ItemDescripcionAlternativaDto;
 import tuval.api.web.models.entity.dynamics.cotizaciones.QuoteRecordEntity;
 import tuval.api.web.models.service.dynamics.cotizaciones.quoteRecordService;
 
@@ -35,7 +38,12 @@ public class QuoteController {
     @CrossOrigin
     @GetMapping("/lista-items-alternativos")
     public ResponseEntity<Map<String, Object>> getListAlternativeItems(@RequestParam String item) {
-        return quoteRecordService.listAlternativeItems(item);
+        try {
+            List<ItemDescripcionAlternativaDto> resp =  quoteRecordService.listAlternativeItems(item);
+            return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resp);
+        } catch (Exception e) {
+           return ResponseJsonUtils.buildError(e.getMessage());
+        }
     }
 
 }

@@ -17,9 +17,11 @@ import tuval.api.web.models.dto.cliente.ListAllSegmentsDto;
 import tuval.api.web.models.dto.cliente.ListAllSubsegmentsDto;
 import tuval.api.web.models.dto.cliente.ListSegmentClientDto;
 import tuval.api.web.models.dto.cliente.ListSellerDto;
+import tuval.api.web.models.dto.cliente.NewAddressStatusDto;
 import tuval.api.web.models.dto.cliente.TypeSellerDto;
 import tuval.api.web.models.request.cliente.ClientRequest;
 import tuval.api.web.models.request.cliente.ClientSubsegmentRucRequest;
+import tuval.api.web.models.request.cliente.NewAddressRequest;
 import tuval.api.web.models.request.cliente.SellerRequest;
 import tuval.api.web.models.service.dynamics.cliente.ClientService;
 
@@ -117,5 +119,18 @@ public class ClienteController {
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
     }
+  }
+
+
+  @CrossOrigin
+  @PostMapping("crear-nueva-direccion")
+  public ResponseEntity<Map<String, Object>> crearNuevaDireccionCliente(@RequestBody NewAddressRequest request) {
+    try {
+      NewAddressStatusDto respString = clienteService.storeNewAddressService(request);
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta Exitosa", respString);
+    } catch (Exception e) {
+        return ResponseJsonUtils.buildException(e);
+    }
+    
   }
 }

@@ -76,6 +76,9 @@ public class HeaderInvoiceRequest {
     @JsonProperty("FAC_VTA_NOTA_CLIENTE")
     private String facVtaNotaCliente;
 
-  
+
+    private String userIdCreator;
+    private String condIdOriginal;
+    
 
 }

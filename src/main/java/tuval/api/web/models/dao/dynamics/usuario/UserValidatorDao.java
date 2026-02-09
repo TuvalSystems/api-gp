@@ -66,7 +66,6 @@ public class UserValidatorDao {
             .addValue("equipo", "wserver");
     try {
       Map<String, Object> out = spConsultUsers.execute(in);
-      System.out.println("Output de sp_tuv_consulta_usuarios: " + out);
       Integer codret = (Integer) out.get("codret");
       String mensaje = (String) out.get("msj");
       if (codret != 0) {
