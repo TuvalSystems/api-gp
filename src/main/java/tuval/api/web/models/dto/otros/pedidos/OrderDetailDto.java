@@ -13,4 +13,5 @@ public class OrderDetailDto {
     private String artCodigo;
     private String bodega;
     private Long dexRowId;
+    private Integer linea;
 }

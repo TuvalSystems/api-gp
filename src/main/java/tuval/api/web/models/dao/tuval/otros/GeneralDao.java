@@ -36,6 +36,21 @@ public class GeneralDao {
     }
 
     public List<OrderHeaderDto> getAllOrderPendingUpdate(Date fechaInicio, Date fechaFin) {
+        // String SQL = """
+        // select
+        // I_vDOCU_ORIGEN as docOrigen,
+        // I_vID_TIPO as idTipo,
+        // I_vPUNTO_VENTA as ptoVta,
+        // DOC_GENERADO as docGenerado,
+        // DEX_ROW_ID as dexRowId,
+        // I_vLOCNCODE as bodega
+        // from
+        // MSW_TB_FACTURA_CAB
+        // WHERE USERID IS NULL
+        // AND COND_PAGO_ORG IS NULL
+        // AND I_vDOCDATE BETWEEN ? AND ?
+        // ORDER BY DEX_ROW_ID
+        // """;
         String SQL = """
                 select
                 I_vDOCU_ORIGEN as docOrigen,
@@ -46,9 +61,7 @@ public class GeneralDao {
                 I_vLOCNCODE as bodega
                 from
                 MSW_TB_FACTURA_CAB
-                WHERE USERID IS NULL
-                AND COND_PAGO_ORG IS NULL
-                AND I_vDOCDATE BETWEEN ? AND ?
+                WHERE I_vDOCDATE BETWEEN ? AND ?
                 ORDER BY DEX_ROW_ID
                 """;
         try {
@@ -71,6 +84,7 @@ public class GeneralDao {
                 I_vID_TIPO     as idTipo,
                 I_vITEMNMBR    as artCodigo,
                 I_vLOCNCODE    as bodega,
+                I_vLINEA       as linea,
                 DEX_ROW_ID     as dexRowId
                 FROM
                 MSW_TB_FACTURA_DET
@@ -109,7 +123,7 @@ public class GeneralDao {
                 // Orden de los ? en el SQL
                 ps.setString(1, header.getUserIdCreator());
                 ps.setString(2, header.getCondIdOriginal());
-                ps.setLong(3, header.getDexRowId()); 
+                ps.setLong(3, header.getDexRowId());
             }
 
             @Override
@@ -121,12 +135,12 @@ public class GeneralDao {
 
     @Transactional
     public int[] updateMassiveDetails(List<OrdersDetailRequest> details) {
-      
+
         String sql = """
-                UPDATE MSW_TB_FACTURA_DET 
+                UPDATE MSW_TB_FACTURA_DET
                 SET
                 DESCRIPCION_ORG = ?,
-                VALOR_ORG = ?, 
+                VALOR_ORG = ?,
                 DESCUENTO_ORG = ?
                 WHERE DEX_ROW_ID = ?
                 """;
@@ -136,10 +150,10 @@ public class GeneralDao {
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 OrdersDetailRequest detail = details.get(i);
                 // Asegúrate de manejar BigDecimal correctamente
-                ps.setString(1, detail.getDescripcionOrginal());  
-                ps.setBigDecimal(2, detail.getValorOrginal());      
-                ps.setBigDecimal(3, detail.getDescuentoOrginal());  
-                ps.setLong(4, detail.getDexRowId());            // WHERE
+                ps.setString(1, detail.getDescripcionOrginal());
+                ps.setBigDecimal(2, detail.getValorOrginal());
+                ps.setBigDecimal(3, detail.getDescuentoOrginal());
+                ps.setLong(4, detail.getDexRowId()); // WHERE
             }
 
             @Override
