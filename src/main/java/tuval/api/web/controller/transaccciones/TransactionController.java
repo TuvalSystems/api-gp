@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.transacciones.facturacionVenta.responseInvoiceVtaDto;
 import tuval.api.web.models.dto.transacciones.facturacionVenta.validateGenerateInvoiceDto;
@@ -25,10 +26,10 @@ import tuval.api.web.models.service.tuval.transacciones.transactionService;
 
 @RestController
 @RequestMapping("/api/transacciones")
+@RequiredArgsConstructor
 public class TransactionController {
 
-    @Autowired
-    private transactionService transactionService;
+    private final transactionService transactionService;
 
     @CrossOrigin
     @PostMapping("/validar-generacion-documento-recibo-compra-l")
@@ -41,7 +42,6 @@ public class TransactionController {
             e.printStackTrace(); // para ver la traza completa
             return ResponseJsonUtils.buildException(e);
         }
-
     }
 
     @CrossOrigin
