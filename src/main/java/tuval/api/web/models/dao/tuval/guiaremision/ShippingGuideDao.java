@@ -16,105 +16,115 @@ import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.HeaderDeliver
 
 public interface ShippingGuideDao {
 
-  public CheckCodeAccessDeliveryNoteResponse checkGuiaRemision(String numDoc);
+    public CheckCodeAccessDeliveryNoteResponse checkGuiaRemision(String numDoc);
 
-  public HeaderGuideTransferVtaResponse executeSpStoreHeaderTransferVta(
-      HeaderGuideTransferVtaRequest req, int modo);
+    public HeaderGuideTransferVtaResponse executeSpStoreHeaderTransferVta(
+            HeaderGuideTransferVtaRequest req, int modo);
 
-  public DetailGuideTransferVtaResponse executeSpStoreDetailGuideTransferVta(
-      DetailGuideTransferVtaRequest det,
-      HeaderGuideTransferVtaRequest cab,
-      int idmov,
-      int sec,
-      int modo);
+    public DetailGuideTransferVtaResponse executeSpStoreDetailGuideTransferVta(
+            DetailGuideTransferVtaRequest det,
+            HeaderGuideTransferVtaRequest cab,
+            int idmov,
+            int sec,
+            int modo);
 
-  public HeaderGuideTransferVtaResponse executeSpGenerateMovimentTransferVta(
-      HeaderGuideTransferVtaRequest req, int idmov, int modo);
+    public HeaderGuideTransferVtaResponse executeSpGenerateMovimentTransferVta(
+            HeaderGuideTransferVtaRequest req, int idmov, int modo);
 
-  public HeaderGuideTransferVtaResponse executeSpStoreHeaderGuideDispatchVta(
-      HeaderGuideDispatchShipmentRequest req, int modo);
+    public HeaderGuideTransferVtaResponse executeSpStoreHeaderGuideDispatchVta(
+            HeaderGuideDispatchShipmentRequest req, int modo);
 
-  public DetailGuideTransferVtaResponse executeSpStoreDetailGuideDispatchVta(
-      DetailGuideTransferVtaRequest det,
-      HeaderGuideDispatchShipmentRequest cab,
-      int idmov,
-      int secitem,
-      int modo);
+    public DetailGuideTransferVtaResponse executeSpStoreDetailGuideDispatchVta(
+            DetailGuideTransferVtaRequest det,
+            HeaderGuideDispatchShipmentRequest cab,
+            int idmov,
+            int secitem,
+            int modo);
 
-  public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
-      HeaderGuideDispatchShipmentRequest req, int idmov, int modo);
+    public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
+            HeaderGuideDispatchShipmentRequest req, int idmov, int modo);
 
-  public HeaderGuideTransferVtaResponse executeFixSpGenerateMovementDispatchDeliveryNote(
-      DispatchDeliveryNoteMovementRequest req, int modo);
+    public HeaderGuideTransferVtaResponse executeFixSpGenerateMovementDispatchDeliveryNote(
+            DispatchDeliveryNoteMovementRequest req, int modo);
 
-  public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(
-      String orderNumber, String newOrderNumber, Integer idGuiaRemision, String guiaRemision);
+    public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(
+            String orderNumber, String newOrderNumber, Integer idGuiaRemision, String guiaRemision);
 
-  public HeaderCheckGuideDispatchResponse getAjusteGuideTransferVtaDao(
-      String orderNumber,
-      String newOrderNumber,
-      String origen,
-      Integer idGuiaRemision,
-      String guiaRemision);
+    public HeaderCheckGuideDispatchResponse getAjusteGuideTransferVtaDao(
+            String orderNumber,
+            String newOrderNumber,
+            String origen,
+            Integer idGuiaRemision,
+            String guiaRemision);
 
-  public HeaderCheckGuideDispatchResponse getAjusteGuideRepositionVtaDao(
-      String orderNumber,
-      String origen,
-      Integer idMovimiento,
-      Integer idGuiaRemision,
-      String guiaRemision);
+    public HeaderCheckGuideDispatchResponse getAjusteGuideRepositionVtaDao(
+            String orderNumber,
+            String origen,
+            Integer idMovimiento,
+            Integer idGuiaRemision,
+            String guiaRemision);
 
-  public DetailCheckGuideAnyResponse getAjustmentDetailGuide(
-      String orderNumber,
-      String newOrderNumber,
-      String item,
-      Integer idMovimiento,
-      Integer cantidad);
+    public DetailCheckGuideAnyResponse getAjustmentDetailGuide(
+            String orderNumber,
+            String newOrderNumber,
+            String item,
+            Integer idMovimiento,
+            Integer cantidad);
 
-  /** proceso de guia de remision */
-  public void executeSpStoreHeaderDeliveryNote(HeaderDeliveryNoteRequest h);
+    /** proceso de guia de remision */
+    public void executeSpStoreHeaderDeliveryNote(HeaderDeliveryNoteRequest h);
 
-  public void executeSpStoreDestinationDeliveryNote(DestinationDeliveryNoteRequest dh);
+    public void executeSpStoreDestinationDeliveryNote(DestinationDeliveryNoteRequest dh);
 
-  public void executeSpStoreDetailDeliveryNote(DetailDeliveryNoteRequest d);
+    public void executeSpStoreDetailDeliveryNote(DetailDeliveryNoteRequest d);
 
-  public void executeSpCreateAccesoCodeDeliveryNote(HeaderDeliveryNoteRequest h);
+    public void executeSpCreateAccesoCodeDeliveryNote(HeaderDeliveryNoteRequest h);
 
-  public void executeSpUpdateAccesoCodeDeliveryNote(HeaderDeliveryNoteRequest h);
+    public void executeSpUpdateAccesoCodeDeliveryNote(HeaderDeliveryNoteRequest h);
 
-  public ValidateExistsDeliveryNoteResponse executeSpValidateExistsDeliveryNoteResponse(
-      String docu);
+    public ValidateExistsDeliveryNoteResponse executeSpValidateExistsDeliveryNoteResponse(
+            String docu);
 
-  /** reservas */
-  public HeaderCheckGuideDispatchResponse getAjusteGuideReservedDao(
-      String orderNumber,
-      String newOrderNumber,
-      String origen,
-      Integer idGuiaRemision,
-      String guiaRemision);
+    /** reservas */
+    public HeaderCheckGuideDispatchResponse getAjusteGuideReservedDao(
+            String orderNumber,
+            String newOrderNumber,
+            String origen,
+            Integer idGuiaRemision,
+            String guiaRemision);
 
+    /** VALIDAR EXISTENCIA DE AJUSTE DE RECIBIDO */
+    public HeaderCheckGuideDispatchResponse getAjusttmentReceivedReservedDao(
+            String orderNumber,
+            String newOrderNumber,
+            String origen,
+            Integer idGuiaRemision,
+            String guiaRemision);
 
-      /** VALIDAR EXISTENCIA DE AJUSTE DE RECIBIDO */
-public HeaderCheckGuideDispatchResponse getAjusttmentReceivedReservedDao(
-      String orderNumber,
-      String newOrderNumber,
-      String origen,
-      Integer idGuiaRemision,
-      String guiaRemision);
-
-
-    
     public HeaderGuideTransferVtaResponse executeSpStoreHeaderReceivedGuideTransfered(
-      HeaderGuideTransferVtaRequest req, int modo);
-    
-       public DetailGuideTransferVtaResponse executeSpStoreDetailReceivedGuideTransfered(
-      DetailGuideTransferVtaRequest det,
-      HeaderGuideTransferVtaRequest cab,
-      int idmov,
-      int secitem,
-      int modo);
+            HeaderGuideTransferVtaRequest req, int modo);
 
+    public DetailGuideTransferVtaResponse executeSpStoreDetailReceivedGuideTransfered(
+            DetailGuideTransferVtaRequest det,
+            HeaderGuideTransferVtaRequest cab,
+            int idmov,
+            int secitem,
+            int modo);
 
     public HeaderGuideTransferVtaResponse executeSpGenerateMovimentReceivedGuideTransfered(
-      HeaderGuideTransferVtaRequest req, int idmov, int modo);
+            HeaderGuideTransferVtaRequest req, int idmov, int modo);
+
+    public HeaderGuideTransferVtaResponse executeSpStoreHeaderReceivedSalesTransferedDao(
+            HeaderGuideTransferVtaRequest req,
+            int modo);
+
+    public DetailGuideTransferVtaResponse executeSpStoreDetailReceivedGuideSalesTransferedDao(
+            DetailGuideTransferVtaRequest det,
+            HeaderGuideTransferVtaRequest cab,
+            int idmov,
+            int secitem,
+            int modo);
+
+    public HeaderGuideTransferVtaResponse executeSpGenerateMovimentReceivedGuideTransferedDao(
+            HeaderGuideTransferVtaRequest req, int idmov, int modo);
 }

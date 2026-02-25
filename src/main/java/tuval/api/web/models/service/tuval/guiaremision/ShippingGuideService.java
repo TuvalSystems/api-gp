@@ -12,51 +12,52 @@ import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DeliveryNoteR
 
 public interface ShippingGuideService {
 
-  public CheckCodeAccessDeliveryNoteResponse checkGuiaRemisionService(String numDoc);
+    public CheckCodeAccessDeliveryNoteResponse checkGuiaRemisionService(String numDoc);
 
-  public HeaderGuideTransferVtaResponse generateGuideTransferVtaService(TransferVtaRequest req);
+    public HeaderGuideTransferVtaResponse generateGuideTransferVtaService(TransferVtaRequest req);
 
-  public HeaderGuideTransferVtaResponse generateGuideReposicionService(TransferVtaRequest req);
+    public HeaderGuideTransferVtaResponse generateGuideReposicionService(TransferVtaRequest req);
 
-  public HeaderGuideTransferVtaResponse generateGuideDispatchVtaService(DispatchVtaRequest req);
+    public HeaderGuideTransferVtaResponse generateGuideDispatchVtaService(DispatchVtaRequest req);
 
-  public HeaderGuideTransferVtaResponse generateMovementDispatchGuide(DispatchDeliveryNoteMovementRequest req);
+    public HeaderGuideTransferVtaResponse generateMovementDispatchGuide(DispatchDeliveryNoteMovementRequest req);
 
+    /** para obtener el ajuste de guias de despacho */
+    public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(
+            String orderN, String newOrderN, Integer idGuiaRemision, String guiaRemision);
 
-  /** para obtener el ajuste de guias de despacho */
-  public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(
-      String orderN, String newOrderN, Integer idGuiaRemision, String guiaRemision);
+    public HeaderCheckGuideDispatchResponse checkAjusteGuideTransferVtaService(
+            String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision);
 
-  public HeaderCheckGuideDispatchResponse checkAjusteGuideTransferVtaService(
-      String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision);
+    public HeaderCheckGuideDispatchResponse checkAjusteGuideRepositionVtaService(
+            String orderN,
+            String origen,
+            Integer idMovimiento,
+            Integer idGuiaRemision,
+            String guiaRemision);
 
-  public HeaderCheckGuideDispatchResponse checkAjusteGuideRepositionVtaService(
-      String orderN,
-      String origen,
-      Integer idMovimiento,
-      Integer idGuiaRemision,
-      String guiaRemision);
+    public DetailCheckGuideAnyResponse checkAjustmentDetailGuideService(
+            String orderNumber,
+            String newOrderNumber,
+            String item,
+            Integer idMovimiento,
+            Integer cantidad);
 
-  public DetailCheckGuideAnyResponse checkAjustmentDetailGuideService(
-      String orderNumber,
-      String newOrderNumber,
-      String item,
-      Integer idMovimiento,
-      Integer cantidad);
+    public void createDeliveryNoteService(DeliveryNoteRequest req);
 
-  public void createDeliveryNoteService(DeliveryNoteRequest req);
+    public ValidateExistsDeliveryNoteResponse checkExistenceDeliveryNoteService(String orderNumber);
 
-  public ValidateExistsDeliveryNoteResponse checkExistenceDeliveryNoteService(String orderNumber);
+    /** reservas */
+    public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationService(
+            String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision);
 
-  /** reservas */
-  public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationService(
-      String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision);
+    public HeaderGuideTransferVtaResponse generateGuideReservationService(TransferVtaRequest req);
 
-  public HeaderGuideTransferVtaResponse generateGuideReservationService(TransferVtaRequest req);
+    /** reservas - recibir */
+    public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationReceivedService(
+            String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision);
 
-  /** reservas - recibir */
-  public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationReceivedService(
-      String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision);
+    public HeaderGuideTransferVtaResponse receiveGuideReservationService(TransferVtaRequest req);
 
-      public HeaderGuideTransferVtaResponse receiveGuideReservationService(TransferVtaRequest req);
+    public HeaderGuideTransferVtaResponse receivedGuideSalesTransferService(TransferVtaRequest req);
 }

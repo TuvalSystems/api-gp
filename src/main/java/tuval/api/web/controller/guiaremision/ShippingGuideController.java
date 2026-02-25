@@ -1,6 +1,8 @@
 package tuval.api.web.controller.guiaremision;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +27,10 @@ import tuval.api.web.models.service.tuval.guiaremision.ShippingGuideService;
 
 @RestController
 @RequestMapping(value = "/api", produces = "application/json")
+@RequiredArgsConstructor
 public class ShippingGuideController {
 
-  @Autowired
-  private ShippingGuideService shippingGuideService;
+  private final ShippingGuideService shippingGuideService;
 
   @CrossOrigin
   @GetMapping("/inventario/guia-remision-obtener-claveacceso")
@@ -308,6 +310,21 @@ public class ShippingGuideController {
       @Valid @RequestBody DispatchDeliveryNoteMovementRequest req) {
     try {
       HeaderGuideTransferVtaResponse response = shippingGuideService.generateMovementDispatchGuide(req);
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
+
+    } catch (Exception e) {
+      // e.printStackTrace(); // para ver la traza completa
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  /** transferencia de ventas */
+
+  @CrossOrigin
+  @PostMapping("inventario/transferencia-ventas/recibir/guardar-generar-movimiento")
+  public ResponseEntity<Map<String, Object>> recibirTransferenciaVenta(@Valid @RequestBody TransferVtaRequest req) {
+    try {
+      HeaderGuideTransferVtaResponse response = shippingGuideService.receivedGuideSalesTransferService(req);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {

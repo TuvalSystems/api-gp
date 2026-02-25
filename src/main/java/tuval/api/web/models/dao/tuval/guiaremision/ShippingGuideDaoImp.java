@@ -35,167 +35,155 @@ import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.HeaderDeliver
 @Repository
 public class ShippingGuideDaoImp implements ShippingGuideDao {
 
-  @Autowired
-  @Qualifier("tuvalJdbcTemplate")
-  private JdbcTemplate jdbcTemplate;
+  private final JdbcTemplate jdbcTemplate;
 
-  private SimpleJdbcCall spCabeceraGuiaRemision;
-  private SimpleJdbcCall spDestinatarioGuiaRemision;
-  private SimpleJdbcCall spDetalleGuiaRemision;
-  private SimpleJdbcCall spCreateAccessCodeDeliveryNote;
-  private SimpleJdbcCall spUpdateAccessCodeDeliveryNote;
-  private SimpleJdbcCall spCheckExistsDeliverNote;
+  private final SimpleJdbcCall spCabeceraGuiaRemision;
+  private final SimpleJdbcCall spDestinatarioGuiaRemision;
+  private final SimpleJdbcCall spDetalleGuiaRemision;
+  private final SimpleJdbcCall spCreateAccessCodeDeliveryNote;
+  private final SimpleJdbcCall spUpdateAccessCodeDeliveryNote;
+  private final SimpleJdbcCall spCheckExistsDeliverNote;
+  private final SimpleJdbcCall spMovimientosIv;
+  private final SimpleJdbcCall spCheckCodeAccessDeliveryNote;
 
-  private SimpleJdbcCall spMovimientosIv;
-  private SimpleJdbcCall spCheckCodeAccessDeliveryNote;
-
-  @PostConstruct
-  public void init() {
-    validateConfiguration();
-    // guardar cabecera guia remision
-    this.spCabeceraGuiaRemision =
-        new SimpleJdbcCall(jdbcTemplate)
-            .withProcedureName("MSW_SP_GUARDAR_GUIA_REMISION_CAB_jgms")
-            .withoutProcedureColumnMetaDataAccess()
-            .declareParameters(
-                new SqlParameter("docu", Types.VARCHAR),
-                new SqlParameter("establecimiento", Types.VARCHAR),
-                new SqlParameter("punto_emision", Types.VARCHAR),
-                new SqlParameter("secuencial", Types.VARCHAR),
-                new SqlParameter("direccion_partida", Types.VARCHAR),
-                new SqlParameter("razon_social_transportista", Types.VARCHAR),
-                new SqlParameter("identificador_transportista", Types.VARCHAR),
-                new SqlParameter("tipo_identificador_transportista", Types.VARCHAR),
-                new SqlParameter("rise", Types.VARCHAR),
-                new SqlParameter("fecha_inicio", Types.TIMESTAMP),
-                new SqlParameter("fecha_fin", Types.TIMESTAMP),
-                new SqlParameter("placa", Types.VARCHAR),
-                new SqlParameter("correo_electronico", Types.VARCHAR),
-                new SqlParameter("observacion", Types.VARCHAR),
-                new SqlOutParameter("codret", Types.INTEGER));
+  public ShippingGuideDaoImp(@Qualifier("tuvalJdbcTemplate") JdbcTemplate jdbcTemplate) {
+    this.jdbcTemplate = jdbcTemplate;
+    this.spCabeceraGuiaRemision = new SimpleJdbcCall(jdbcTemplate)
+        .withSchemaName("dbo")
+        .withProcedureName("MSW_SP_GUARDAR_GUIA_REMISION_CAB_jgms")
+        .withoutProcedureColumnMetaDataAccess()
+        .declareParameters(
+            new SqlParameter("docu", Types.VARCHAR),
+            new SqlParameter("establecimiento", Types.VARCHAR),
+            new SqlParameter("punto_emision", Types.VARCHAR),
+            new SqlParameter("secuencial", Types.VARCHAR),
+            new SqlParameter("direccion_partida", Types.VARCHAR),
+            new SqlParameter("razon_social_transportista", Types.VARCHAR),
+            new SqlParameter("identificador_transportista", Types.VARCHAR),
+            new SqlParameter("tipo_identificador_transportista", Types.VARCHAR),
+            new SqlParameter("rise", Types.VARCHAR),
+            new SqlParameter("fecha_inicio", Types.TIMESTAMP),
+            new SqlParameter("fecha_fin", Types.TIMESTAMP),
+            new SqlParameter("placa", Types.VARCHAR),
+            new SqlParameter("correo_electronico", Types.VARCHAR),
+            new SqlParameter("observacion", Types.VARCHAR),
+            new SqlOutParameter("codret", Types.INTEGER));
     // guardar destinatario guia remision
 
-    this.spDestinatarioGuiaRemision =
-        new SimpleJdbcCall(jdbcTemplate)
-            .withProcedureName("MSW_SP_GUARDAR_GUIA_REMISION_DESTINATARIO_jgms")
-            .withSchemaName("dbo")
-            .withoutProcedureColumnMetaDataAccess()
-            .declareParameters(
-                new SqlParameter("docu", Types.VARCHAR),
-                new SqlParameter("secuencial", Types.INTEGER),
-                new SqlParameter("identificador_destinatario", Types.VARCHAR),
-                new SqlParameter("razon_social_destinatario", Types.VARCHAR),
-                new SqlParameter("direccion_destinatario", Types.VARCHAR),
-                new SqlParameter("motivo_traslado", Types.VARCHAR),
-                new SqlParameter("documento_aduanero", Types.VARCHAR),
-                new SqlParameter("establecimiento_destino", Types.VARCHAR),
-                new SqlParameter("desc_establecimiento_destino", Types.VARCHAR),
-                new SqlParameter("ruta", Types.VARCHAR),
-                new SqlParameter("codigo_sustento", Types.VARCHAR),
-                new SqlParameter("docu_sustento", Types.VARCHAR),
-                new SqlParameter("nume_autorizacion", Types.VARCHAR),
-                new SqlParameter("fecha", Types.DATE),
-                new SqlOutParameter("codret", Types.INTEGER));
+    this.spDestinatarioGuiaRemision = new SimpleJdbcCall(jdbcTemplate)
+        .withSchemaName("dbo")
+        .withProcedureName("MSW_SP_GUARDAR_GUIA_REMISION_DESTINATARIO_jgms")
+        .withoutProcedureColumnMetaDataAccess()
+        .declareParameters(
+            new SqlParameter("docu", Types.VARCHAR),
+            new SqlParameter("secuencial", Types.INTEGER),
+            new SqlParameter("identificador_destinatario", Types.VARCHAR),
+            new SqlParameter("razon_social_destinatario", Types.VARCHAR),
+            new SqlParameter("direccion_destinatario", Types.VARCHAR),
+            new SqlParameter("motivo_traslado", Types.VARCHAR),
+            new SqlParameter("documento_aduanero", Types.VARCHAR),
+            new SqlParameter("establecimiento_destino", Types.VARCHAR),
+            new SqlParameter("desc_establecimiento_destino", Types.VARCHAR),
+            new SqlParameter("ruta", Types.VARCHAR),
+            new SqlParameter("codigo_sustento", Types.VARCHAR),
+            new SqlParameter("docu_sustento", Types.VARCHAR),
+            new SqlParameter("nume_autorizacion", Types.VARCHAR),
+            new SqlParameter("fecha", Types.DATE),
+            new SqlOutParameter("codret", Types.INTEGER));
 
     // guardar detalle guia remision
-    this.spDetalleGuiaRemision =
-        new SimpleJdbcCall(jdbcTemplate)
-            .withProcedureName("MSW_SP_GUARDAR_GUIA_REMISION_DET_jgms")
-            .withSchemaName("dbo")
-            .withoutProcedureColumnMetaDataAccess()
-            .declareParameters(
-                new SqlParameter("docu", Types.VARCHAR),
-                new SqlParameter("secuencial_destinatario", Types.INTEGER),
-                new SqlParameter("secuencial_detalle", Types.INTEGER),
-                new SqlParameter("identificacion_destinatario", Types.VARCHAR),
-                new SqlParameter("numero_docu_sustento", Types.VARCHAR),
-                new SqlParameter("codigo_producto", Types.VARCHAR),
-                new SqlParameter("codigo_adicional", Types.VARCHAR),
-                new SqlParameter("descripcion_producto", Types.NVARCHAR),
-                new SqlParameter("cantidad", Types.DECIMAL), // numeric(19,5)
-                new SqlParameter("unidad_medida", Types.VARCHAR),
-                new SqlParameter("bodega", Types.VARCHAR),
-                new SqlOutParameter("codret", Types.INTEGER));
+    this.spDetalleGuiaRemision = new SimpleJdbcCall(jdbcTemplate)
+        .withSchemaName("dbo")
+        .withProcedureName("MSW_SP_GUARDAR_GUIA_REMISION_DET_jgms")
+        .withoutProcedureColumnMetaDataAccess()
+        .declareParameters(
+            new SqlParameter("docu", Types.VARCHAR),
+            new SqlParameter("secuencial_destinatario", Types.INTEGER),
+            new SqlParameter("secuencial_detalle", Types.INTEGER),
+            new SqlParameter("identificacion_destinatario", Types.VARCHAR),
+            new SqlParameter("numero_docu_sustento", Types.VARCHAR),
+            new SqlParameter("codigo_producto", Types.VARCHAR),
+            new SqlParameter("codigo_adicional", Types.VARCHAR),
+            new SqlParameter("descripcion_producto", Types.NVARCHAR),
+            new SqlParameter("cantidad", Types.DECIMAL), // numeric(19,5)
+            new SqlParameter("unidad_medida", Types.VARCHAR),
+            new SqlParameter("bodega", Types.VARCHAR),
+            new SqlOutParameter("codret", Types.INTEGER));
 
     // sp para generar las claves de acceso de la guia de remision
-    this.spCreateAccessCodeDeliveryNote =
-        new SimpleJdbcCall(jdbcTemplate)
-            .withProcedureName("MSW_SP_GENERAR_CLAVE_ACCESO_GUIA_REMISION")
-            .withoutProcedureColumnMetaDataAccess()
-            .declareParameters(new SqlParameter("docu", Types.VARCHAR));
+    this.spCreateAccessCodeDeliveryNote = new SimpleJdbcCall(jdbcTemplate)
+        .withSchemaName("dbo")
+        .withProcedureName("MSW_SP_GENERAR_CLAVE_ACCESO_GUIA_REMISION")
+        .withoutProcedureColumnMetaDataAccess()
+        .declareParameters(new SqlParameter("docu", Types.VARCHAR));
 
     // sp para actualizar la guia de remision con la clave de acceso
-    this.spUpdateAccessCodeDeliveryNote =
-        new SimpleJdbcCall(jdbcTemplate)
-            .withProcedureName("MSW_SP_ACTUALIZAR_DOCU_GENERADO_GUIA_REMISION")
-            .withoutProcedureColumnMetaDataAccess()
-            .declareParameters(new SqlParameter("docu", Types.VARCHAR));
+    this.spUpdateAccessCodeDeliveryNote = new SimpleJdbcCall(jdbcTemplate)
+        .withSchemaName("dbo")
+        .withProcedureName("MSW_SP_ACTUALIZAR_DOCU_GENERADO_GUIA_REMISION")
+        .withoutProcedureColumnMetaDataAccess()
+        .declareParameters(new SqlParameter("docu", Types.VARCHAR));
 
     // sp para validar la existencia de la guia de remision
-    this.spCheckExistsDeliverNote =
-        new SimpleJdbcCall(jdbcTemplate)
-            .withProcedureName("sp_validar_existencia_guia_remision_tuv_jgms")
-            .withoutProcedureColumnMetaDataAccess()
-            .declareParameters(
-                new SqlParameter("docu", Types.VARCHAR),
-                new SqlOutParameter("existe_cabecera", Types.BIT),
-                new SqlInOutParameter("codret", Types.INTEGER),
-                new SqlInOutParameter("msj", Types.VARCHAR));
+    this.spCheckExistsDeliverNote = new SimpleJdbcCall(jdbcTemplate)
+        .withSchemaName("dbo")
+        .withProcedureName("sp_validar_existencia_guia_remision_tuv_jgms")
+        .withoutProcedureColumnMetaDataAccess()
+        .declareParameters(
+            new SqlParameter("docu", Types.VARCHAR),
+            new SqlOutParameter("existe_cabecera", Types.BIT),
+            new SqlInOutParameter("codret", Types.INTEGER),
+            new SqlInOutParameter("msj", Types.VARCHAR));
     // para movimientos
-    this.spMovimientosIv =
-        new SimpleJdbcCall(jdbcTemplate)
-            .withProcedureName("sp_msw_movimientos_iv")
-            .withoutProcedureColumnMetaDataAccess()
-            .declareParameters(
-                new SqlParameter("tipotrx", Types.VARCHAR),
-                new SqlParameter("numdoc", Types.VARCHAR),
-                new SqlParameter("numdocori", Types.VARCHAR),
-                new SqlParameter("bodorigen", Types.VARCHAR),
-                new SqlParameter("boddestino", Types.VARCHAR),
-                new SqlParameter("binitem", Types.VARCHAR),
-                new SqlParameter("binori", Types.VARCHAR),
-                new SqlParameter("bindes", Types.VARCHAR),
-                new SqlParameter("observacion", Types.VARCHAR),
-                new SqlParameter("item", Types.VARCHAR),
-                new SqlParameter("cantidad", Types.DECIMAL), // numeric(19,5)
-                new SqlParameter("secitem", Types.INTEGER),
-                new SqlParameter("compartimento", Types.VARCHAR),
-                new SqlInOutParameter("idmov", Types.INTEGER),
-                new SqlOutParameter("docgp", Types.VARCHAR), // OUT varchar(30)
-                new SqlParameter("numtran", Types.DECIMAL), // numeric(19,5)
-                new SqlParameter("idfila", Types.INTEGER),
-                new SqlParameter("fecpro", Types.TIMESTAMP), // datetime
-                new SqlParameter("userid", Types.CHAR),
-                new SqlParameter("modo", Types.SMALLINT),
-                new SqlParameter("submodo", Types.SMALLINT),
-                new SqlParameter("equipo", Types.VARCHAR),
-                new SqlInOutParameter("codret", Types.INTEGER),
-                new SqlInOutParameter("msj", Types.VARCHAR),
-                new SqlParameter("idguia", Types.INTEGER),
-                new SqlParameter("guia", Types.VARCHAR));
+    this.spMovimientosIv = new SimpleJdbcCall(jdbcTemplate)
+        .withSchemaName("dbo")
+        .withProcedureName("sp_msw_movimientos_iv")
+        .withoutProcedureColumnMetaDataAccess()
+        .declareParameters(
+            new SqlParameter("tipotrx", Types.VARCHAR),
+            new SqlParameter("numdoc", Types.VARCHAR),
+            new SqlParameter("numdocori", Types.VARCHAR),
+            new SqlParameter("bodorigen", Types.VARCHAR),
+            new SqlParameter("boddestino", Types.VARCHAR),
+            new SqlParameter("binitem", Types.VARCHAR),
+            new SqlParameter("binori", Types.VARCHAR),
+            new SqlParameter("bindes", Types.VARCHAR),
+            new SqlParameter("observacion", Types.VARCHAR),
+            new SqlParameter("item", Types.VARCHAR),
+            new SqlParameter("cantidad", Types.DECIMAL), // numeric(19,5)
+            new SqlParameter("secitem", Types.INTEGER),
+            new SqlParameter("compartimento", Types.VARCHAR),
+            new SqlInOutParameter("idmov", Types.INTEGER),
+            new SqlOutParameter("docgp", Types.VARCHAR), // OUT varchar(30)
+            new SqlParameter("numtran", Types.DECIMAL), // numeric(19,5)
+            new SqlParameter("idfila", Types.INTEGER),
+            new SqlParameter("fecpro", Types.TIMESTAMP), // datetime
+            new SqlParameter("userid", Types.CHAR),
+            new SqlParameter("modo", Types.SMALLINT),
+            new SqlParameter("submodo", Types.SMALLINT),
+            new SqlParameter("equipo", Types.VARCHAR),
+            new SqlInOutParameter("codret", Types.INTEGER),
+            new SqlInOutParameter("msj", Types.VARCHAR),
+            new SqlParameter("idguia", Types.INTEGER),
+            new SqlParameter("guia", Types.VARCHAR));
 
-    this.spCheckCodeAccessDeliveryNote =
-        new SimpleJdbcCall(jdbcTemplate)
-            .withProcedureName("MSW_SP_VALIDAR_GENERACION_GUIA_REMISION")
-            .useInParameterNames("docu") // opcional, ayuda a claridad
-            .declareParameters(new SqlParameter("docu", Types.VARCHAR));
-  }
+    this.spCheckCodeAccessDeliveryNote = new SimpleJdbcCall(jdbcTemplate)
+        .withSchemaName("dbo")
+        .withProcedureName("MSW_SP_VALIDAR_GENERACION_GUIA_REMISION")
+        .withoutProcedureColumnMetaDataAccess()
+        .useInParameterNames("docu") // opcional, ayuda a claridad
+        .declareParameters(new SqlParameter("docu", Types.VARCHAR));
 
-  public void validateConfiguration() {
-    if (jdbcTemplate == null) {
-      throw new IllegalStateException("JdbcTemplate no ha sido inyectado correctamente");
-    }
   }
 
   @Override
   public CheckCodeAccessDeliveryNoteResponse checkGuiaRemision(String numDoc) {
     try {
-      MapSqlParameterSource in =
-          new MapSqlParameterSource()
-              .addValue(
-                  "docu",
-                  (numDoc == null || numDoc.isBlank()) ? null : numDoc.trim(),
-                  java.sql.Types.VARCHAR);
+      MapSqlParameterSource in = new MapSqlParameterSource()
+          .addValue(
+              "docu",
+              (numDoc == null || numDoc.isBlank()) ? null : numDoc.trim(),
+              java.sql.Types.VARCHAR);
 
       Map<String, Object> out = spCheckCodeAccessDeliveryNote.execute(in);
       @SuppressWarnings("unchecked")
@@ -209,9 +197,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       // POJO
       String claveAcceso = CoerceHelperUtils.stringOrEmpty(row.get("CLAVE_ACCESO"));
       String documentoOrigen = CoerceHelperUtils.stringOrEmpty(row.get("I_vDOCU_ORIGEN"));
-      int codigo =
-          CoerceHelperUtils.getInt(
-              row.get("I_vCODIGO"), 0); // ojo: viene vacío en tu log -> quedará 0
+      int codigo = CoerceHelperUtils.getInt(
+          row.get("I_vCODIGO"), 0); // ojo: viene vacío en tu log -> quedará 0
       String mensaje = CoerceHelperUtils.stringOrEmpty(row.get("I_vMENSAJE"));
       String docGenerado = CoerceHelperUtils.stringOrEmpty(row.get("DOC_GENERADO"));
 
@@ -233,33 +220,32 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     if (obs != null && obs.length() > 200) {
       obs = obs.substring(0, 200);
     }
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("tipotrx", "")
-            .addValue("numdoc", req.getPedido())
-            .addValue("numdocori", "")
-            .addValue("bodorigen", req.getBodegaOrigen())
-            .addValue("boddestino", req.getBodegaDestino())
-            .addValue("binitem", "")
-            .addValue("binori", "")
-            .addValue("bindes", "")
-            .addValue("observacion", obs)
-            .addValue("item", "")
-            .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("secitem", 0)
-            .addValue("compartimento", null, Types.VARCHAR)
-            .addValue("idmov", 0) // INOUT inicia en 0 como en .NET
-            .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("idfila", 0)
-            .addValue("fecpro", null, Types.TIMESTAMP)
-            .addValue("userid", req.getUsuario()) // SQL Server CHAR(15) rellena espacios
-            .addValue("modo", modo) // 1
-            .addValue("submodo", 0)
-            .addValue("equipo", "wserver")
-            .addValue("codret", 0) // INOUT
-            .addValue("msj", "")
-            .addValue("idguia", req.getIdGuiaRemision())
-            .addValue("guia", req.getGuiaRemision());
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", req.getPedido())
+        .addValue("numdocori", "")
+        .addValue("bodorigen", req.getBodegaOrigen())
+        .addValue("boddestino", req.getBodegaDestino())
+        .addValue("binitem", "")
+        .addValue("binori", "")
+        .addValue("bindes", "")
+        .addValue("observacion", obs)
+        .addValue("item", "")
+        .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("secitem", 0)
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", 0) // INOUT inicia en 0 como en .NET
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", req.getUsuario()) // SQL Server CHAR(15) rellena espacios
+        .addValue("modo", modo) // 1
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("codret", 0) // INOUT
+        .addValue("msj", "")
+        .addValue("idguia", req.getIdGuiaRemision())
+        .addValue("guia", req.getGuiaRemision());
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
@@ -268,14 +254,12 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
 
       if (codret != 0) {
-        throw new IllegalStateException(
-            String.format(
-                "Error al guardar la cabecera de transferencia.\n"
-                    + "  Pedido: %s\n"
-                    + "  ID Movimiento: %d\n"
-                    + "  Código de retorno: %d\n"
-                    + "  Mensaje del sistema: %s",
-                req.getPedido(), idmov, codret, msj));
+        throw new IllegalStateException("""
+            Error al guardar la cabecera de egreso de transferencia de venta.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Mensaje del sistema: %s""".formatted(req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
@@ -291,48 +275,46 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       int idmov,
       int secitem,
       int modo) {
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("tipotrx", "")
-            .addValue("numdoc", cab.getPedido())
-            .addValue("numdocori", "")
-            .addValue("bodorigen", cab.getBodegaOrigen())
-            .addValue("boddestino", cab.getBodegaDestino())
-            .addValue("binitem", det.getItem())
-            .addValue("binori", det.getCompartimento())
-            .addValue("bindes", "")
-            .addValue("observacion", null, Types.VARCHAR)
-            .addValue("item", det.getItem())
-            .addValue("cantidad", det.getCantidad())
-            .addValue("secitem", secitem) // secuencia siempre es 1 al parecer
-            .addValue("compartimento", null, Types.VARCHAR)
-            .addValue("idmov", idmov)
-            .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("idfila", 0)
-            .addValue("fecpro", null, Types.TIMESTAMP)
-            .addValue("userid", cab.getUsuario())
-            .addValue("modo", modo) // 2
-            .addValue("submodo", 0)
-            .addValue("equipo", "wserver")
-            .addValue("codret", 0)
-            .addValue("msj", "")
-            .addValue("idguia", cab.getIdGuiaRemision())
-            .addValue("guia", cab.getGuiaRemision());
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", cab.getPedido())
+        .addValue("numdocori", "")
+        .addValue("bodorigen", cab.getBodegaOrigen())
+        .addValue("boddestino", cab.getBodegaDestino())
+        .addValue("binitem", det.getItem())
+        .addValue("binori", det.getCompartimento())
+        .addValue("bindes", "")
+        .addValue("observacion", null, Types.VARCHAR)
+        .addValue("item", det.getItem())
+        .addValue("cantidad", det.getCantidad())
+        .addValue("secitem", secitem) // secuencia siempre es 1 al parecer
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", idmov)
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", cab.getUsuario())
+        .addValue("modo", modo) // 2
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("codret", 0)
+        .addValue("msj", "")
+        .addValue("idguia", cab.getIdGuiaRemision())
+        .addValue("guia", cab.getGuiaRemision());
 
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
-        throw new IllegalStateException(
-            String.format(
-                "Error al guardar el detalle de transferencia.\n"
-                    + "  Pedido: %s\n"
-                    + "  ID Movimiento: %d\n"
-                    + "  Código de retorno: %d\n"
-                    + "  Item: %s\n"
-                    + "  Mensaje del sistema: %s",
-                cab.getPedido(), idmov, codret, det.getItem(), msj));
+        throw new IllegalStateException("""
+            Error al guardar el detalle de egreso de transferencia de venta.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Item: %s
+              Mensaje del sistema: %s""".formatted(cab.getPedido(), idmov, codret, det.getItem(), msj));
+
       }
       return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
     } catch (Exception e) {
@@ -344,48 +326,45 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
   @Override
   public HeaderGuideTransferVtaResponse executeSpGenerateMovimentTransferVta(
       HeaderGuideTransferVtaRequest req, int idmov, int modo) {
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("tipotrx", "")
-            .addValue("numdoc", req.getPedido())
-            .addValue("numdocori", "")
-            .addValue("bodorigen", req.getBodegaOrigen())
-            .addValue("boddestino", req.getBodegaDestino())
-            .addValue("binitem", "")
-            .addValue("binori", "")
-            .addValue("bindes", "")
-            .addValue("observacion", null, Types.VARCHAR)
-            .addValue("item", "")
-            .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("secitem", 0)
-            .addValue("compartimento", null, Types.VARCHAR)
-            .addValue("idmov", idmov)
-            .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("idfila", 0)
-            .addValue("fecpro", null, Types.TIMESTAMP)
-            .addValue("userid", req.getUsuario())
-            .addValue("modo", modo) // 3
-            .addValue("submodo", 0)
-            .addValue("equipo", "wserver")
-            .addValue("docgp", "") // INOUT
-            .addValue("codret", 0) // INOUT
-            .addValue("msj", "")
-            .addValue("idguia", "")
-            .addValue("guia", "");
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", req.getPedido())
+        .addValue("numdocori", "")
+        .addValue("bodorigen", req.getBodegaOrigen())
+        .addValue("boddestino", req.getBodegaDestino())
+        .addValue("binitem", "")
+        .addValue("binori", "")
+        .addValue("bindes", "")
+        .addValue("observacion", null, Types.VARCHAR)
+        .addValue("item", "")
+        .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("secitem", 0)
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", idmov)
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", req.getUsuario())
+        .addValue("modo", modo) // 3
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("docgp", "") // INOUT
+        .addValue("codret", 0) // INOUT
+        .addValue("msj", "")
+        .addValue("idguia", "")
+        .addValue("guia", "");
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
       String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
-        throw new IllegalStateException(
-            String.format(
-                "Error al guardar el movimiento de transferencia.\n"
-                    + "  Pedido: %s\n"
-                    + "  ID Movimiento: %d\n"
-                    + "  Código de retorno: %d\n"
-                    + "  Mensaje del sistema: %s",
-                req.getPedido(), idmov, codret, msj));
+        throw new IllegalStateException("""
+            Error al generar el movimiento de salida de transferencia de venta.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Mensaje del sistema: %s""".formatted(req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
@@ -404,33 +383,32 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     if (obs != null && obs.length() > 200) {
       obs = obs.substring(0, 200);
     }
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("tipotrx", "")
-            .addValue("numdoc", req.getPedido())
-            .addValue("numdocori", req.getPedidoNuevo())
-            .addValue("bodorigen", req.getBodegaOrigen())
-            .addValue("boddestino", "")
-            .addValue("binitem", "")
-            .addValue("binori", "")
-            .addValue("bindes", "")
-            .addValue("observacion", obs)
-            .addValue("item", "")
-            .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("secitem", 0)
-            .addValue("compartimento", null, Types.VARCHAR)
-            .addValue("idmov", 0) // INOUT inicia en 0 como en .NET
-            .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("idfila", 0)
-            .addValue("fecpro", null, Types.TIMESTAMP)
-            .addValue("userid", req.getUsuario()) // SQL Server CHAR(15) rellena espacios
-            .addValue("modo", modo) // 1
-            .addValue("submodo", 0)
-            .addValue("equipo", "wserver")
-            .addValue("codret", 0) // INOUT
-            .addValue("msj", "")
-            .addValue("idguia", req.getIdGuiaRemision())
-            .addValue("guia", req.getGuiaRemision());
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", req.getPedido())
+        .addValue("numdocori", req.getPedidoNuevo())
+        .addValue("bodorigen", req.getBodegaOrigen())
+        .addValue("boddestino", "")
+        .addValue("binitem", "")
+        .addValue("binori", "")
+        .addValue("bindes", "")
+        .addValue("observacion", obs)
+        .addValue("item", "")
+        .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("secitem", 0)
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", 0) // INOUT inicia en 0 como en .NET
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", req.getUsuario()) // SQL Server CHAR(15) rellena espacios
+        .addValue("modo", modo) // 1
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("codret", 0) // INOUT
+        .addValue("msj", "")
+        .addValue("idguia", req.getIdGuiaRemision())
+        .addValue("guia", req.getGuiaRemision());
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
@@ -439,14 +417,12 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
 
       if (codret != 0) {
-        throw new IllegalStateException(
-            String.format(
-                "Error al guardar la cabecera de despacho.\n"
-                    + "  Pedido: %s\n"
-                    + "  ID Movimiento: %d\n"
-                    + "  Código de retorno: %d\n"
-                    + "  Mensaje del sistema: %s",
-                req.getPedido(), idmov, codret, msj));
+        throw new IllegalStateException("""
+            Error al guardar la cabecera de despacho.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Mensaje del sistema: %s""".formatted(req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
@@ -462,48 +438,46 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       int idmov,
       int secitem,
       int modo) {
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("tipotrx", "")
-            .addValue("numdoc", cab.getPedido())
-            .addValue("numdocori", "")
-            .addValue("bodorigen", cab.getBodegaOrigen())
-            .addValue("boddestino", "")
-            .addValue("binitem", det.getItem())
-            .addValue("binori", det.getCompartimento())
-            .addValue("bindes", "")
-            .addValue("observacion", null, Types.VARCHAR)
-            .addValue("item", det.getItem())
-            .addValue("cantidad", det.getCantidad())
-            .addValue("secitem", secitem) // secuencia siempre es 1 al parecer
-            .addValue("compartimento", null, Types.VARCHAR)
-            .addValue("idmov", idmov)
-            .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("idfila", 0)
-            .addValue("fecpro", null, Types.TIMESTAMP)
-            .addValue("userid", cab.getUsuario())
-            .addValue("modo", modo) // 2
-            .addValue("submodo", 0)
-            .addValue("equipo", "wserver")
-            .addValue("codret", 0)
-            .addValue("msj", "")
-            .addValue("idguia", cab.getIdGuiaRemision())
-            .addValue("guia", cab.getGuiaRemision());
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", cab.getPedido())
+        .addValue("numdocori", "")
+        .addValue("bodorigen", cab.getBodegaOrigen())
+        .addValue("boddestino", "")
+        .addValue("binitem", det.getItem())
+        .addValue("binori", det.getCompartimento())
+        .addValue("bindes", "")
+        .addValue("observacion", null, Types.VARCHAR)
+        .addValue("item", det.getItem())
+        .addValue("cantidad", det.getCantidad())
+        .addValue("secitem", secitem) // secuencia siempre es 1 al parecer
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", idmov)
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", cab.getUsuario())
+        .addValue("modo", modo) // 2
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("codret", 0)
+        .addValue("msj", "")
+        .addValue("idguia", cab.getIdGuiaRemision())
+        .addValue("guia", cab.getGuiaRemision());
 
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
-        throw new IllegalStateException(
-            String.format(
-                "Error al guardar el detalle de despacho.\n"
-                    + "  Pedido: %s\n"
-                    + "  ID Movimiento: %d\n"
-                    + "  Código de retorno: %d\n"
-                    + "  Item: %s\n"
-                    + "  Mensaje del sistema: %s",
-                cab.getPedido(), idmov, codret, det.getItem(), msj));
+        throw new IllegalStateException("""
+            Error al guardar el detalle de despacho.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Item: %s
+              Mensaje del sistema: %s""".formatted(cab.getPedido(), idmov, codret, det.getItem(), msj));
+
       }
       return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
     } catch (Exception e) {
@@ -524,50 +498,45 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
   @Override
   public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
       HeaderGuideDispatchShipmentRequest req, int idmov, int modo) {
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("tipotrx", "")
-            .addValue("numdoc", req.getPedido())
-            .addValue("numdocori", "")
-            .addValue("bodorigen", req.getBodegaOrigen())
-            .addValue("boddestino", "")
-            .addValue("binitem", "")
-            .addValue("binori", "")
-            .addValue("bindes", "")
-            .addValue("observacion", null, Types.VARCHAR)
-            .addValue("item", "")
-            .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("secitem", 0)
-            .addValue("compartimento", null, Types.VARCHAR)
-            .addValue("idmov", idmov)
-            .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("idfila", 0)
-            .addValue("fecpro", null, Types.TIMESTAMP)
-            .addValue("userid", req.getUsuario())
-            .addValue("modo", modo) // 3
-            .addValue("submodo", 0)
-            .addValue("equipo", "wserver")
-            .addValue("docgp", "") // INOUT
-            .addValue("codret", 0) // INOUT
-            .addValue("msj", "")
-            .addValue("idguia", "")
-            .addValue("guia", "");
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", req.getPedido())
+        .addValue("numdocori", "")
+        .addValue("bodorigen", req.getBodegaOrigen())
+        .addValue("boddestino", "")
+        .addValue("binitem", "")
+        .addValue("binori", "")
+        .addValue("bindes", "")
+        .addValue("observacion", null, Types.VARCHAR)
+        .addValue("item", "")
+        .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("secitem", 0)
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", idmov)
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", req.getUsuario())
+        .addValue("modo", modo) // 3
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("docgp", "") // INOUT
+        .addValue("codret", 0) // INOUT
+        .addValue("msj", "")
+        .addValue("idguia", "")
+        .addValue("guia", "");
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
       String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
-        if (codret != 0) {
-          throw new IllegalStateException(
-              String.format(
-                  "Error al generar el movimiento de despacho.\n"
-                      + "  Pedido: %s\n"
-                      + "  ID Movimiento: %d\n"
-                      + "  Código de retorno: %d\n"
-                      + "  Mensaje del sistema: %s",
-                  req.getPedido(), idmov, codret, msj));
-        }
+        throw new IllegalStateException("""
+            Error al generar el movimiento de despacho.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Mensaje del sistema: %s""".formatted(req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
@@ -579,50 +548,45 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
   @Override
   public HeaderGuideTransferVtaResponse executeFixSpGenerateMovementDispatchDeliveryNote(
       DispatchDeliveryNoteMovementRequest req, int modo) {
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("tipotrx", "")
-            .addValue("numdoc", req.getPedido())
-            .addValue("numdocori", "")
-            .addValue("bodorigen", req.getBodegaOrigen())
-            .addValue("boddestino", "")
-            .addValue("binitem", "")
-            .addValue("binori", "")
-            .addValue("bindes", "")
-            .addValue("observacion", null, Types.VARCHAR)
-            .addValue("item", "")
-            .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("secitem", 0)
-            .addValue("compartimento", null, Types.VARCHAR)
-            .addValue("idmov", req.getIdMovimiento())
-            .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("idfila", 0)
-            .addValue("fecpro", null, Types.TIMESTAMP)
-            .addValue("userid", req.getUsuario())
-            .addValue("modo", modo) // 3
-            .addValue("submodo", 0)
-            .addValue("equipo", "wserver")
-            .addValue("docgp", "") // INOUT
-            .addValue("codret", 0) // INOUT
-            .addValue("msj", "")
-            .addValue("idguia", "")
-            .addValue("guia", "");
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", req.getPedido())
+        .addValue("numdocori", "")
+        .addValue("bodorigen", req.getBodegaOrigen())
+        .addValue("boddestino", "")
+        .addValue("binitem", "")
+        .addValue("binori", "")
+        .addValue("bindes", "")
+        .addValue("observacion", null, Types.VARCHAR)
+        .addValue("item", "")
+        .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("secitem", 0)
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", req.getIdMovimiento())
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", req.getUsuario())
+        .addValue("modo", modo) // 3
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("docgp", "") // INOUT
+        .addValue("codret", 0) // INOUT
+        .addValue("msj", "")
+        .addValue("idguia", "")
+        .addValue("guia", "");
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
       String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
-        if (codret != 0) {
-          throw new IllegalStateException(
-              String.format(
-                  "Error al generar el movimiento de despacho.\n"
-                      + "  Pedido: %s\n"
-                      + "  ID Movimiento: %d\n"
-                      + "  Código de retorno: %d\n"
-                      + "  Mensaje del sistema: %s",
-                  req.getPedido(), req.getIdMovimiento(), codret, msj));
-        }
+        throw new IllegalStateException("""
+            Error al generar el movimiento de despacho.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Mensaje del sistema: %s""".formatted(req.getPedido(), req.getIdMovimiento(), codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, req.getIdMovimiento(), docgp);
     } catch (Exception e) {
@@ -634,8 +598,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
   @Override
   public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(
       String orderNumber, String newOrderNumber, Integer idGuiaRemision, String guiaRemision) {
-    String SQL =
-        """
+    String SQL = """
           SELECT TOP (1)
             mc_id      AS idMovimiento,
             mc_numdoc  AS numDoc,
@@ -681,8 +644,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String origen,
       Integer idGuiaRemision,
       String guiaRemision) {
-    String SQL =
-        """
+    String SQL = """
           SELECT
             mc_id             AS idMovimiento,
             mc_numdoc         AS numDoc,
@@ -733,8 +695,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       Integer idMovimiento,
       Integer idGuiaRemision,
       String guiaRemision) {
-    String SQL =
-        """
+    String SQL = """
             SELECT TOP (1)
           mc_id        AS idMovimiento,
           mc_numdoc    AS numDoc,
@@ -784,8 +745,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String item,
       Integer idMovimiento,
       Integer cantidad) {
-    String SQL =
-        """
+    String SQL = """
           SELECT TOP (1)
           md_id        AS idMovimiento,
           md_tipotrx   AS tipoTrx,
@@ -831,22 +791,21 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
 
   @Override
   public void executeSpStoreHeaderDeliveryNote(HeaderDeliveryNoteRequest h) {
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("docu", h.getGuiaRemision())
-            .addValue("establecimiento", h.getEstablecimiento())
-            .addValue("punto_emision", h.getPtoEmision())
-            .addValue("secuencial", h.getSecuencial())
-            .addValue("direccion_partida", h.getDireccionPartida())
-            .addValue("razon_social_transportista", h.getDireccionPartida())
-            .addValue("identificador_transportista", h.getIdentificacionTransportista())
-            .addValue("tipo_identificador_transportista", h.getTipoIdentificacionTransportista())
-            .addValue("rise", CoerceHelperUtils.emptyIfNull(h.getRise()))
-            .addValue("fecha_inicio", h.getFechaInicio())
-            .addValue("fecha_fin", h.getFechaFin())
-            .addValue("placa", h.getPlaca())
-            .addValue("correo_electronico", h.getCorreoElectronico())
-            .addValue("observacion", h.getObservacion());
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("docu", h.getGuiaRemision())
+        .addValue("establecimiento", h.getEstablecimiento())
+        .addValue("punto_emision", h.getPtoEmision())
+        .addValue("secuencial", h.getSecuencial())
+        .addValue("direccion_partida", h.getDireccionPartida())
+        .addValue("razon_social_transportista", h.getDireccionPartida())
+        .addValue("identificador_transportista", h.getIdentificacionTransportista())
+        .addValue("tipo_identificador_transportista", h.getTipoIdentificacionTransportista())
+        .addValue("rise", CoerceHelperUtils.emptyIfNull(h.getRise()))
+        .addValue("fecha_inicio", h.getFechaInicio())
+        .addValue("fecha_fin", h.getFechaFin())
+        .addValue("placa", h.getPlaca())
+        .addValue("correo_electronico", h.getCorreoElectronico())
+        .addValue("observacion", h.getObservacion());
 
     try {
       Map<String, Object> out = spCabeceraGuiaRemision.execute(in);
@@ -864,22 +823,21 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
 
   @Override
   public void executeSpStoreDestinationDeliveryNote(DestinationDeliveryNoteRequest h) {
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("docu", h.getGuiaRemision())
-            .addValue("secuencial", h.getSecuencialDestinatario())
-            .addValue("identificador_destinatario", h.getIdentificacionDestinatario())
-            .addValue("razon_social_destinatario", h.getRazonSocialDestinatario())
-            .addValue("direccion_destinatario", h.getDireccionDestinatario())
-            .addValue("motivo_traslado", h.getMotivoTraslado())
-            .addValue("documento_aduanero", h.getDocAduanero())
-            .addValue("establecimiento_destino", h.getCodEstablecimientoDestino())
-            .addValue("desc_establecimiento_destino", h.getDescEstablecimientoDestino())
-            .addValue("ruta", h.getRuta())
-            .addValue("codigo_sustento", CoerceHelperUtils.emptyIfNull(h.getDocSustento()))
-            .addValue("docu_sustento", CoerceHelperUtils.emptyIfNull(h.getNumDocSustento()))
-            .addValue("nume_autorizacion", CoerceHelperUtils.emptyIfNull(h.getNumAutoDocSustento()))
-            .addValue("fecha", h.getFechaEmisionDocSustento());
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("docu", h.getGuiaRemision())
+        .addValue("secuencial", h.getSecuencialDestinatario())
+        .addValue("identificador_destinatario", h.getIdentificacionDestinatario())
+        .addValue("razon_social_destinatario", h.getRazonSocialDestinatario())
+        .addValue("direccion_destinatario", h.getDireccionDestinatario())
+        .addValue("motivo_traslado", h.getMotivoTraslado())
+        .addValue("documento_aduanero", h.getDocAduanero())
+        .addValue("establecimiento_destino", h.getCodEstablecimientoDestino())
+        .addValue("desc_establecimiento_destino", h.getDescEstablecimientoDestino())
+        .addValue("ruta", h.getRuta())
+        .addValue("codigo_sustento", CoerceHelperUtils.emptyIfNull(h.getDocSustento()))
+        .addValue("docu_sustento", CoerceHelperUtils.emptyIfNull(h.getNumDocSustento()))
+        .addValue("nume_autorizacion", CoerceHelperUtils.emptyIfNull(h.getNumAutoDocSustento()))
+        .addValue("fecha", h.getFechaEmisionDocSustento());
     try {
       Map<String, Object> out = spDestinatarioGuiaRemision.execute(in);
       Integer codret = (Integer) out.get("codret");
@@ -893,19 +851,18 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
 
   @Override
   public void executeSpStoreDetailDeliveryNote(DetailDeliveryNoteRequest d) {
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("docu", d.getGuiaRemision())
-            .addValue("secuencial_destinatario", d.getSecuencialDestinatario())
-            .addValue("secuencial_detalle", d.getSecuenciaDetalle())
-            .addValue("identificacion_destinatario", d.getIdentificacionDestinatario())
-            .addValue("numero_docu_sustento", CoerceHelperUtils.emptyIfNull(d.getDocSustento()))
-            .addValue("codigo_producto", d.getCodInterno())
-            .addValue("codigo_adicional", CoerceHelperUtils.emptyIfNull(d.getCodAdicional()))
-            .addValue("descripcion_producto", d.getDescripcion())
-            .addValue("cantidad", d.getCantidad())
-            .addValue("unidad_medida", d.getUnidadMedida())
-            .addValue("bodega", d.getGuiaBodega());
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("docu", d.getGuiaRemision())
+        .addValue("secuencial_destinatario", d.getSecuencialDestinatario())
+        .addValue("secuencial_detalle", d.getSecuenciaDetalle())
+        .addValue("identificacion_destinatario", d.getIdentificacionDestinatario())
+        .addValue("numero_docu_sustento", CoerceHelperUtils.emptyIfNull(d.getDocSustento()))
+        .addValue("codigo_producto", d.getCodInterno())
+        .addValue("codigo_adicional", CoerceHelperUtils.emptyIfNull(d.getCodAdicional()))
+        .addValue("descripcion_producto", d.getDescripcion())
+        .addValue("cantidad", d.getCantidad())
+        .addValue("unidad_medida", d.getUnidadMedida())
+        .addValue("bodega", d.getGuiaBodega());
 
     try {
       Map<String, Object> out = spDetalleGuiaRemision.execute(in);
@@ -961,11 +918,6 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       System.out.println("executeSpValidateExistsDeliveryNoteResponse guia de remisión" + out);
       Integer codret = (Integer) out.get("codret");
       String mensaje = (String) out.get("msj");
-      // Object exObj = out.get("existe_cabecera");
-      // Boolean existe = null;
-      // if (codret != 0) {
-      //   throw new RuntimeException(mensaje);
-      // }
       if (codret == null || codret != 0) {
         throw new RuntimeException(
             "Error al obtener la información de la guía de remisión (codret=" + codret + ")");
@@ -984,8 +936,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String origen,
       Integer idGuiaRemision,
       String guiaRemision) {
-    String SQL =
-        """
+    String SQL = """
           SELECT
             mc_id             AS idMovimiento,
             mc_numdoc         AS numDoc,
@@ -1035,8 +986,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String origen,
       Integer idGuiaRemision,
       String guiaRemision) {
-    String SQL =
-        """
+    String SQL = """
           SELECT
             mc_id             AS idMovimiento,
             mc_numdoc         AS numDoc,
@@ -1090,33 +1040,32 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     if (obs != null && obs.length() > 200) {
       obs = obs.substring(0, 200);
     }
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("tipotrx", "")
-            .addValue("numdoc", req.getPedido())
-            .addValue("numdocori", req.getNumTranferencia())
-            .addValue("bodorigen", req.getBodegaOrigen())
-            .addValue("boddestino", req.getBodegaDestino())
-            .addValue("binitem", "")
-            .addValue("binori", "")
-            .addValue("bindes", "")
-            .addValue("observacion", obs)
-            .addValue("item", "")
-            .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("secitem", 0)
-            .addValue("compartimento", null, Types.VARCHAR)
-            .addValue("idmov", 0) // INOUT inicia en 0 como en .NET
-            .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("idfila", 0)
-            .addValue("fecpro", null, Types.TIMESTAMP)
-            .addValue("userid", req.getUsuario()) // SQL Server CHAR(15) rellena espacios
-            .addValue("modo", modo) // 1
-            .addValue("submodo", 0)
-            .addValue("equipo", "wserver")
-            .addValue("codret", 0) // INOUT
-            .addValue("msj", "")
-            .addValue("idguia", req.getIdGuiaRemision())
-            .addValue("guia", req.getGuiaRemision());
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", req.getPedido())
+        .addValue("numdocori", req.getNumTranferencia())
+        .addValue("bodorigen", req.getBodegaOrigen())
+        .addValue("boddestino", req.getBodegaDestino())
+        .addValue("binitem", "")
+        .addValue("binori", "")
+        .addValue("bindes", "")
+        .addValue("observacion", obs)
+        .addValue("item", "")
+        .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("secitem", 0)
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", 0) // INOUT inicia en 0 como en .NET
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", req.getUsuario()) // SQL Server CHAR(15) rellena espacios
+        .addValue("modo", modo) // 1
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("codret", 0) // INOUT
+        .addValue("msj", "")
+        .addValue("idguia", req.getIdGuiaRemision())
+        .addValue("guia", req.getGuiaRemision());
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
@@ -1125,14 +1074,12 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
 
       if (codret != 0) {
-        throw new IllegalStateException(
-            String.format(
-                "Error al guardar la cabecera de transferencia.\n"
-                    + "  Pedido: %s\n"
-                    + "  ID Movimiento: %d\n"
-                    + "  Código de retorno: %d\n"
-                    + "  Mensaje del sistema: %s",
-                req.getPedido(), idmov, codret, msj));
+        throw new IllegalStateException("""
+            Error al guardar la cabecera de recepcion de transferencia de reserva.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Mensaje del sistema: %s""".formatted(req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
@@ -1148,48 +1095,45 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       int idmov,
       int secitem,
       int modo) {
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("tipotrx", "")
-            .addValue("numdoc", cab.getPedido())
-            .addValue("numdocori", cab.getNumTranferencia())
-            .addValue("bodorigen", cab.getBodegaOrigen())
-            .addValue("boddestino", cab.getBodegaDestino())
-            .addValue("binitem", det.getItem())
-            .addValue("binori", det.getCompartimento())
-            .addValue("bindes", "")
-            .addValue("observacion", null, Types.VARCHAR)
-            .addValue("item", det.getItem())
-            .addValue("cantidad", det.getCantidad())
-            .addValue("secitem", secitem) // secuencia siempre es 1 al parecer
-            .addValue("compartimento", null, Types.VARCHAR)
-            .addValue("idmov", idmov)
-            .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("idfila", 0)
-            .addValue("fecpro", null, Types.TIMESTAMP)
-            .addValue("userid", cab.getUsuario())
-            .addValue("modo", modo) // 2
-            .addValue("submodo", 0)
-            .addValue("equipo", "wserver")
-            .addValue("codret", 0)
-            .addValue("msj", "")
-            .addValue("idguia", cab.getIdGuiaRemision())
-            .addValue("guia", cab.getGuiaRemision());
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", cab.getPedido())
+        .addValue("numdocori", cab.getNumTranferencia())
+        .addValue("bodorigen", cab.getBodegaOrigen())
+        .addValue("boddestino", cab.getBodegaDestino())
+        .addValue("binitem", det.getItem())
+        .addValue("binori", det.getCompartimento())
+        .addValue("bindes", "")
+        .addValue("observacion", null, Types.VARCHAR)
+        .addValue("item", det.getItem())
+        .addValue("cantidad", det.getCantidad())
+        .addValue("secitem", secitem) // secuencia siempre es 1 al parecer
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", idmov)
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", cab.getUsuario())
+        .addValue("modo", modo) // 2
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("codret", 0)
+        .addValue("msj", "")
+        .addValue("idguia", cab.getIdGuiaRemision())
+        .addValue("guia", cab.getGuiaRemision());
 
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
-        throw new IllegalStateException(
-            String.format(
-                "Error al guardar el detalle de transferencia.\n"
-                    + "  Pedido: %s\n"
-                    + "  ID Movimiento: %d\n"
-                    + "  Código de retorno: %d\n"
-                    + "  Item: %s\n"
-                    + "  Mensaje del sistema: %s",
-                cab.getPedido(), idmov, codret, det.getItem(), msj));
+        throw new IllegalStateException("""
+            Error al guardar el detalle de recepcion de transferencia de reservas.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Item: %s
+              Mensaje del sistema: %s""".formatted(cab.getPedido(), idmov, codret, det.getItem(), msj));
       }
       return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
     } catch (Exception e) {
@@ -1201,48 +1145,45 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
   @Override
   public HeaderGuideTransferVtaResponse executeSpGenerateMovimentReceivedGuideTransfered(
       HeaderGuideTransferVtaRequest req, int idmov, int modo) {
-    MapSqlParameterSource in =
-        new MapSqlParameterSource()
-            .addValue("tipotrx", "")
-            .addValue("numdoc", req.getPedido())
-            .addValue("numdocori", req.getNumTranferencia())
-            .addValue("bodorigen", req.getBodegaOrigen())
-            .addValue("boddestino", req.getBodegaDestino())
-            .addValue("binitem", "")
-            .addValue("binori", "")
-            .addValue("bindes", "")
-            .addValue("observacion", null, Types.VARCHAR)
-            .addValue("item", "")
-            .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("secitem", 0)
-            .addValue("compartimento", null, Types.VARCHAR)
-            .addValue("idmov", idmov)
-            .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-            .addValue("idfila", 0)
-            .addValue("fecpro", null, Types.TIMESTAMP)
-            .addValue("userid", req.getUsuario())
-            .addValue("modo", modo) // 3
-            .addValue("submodo", 0)
-            .addValue("equipo", "wserver")
-            .addValue("docgp", "") // INOUT
-            .addValue("codret", 0) // INOUT
-            .addValue("msj", "")
-            .addValue("idguia", "")
-            .addValue("guia", "");
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", req.getPedido())
+        .addValue("numdocori", req.getNumTranferencia())
+        .addValue("bodorigen", req.getBodegaOrigen())
+        .addValue("boddestino", req.getBodegaDestino())
+        .addValue("binitem", "")
+        .addValue("binori", "")
+        .addValue("bindes", "")
+        .addValue("observacion", null, Types.VARCHAR)
+        .addValue("item", "")
+        .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("secitem", 0)
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", idmov)
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", req.getUsuario())
+        .addValue("modo", modo) // 3
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("docgp", "") // INOUT
+        .addValue("codret", 0) // INOUT
+        .addValue("msj", "")
+        .addValue("idguia", "")
+        .addValue("guia", "");
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
       String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
-        throw new IllegalStateException(
-            String.format(
-                "Error al guardar el movimiento de transferencia.\n"
-                    + "  Pedido: %s\n"
-                    + "  ID Movimiento: %d\n"
-                    + "  Código de retorno: %d\n"
-                    + "  Mensaje del sistema: %s",
-                req.getPedido(), idmov, codret, msj));
+        throw new IllegalStateException("""
+            Error al generar el movimiento de transferencia de reserva.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Mensaje del sistema: %s""".formatted(req.getPedido(), idmov, codret, msj));
       }
       return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
     } catch (Exception e) {
@@ -1250,4 +1191,167 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       throw new RuntimeException(e.getMessage(), e);
     }
   }
+
+  /** proceso de recepcion guias de trransferencia de ventas */
+  @Override
+  public HeaderGuideTransferVtaResponse executeSpStoreHeaderReceivedSalesTransferedDao(
+      HeaderGuideTransferVtaRequest req, int modo) {
+    // saneo mínimo (evita overflow al SP)
+    String obs = req.getObservacion();
+    if (obs != null && obs.length() > 200) {
+      obs = obs.substring(0, 200);
+    }
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", req.getPedido())
+        .addValue("numdocori", req.getNumTranferencia())
+        .addValue("bodorigen", req.getBodegaOrigen())
+        .addValue("boddestino", req.getBodegaDestino())
+        .addValue("binitem", "")
+        .addValue("binori", "")
+        .addValue("bindes", "")
+        .addValue("observacion", obs)
+        .addValue("item", "")
+        .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("secitem", 0)
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", 0) // INOUT inicia en 0 como en .NET
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", req.getUsuario()) // SQL Server CHAR(15) rellena espacios
+        .addValue("modo", modo) // 1
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("codret", 0) // INOUT
+        .addValue("msj", "")
+        .addValue("idguia", req.getIdGuiaRemision())
+        .addValue("guia", req.getGuiaRemision());
+    try {
+      Map<String, Object> out = spMovimientosIv.execute(in);
+      int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
+      int idmov = CoerceHelperUtils.getInt(out.get("idmov"), 0);
+      String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
+      String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
+
+      if (codret != 0) {
+        throw new IllegalStateException("""
+            Error al guardar la cabecera de recepcion de transferencia de venta.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Mensaje del sistema: %s""".formatted(req.getPedido(), idmov, codret, msj));
+      }
+      return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public DetailGuideTransferVtaResponse executeSpStoreDetailReceivedGuideSalesTransferedDao(
+      DetailGuideTransferVtaRequest det,
+      HeaderGuideTransferVtaRequest cab,
+      int idmov,
+      int secitem,
+      int modo) {
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", cab.getPedido())
+        .addValue("numdocori", cab.getNumTranferencia())
+        .addValue("bodorigen", cab.getBodegaOrigen())
+        .addValue("boddestino", cab.getBodegaDestino())
+        .addValue("binitem", det.getItem())
+        .addValue("binori", det.getCompartimento())
+        .addValue("bindes", "")
+        .addValue("observacion", null, Types.VARCHAR)
+        .addValue("item", det.getItem())
+        .addValue("cantidad", det.getCantidad())
+        .addValue("secitem", secitem) // secuencia siempre es 1 al parecer
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", idmov)
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", cab.getUsuario())
+        .addValue("modo", modo) // 2
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("codret", 0)
+        .addValue("msj", "")
+        .addValue("idguia", cab.getIdGuiaRemision())
+        .addValue("guia", cab.getGuiaRemision());
+
+    try {
+      Map<String, Object> out = spMovimientosIv.execute(in);
+      int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
+      String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
+      if (codret != 0) {
+
+        throw new IllegalStateException("""
+            Error al guardar el detalle de recepcion de transferencia de venta.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Item: %s
+              Mensaje del sistema: %s""".formatted(cab.getPedido(), idmov, codret, det.getItem(), msj));
+      }
+      return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public HeaderGuideTransferVtaResponse executeSpGenerateMovimentReceivedGuideTransferedDao(
+      HeaderGuideTransferVtaRequest req, int idmov, int modo) {
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", req.getPedido())
+        .addValue("numdocori", req.getNumTranferencia())
+        .addValue("bodorigen", req.getBodegaOrigen())
+        .addValue("boddestino", req.getBodegaDestino())
+        .addValue("binitem", "")
+        .addValue("binori", "")
+        .addValue("bindes", "")
+        .addValue("observacion", null, Types.VARCHAR)
+        .addValue("item", "")
+        .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("secitem", 0)
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", idmov)
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", req.getUsuario())
+        .addValue("modo", modo) // 3
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("docgp", "") // INOUT
+        .addValue("codret", 0) // INOUT
+        .addValue("msj", "")
+        .addValue("idguia", "")
+        .addValue("guia", "");
+    try {
+      Map<String, Object> out = spMovimientosIv.execute(in);
+      int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
+      String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
+      String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
+      if (codret != 0) {
+        throw new IllegalStateException("""
+            Error al generar el movimiento de transferencia de venta.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Mensaje del sistema: %s""".formatted(req.getPedido(), idmov, codret, msj));
+      }
+      return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(e.getMessage(), e);
+    }
+  }
+
 }
