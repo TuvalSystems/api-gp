@@ -890,7 +890,6 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     MapSqlParameterSource in = new MapSqlParameterSource().addValue("docu", h.getGuiaRemision());
     try {
       Map<String, Object> out = spCreateAccessCodeDeliveryNote.execute(in);
-      System.out.println("executeSpCreateAccesoCodeDeliveryNote guia de remisión" + out);
     } catch (Exception e) {
       throw new RuntimeException(
           "SP executeSpCreateAccesoCodeDeliveryNote falló: " + e.getMessage(), e);
@@ -902,7 +901,6 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     MapSqlParameterSource in = new MapSqlParameterSource().addValue("docu", h.getGuiaRemision());
     try {
       Map<String, Object> out = spUpdateAccessCodeDeliveryNote.execute(in);
-      System.out.println("executeSpUpdateAccesoCodeDeliveryNote guia de remisión" + out);
     } catch (Exception e) {
       throw new RuntimeException(
           "SP executeSpStoreAccesoCodeDeliveryNote falló: " + e.getMessage(), e);
@@ -915,7 +913,6 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     MapSqlParameterSource in = new MapSqlParameterSource().addValue("docu", docu);
     try {
       Map<String, Object> out = spCheckExistsDeliverNote.execute(in);
-      System.out.println("executeSpValidateExistsDeliveryNoteResponse guia de remisión" + out);
       Integer codret = (Integer) out.get("codret");
       String mensaje = (String) out.get("msj");
       if (codret == null || codret != 0) {
