@@ -1,9 +1,5 @@
 package tuval.api.web.models.service.tuval.guiaremision;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import lombok.RequiredArgsConstructor;
 import tuval.api.web.models.dao.tuval.guiaremision.ShippingGuideDao;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
@@ -11,12 +7,13 @@ import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyRespons
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
-import tuval.api.web.models.request.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.DispatchDeliveryNoteMovementRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.DispatchVtaRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.TransferVtaRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DeliveryNoteRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DetailDeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.DetailGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.DispatchDeliveryNoteMovementRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.DispatchVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.TransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.ValidateGuideSalesTransferedRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DetailDeliveryNoteRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -206,5 +203,13 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
     return shippingGuideDao.executeSpGenerateMovimentReceivedGuideTransferedDao(
         req.getCabecera(), header.getIdMovimiento(), 6);
 
+  }
+
+
+   @Override
+  public HeaderCheckGuideDispatchResponse checkAjusteGuideSalesTransferReceivedService(
+       ValidateGuideSalesTransferedRequest req) {
+    return shippingGuideDao.getAdjustmentGuideSalesTransferedDao(
+        req);
   }
 }

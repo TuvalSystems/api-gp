@@ -6,13 +6,14 @@ import tuval.api.web.models.entity.tuval.guiaremision.DetailGuideTransferVtaResp
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
-import tuval.api.web.models.request.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.DispatchDeliveryNoteMovementRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.HeaderGuideDispatchShipmentRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.HeaderGuideTransferVtaRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DestinationDeliveryNoteRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DetailDeliveryNoteRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.HeaderDeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.DetailGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.DispatchDeliveryNoteMovementRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.HeaderGuideDispatchShipmentRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.HeaderGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.ValidateGuideSalesTransferedRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DestinationDeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DetailDeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.HeaderDeliveryNoteRequest;
 
 public interface ShippingGuideDao {
 
@@ -127,4 +128,7 @@ public interface ShippingGuideDao {
 
     public HeaderGuideTransferVtaResponse executeSpGenerateMovimentReceivedGuideTransferedDao(
             HeaderGuideTransferVtaRequest req, int idmov, int modo);
+
+    public HeaderCheckGuideDispatchResponse getAdjustmentGuideSalesTransferedDao(
+            ValidateGuideSalesTransferedRequest req);
 }

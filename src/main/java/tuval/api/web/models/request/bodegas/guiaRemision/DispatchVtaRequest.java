@@ -1,4 +1,4 @@
-package tuval.api.web.models.request.bodegas.guiaRemision;
+package tuval.api.web.models.request.bodegas.guiaremision;
 
 import java.util.List;
 

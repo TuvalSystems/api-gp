@@ -19,10 +19,11 @@ import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyRespons
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
-import tuval.api.web.models.request.bodegas.guiaRemision.DispatchDeliveryNoteMovementRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.DispatchVtaRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.TransferVtaRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.DispatchDeliveryNoteMovementRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.DispatchVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.TransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.ValidateGuideSalesTransferedRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DeliveryNoteRequest;
 import tuval.api.web.models.service.tuval.guiaremision.ShippingGuideService;
 
 @RestController
@@ -329,6 +330,25 @@ public class ShippingGuideController {
 
     } catch (Exception e) {
       // e.printStackTrace(); // para ver la traza completa
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @CrossOrigin
+  @PostMapping("inventario/transferencia-ventas/validar-existencia-ajuste-recibir")
+  public ResponseEntity<Map<String, Object>> obtenerMovimientoIngresoTransferenciaVenta(
+      @Valid @RequestBody ValidateGuideSalesTransferedRequest request) {
+
+    try {
+      HeaderCheckGuideDispatchResponse resp = shippingGuideService.checkAjusteGuideSalesTransferReceivedService(
+          request);
+      if (resp == null) {
+        return ResponseJsonUtils.buildNoFound(
+            "No existe ajuste de recibido para el pedido: " + request.getOrderNumber());
+      }
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resp);
+
+    } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
     }
   }

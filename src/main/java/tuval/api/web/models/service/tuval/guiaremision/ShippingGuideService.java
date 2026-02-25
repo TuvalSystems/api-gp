@@ -5,10 +5,11 @@ import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyRespons
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
-import tuval.api.web.models.request.bodegas.guiaRemision.DispatchDeliveryNoteMovementRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.DispatchVtaRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.TransferVtaRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.DispatchDeliveryNoteMovementRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.DispatchVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.TransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.ValidateGuideSalesTransferedRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DeliveryNoteRequest;
 
 public interface ShippingGuideService {
 
@@ -60,4 +61,6 @@ public interface ShippingGuideService {
     public HeaderGuideTransferVtaResponse receiveGuideReservationService(TransferVtaRequest req);
 
     public HeaderGuideTransferVtaResponse receivedGuideSalesTransferService(TransferVtaRequest req);
+    public HeaderCheckGuideDispatchResponse checkAjusteGuideSalesTransferReceivedService(
+       ValidateGuideSalesTransferedRequest req);
 }

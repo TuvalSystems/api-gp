@@ -1,11 +1,9 @@
 package tuval.api.web.models.dao.tuval.guiaremision;
 
-import jakarta.annotation.PostConstruct;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -24,13 +22,14 @@ import tuval.api.web.models.entity.tuval.guiaremision.DetailGuideTransferVtaResp
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderCheckGuideDispatchResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.HeaderGuideTransferVtaResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNoteResponse;
-import tuval.api.web.models.request.bodegas.guiaRemision.DetailGuideTransferVtaRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.DispatchDeliveryNoteMovementRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.HeaderGuideDispatchShipmentRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.HeaderGuideTransferVtaRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DestinationDeliveryNoteRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.DetailDeliveryNoteRequest;
-import tuval.api.web.models.request.bodegas.guiaRemision.crearGuia.HeaderDeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.DetailGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.DispatchDeliveryNoteMovementRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.HeaderGuideDispatchShipmentRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.HeaderGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.ValidateGuideSalesTransferedRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DestinationDeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DetailDeliveryNoteRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.HeaderDeliveryNoteRequest;
 
 @Repository
 public class ShippingGuideDaoImp implements ShippingGuideDao {
@@ -1350,5 +1349,51 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       throw new RuntimeException(e.getMessage(), e);
     }
   }
+
+
+  public HeaderCheckGuideDispatchResponse getAdjustmentGuideSalesTransferedDao(
+     ValidateGuideSalesTransferedRequest req
+    ) {
+    String sqlText = """
+          SELECT 
+            mc_id             AS idMovimiento,
+            mc_numdoc         AS numDoc,
+            mc_numdocori      AS numDocOri,
+            mc_origen         AS origen,
+            mc_destino        AS destino,
+            RTRIM(mc_usring)  AS userIngreso,
+            mc_fecgp          AS fechaGp,
+            RTRIM(mc_docgp)   AS docGp,
+            mc_guia_remision_id AS idGuiaRemision,
+            mc_guia_remision AS guiaRemision
+        FROM dbo.tbmsw_movimiento_cab
+        WHERE mc_numdoc   = ?
+          AND mc_docgp IS NOT NULL
+          AND mc_guia_remision_id = ?
+          AND mc_guia_remision = ?
+          AND mc_origen = ?
+          AND mc_destino = ?
+          AND mc_tipotrx = ?
+          AND mc_tipomov = 'I'
+          ORDER BY mc_fecgp DESC
+        """;
+    List<Object> args = new ArrayList<>();
+    args.add(req.getOrderNumber());
+    args.add(req.getIdGuiaRemision());
+    args.add(req.getGuiaRemision());
+    args.add(req.getOrigen());
+    args.add(req.getDestino());
+    args.add(req.getTipo());
+
+    try {
+      var mapper = new BeanPropertyRowMapper<>(HeaderCheckGuideDispatchResponse.class);
+      return jdbcTemplate.queryForObject(sqlText, mapper, args.toArray());
+    } catch (EmptyResultDataAccessException e) {
+      return null;
+    } catch (DataAccessException e) {
+      throw new IllegalStateException("Error al consultar la base de datos" + e);
+    }
+  }
+
 
 }
