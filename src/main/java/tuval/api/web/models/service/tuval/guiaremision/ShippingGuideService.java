@@ -61,6 +61,9 @@ public interface ShippingGuideService {
     public HeaderGuideTransferVtaResponse receiveGuideReservationService(TransferVtaRequest req);
 
     public HeaderGuideTransferVtaResponse receivedGuideSalesTransferService(TransferVtaRequest req);
+
     public HeaderCheckGuideDispatchResponse checkAjusteGuideSalesTransferReceivedService(
-       ValidateGuideSalesTransferedRequest req);
+            ValidateGuideSalesTransferedRequest req);
+
+    public HeaderGuideTransferVtaResponse receivedGuideReplenishmentTransferService(TransferVtaRequest req);
 }

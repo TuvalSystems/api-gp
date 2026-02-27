@@ -25,7 +25,6 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
     return shippingGuideDao.checkGuiaRemision(numDoc);
   }
 
-  // @Transactional(rollbackFor = Exception.class)
   @Override
   public HeaderGuideTransferVtaResponse generateGuideTransferVtaService(TransferVtaRequest req) {
     HeaderGuideTransferVtaResponse responseHeader = shippingGuideDao.executeSpStoreHeaderTransferVta(req.getCabecera(),
@@ -211,5 +210,25 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
        ValidateGuideSalesTransferedRequest req) {
     return shippingGuideDao.getAdjustmentGuideSalesTransferedDao(
         req);
+  }
+
+
+  @Override
+  public HeaderGuideTransferVtaResponse receivedGuideReplenishmentTransferService(TransferVtaRequest req) {
+    // cabecera
+    HeaderGuideTransferVtaResponse header;
+    header = shippingGuideDao.executeSpStoreHeaderReceivedSalesTransferedDao(req.getCabecera(), 13);
+
+    // detalle
+    if (req.getDetalle() != null && !req.getDetalle().isEmpty()) {
+      for (DetailGuideTransferVtaRequest det : req.getDetalle()) {
+        shippingGuideDao.executeSpStoreDetailReceivedGuideReplenishmentTransferDao(
+            det, req.getCabecera(), header.getIdMovimiento(), 1, 14);
+      }
+    }
+    // //movimiento
+    return shippingGuideDao.executeSpGenerateMovimentReceivedGuideTransferedDao(
+        req.getCabecera(), header.getIdMovimiento(), 15);
+
   }
 }

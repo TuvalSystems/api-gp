@@ -1232,7 +1232,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
 
       if (codret != 0) {
         throw new IllegalStateException("""
-            Error al guardar la cabecera de recepcion de transferencia de venta.
+            Error al guardar la cabecera de recepcion de transferencia.
               Pedido: %s
               ID Movimiento: %d
               Código de retorno: %d
@@ -1286,7 +1286,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       if (codret != 0) {
 
         throw new IllegalStateException("""
-            Error al guardar el detalle de recepcion de transferencia de venta.
+            Error al guardar el detalle de recepcion de transferencia.
               Pedido: %s
               ID Movimiento: %d
               Código de retorno: %d
@@ -1337,7 +1337,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
       String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
       if (codret != 0) {
         throw new IllegalStateException("""
-            Error al generar el movimiento de transferencia de venta.
+            Error al generar el movimiento de transferencia.
               Pedido: %s
               ID Movimiento: %d
               Código de retorno: %d
@@ -1395,5 +1395,62 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     }
   }
 
+
+  /** funcion para el almacenamiento del detalle de guias de reposiciones */
+
+   @Override
+  public DetailGuideTransferVtaResponse executeSpStoreDetailReceivedGuideReplenishmentTransferDao(
+      DetailGuideTransferVtaRequest det,
+      HeaderGuideTransferVtaRequest cab,
+      int idmov,
+      int secitem,
+      int modo) {
+    MapSqlParameterSource in = new MapSqlParameterSource()
+        .addValue("tipotrx", "")
+        .addValue("numdoc", cab.getPedido())
+        .addValue("numdocori", cab.getNumTranferencia())
+        .addValue("bodorigen", cab.getBodegaOrigen())
+        .addValue("boddestino", cab.getBodegaDestino())
+        .addValue("binitem", det.getItem())
+        .addValue("binori", "")
+        .addValue("bindes", det.getCompartimento())
+        .addValue("observacion", null, Types.VARCHAR)
+        .addValue("item", det.getItem())
+        .addValue("cantidad", det.getCantidad())
+        .addValue("secitem", secitem) // secuencia siempre es 1 al parecer
+        .addValue("compartimento", null, Types.VARCHAR)
+        .addValue("idmov", idmov)
+        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+        .addValue("idfila", 0)
+        .addValue("fecpro", null, Types.TIMESTAMP)
+        .addValue("userid", cab.getUsuario())
+        .addValue("modo", modo) // 2
+        .addValue("submodo", 0)
+        .addValue("equipo", "wserver")
+        .addValue("codret", 0)
+        .addValue("msj", "")
+        .addValue("idguia", cab.getIdGuiaRemision())
+        .addValue("guia", cab.getGuiaRemision());
+
+    try {
+      Map<String, Object> out = spMovimientosIv.execute(in);
+      int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
+      String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
+      if (codret != 0) {
+
+        throw new IllegalStateException("""
+            Error al guardar el detalle de recepcion de transferencia.
+              Pedido: %s
+              ID Movimiento: %d
+              Código de retorno: %d
+              Item: %s
+              Mensaje del sistema: %s""".formatted(cab.getPedido(), idmov, codret, det.getItem(), msj));
+      }
+      return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(e.getMessage(), e);
+    }
+  }
 
 }

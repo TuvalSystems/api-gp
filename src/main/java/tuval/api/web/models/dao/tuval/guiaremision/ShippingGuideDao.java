@@ -131,4 +131,11 @@ public interface ShippingGuideDao {
 
     public HeaderCheckGuideDispatchResponse getAdjustmentGuideSalesTransferedDao(
             ValidateGuideSalesTransferedRequest req);
+
+    public DetailGuideTransferVtaResponse executeSpStoreDetailReceivedGuideReplenishmentTransferDao(
+      DetailGuideTransferVtaRequest det,
+      HeaderGuideTransferVtaRequest cab,
+      int idmov,
+      int secitem,
+      int modo);
 }

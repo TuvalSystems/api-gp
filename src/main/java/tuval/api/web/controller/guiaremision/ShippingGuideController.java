@@ -353,4 +353,19 @@ public class ShippingGuideController {
     }
   }
 
+
+  /* recibir reposiciones */
+
+  @CrossOrigin
+  @PostMapping("inventario/reposiciones/recibir/guardar-generar-movimiento")
+  public ResponseEntity<Map<String, Object>> recibirReposiciones(@Valid @RequestBody TransferVtaRequest req) {
+    try {
+      HeaderGuideTransferVtaResponse response = shippingGuideService.receivedGuideReplenishmentTransferService(req);
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
+
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
 }
