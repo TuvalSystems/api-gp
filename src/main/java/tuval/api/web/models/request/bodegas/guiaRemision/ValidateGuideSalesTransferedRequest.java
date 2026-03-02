@@ -13,5 +13,7 @@ public class ValidateGuideSalesTransferedRequest {
     private String destino;
     private Integer idGuiaRemision;
     private String guiaRemision;
+    private String tipoTrx;
     private String tipo;
+    private String hashInterno;
 }

@@ -19,4 +19,5 @@ public class HeaderGuideTransferVtaRequest {
   private Integer idGuiaRemision;
   private String guiaRemision;
   private String numTranferencia;
+  private String hasInterno;
 }

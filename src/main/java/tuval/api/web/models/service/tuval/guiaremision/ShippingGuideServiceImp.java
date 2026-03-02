@@ -11,6 +11,7 @@ import tuval.api.web.models.request.bodegas.guiaremision.DetailGuideTransferVtaR
 import tuval.api.web.models.request.bodegas.guiaremision.DispatchDeliveryNoteMovementRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.DispatchVtaRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.TransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.ValidateGuideDispatchRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.ValidateGuideSalesTransferedRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DeliveryNoteRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DetailDeliveryNoteRequest;
@@ -79,9 +80,9 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
 
   @Override
   public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(
-      String orderN, String newOrderN, Integer idGuiaRemision, String guiaRemision) {
+     ValidateGuideDispatchRequest req) {
     return shippingGuideDao.getAjusteGuideDispatchVtaDao(
-        orderN, newOrderN, idGuiaRemision, guiaRemision);
+        req);
   }
 
   @Override

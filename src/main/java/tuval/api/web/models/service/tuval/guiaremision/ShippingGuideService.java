@@ -8,6 +8,7 @@ import tuval.api.web.models.entity.tuval.guiaremision.ValidateExistsDeliveryNote
 import tuval.api.web.models.request.bodegas.guiaremision.DispatchDeliveryNoteMovementRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.DispatchVtaRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.TransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.ValidateGuideDispatchRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.ValidateGuideSalesTransferedRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DeliveryNoteRequest;
 
@@ -25,7 +26,7 @@ public interface ShippingGuideService {
 
     /** para obtener el ajuste de guias de despacho */
     public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(
-            String orderN, String newOrderN, Integer idGuiaRemision, String guiaRemision);
+            ValidateGuideDispatchRequest req);
 
     public HeaderCheckGuideDispatchResponse checkAjusteGuideTransferVtaService(
             String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision);

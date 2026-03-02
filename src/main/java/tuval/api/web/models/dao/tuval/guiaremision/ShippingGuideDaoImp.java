@@ -26,6 +26,7 @@ import tuval.api.web.models.request.bodegas.guiaremision.DetailGuideTransferVtaR
 import tuval.api.web.models.request.bodegas.guiaremision.DispatchDeliveryNoteMovementRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.HeaderGuideDispatchShipmentRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.HeaderGuideTransferVtaRequest;
+import tuval.api.web.models.request.bodegas.guiaremision.ValidateGuideDispatchRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.ValidateGuideSalesTransferedRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DestinationDeliveryNoteRequest;
 import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DetailDeliveryNoteRequest;
@@ -164,7 +165,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             new SqlInOutParameter("codret", Types.INTEGER),
             new SqlInOutParameter("msj", Types.VARCHAR),
             new SqlParameter("idguia", Types.INTEGER),
-            new SqlParameter("guia", Types.VARCHAR));
+            new SqlParameter("guia", Types.VARCHAR),
+            new SqlParameter("hash_intento", Types.VARCHAR));
 
     this.spCheckCodeAccessDeliveryNote = new SimpleJdbcCall(jdbcTemplate)
         .withSchemaName("dbo")
@@ -244,7 +246,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0) // INOUT
         .addValue("msj", "")
         .addValue("idguia", req.getIdGuiaRemision())
-        .addValue("guia", req.getGuiaRemision());
+        .addValue("guia", req.getGuiaRemision())
+        .addValue("hash_intento", req.getHasInterno());
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
@@ -299,7 +302,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0)
         .addValue("msj", "")
         .addValue("idguia", cab.getIdGuiaRemision())
-        .addValue("guia", cab.getGuiaRemision());
+        .addValue("guia", cab.getGuiaRemision())
+        .addValue("hash_intento", "");
 
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
@@ -351,7 +355,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0) // INOUT
         .addValue("msj", "")
         .addValue("idguia", "")
-        .addValue("guia", "");
+        .addValue("guia", "")
+        .addValue("hash_intento", "");
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
@@ -407,7 +412,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0) // INOUT
         .addValue("msj", "")
         .addValue("idguia", req.getIdGuiaRemision())
-        .addValue("guia", req.getGuiaRemision());
+        .addValue("guia", req.getGuiaRemision())
+        .addValue("hash_intento", req.getHashInterno());
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
@@ -462,7 +468,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0)
         .addValue("msj", "")
         .addValue("idguia", cab.getIdGuiaRemision())
-        .addValue("guia", cab.getGuiaRemision());
+        .addValue("guia", cab.getGuiaRemision())
+        .addValue("hash_intento", "");
 
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
@@ -523,7 +530,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0) // INOUT
         .addValue("msj", "")
         .addValue("idguia", "")
-        .addValue("guia", "");
+        .addValue("guia", "")
+        .addValue("hash_intento", "");
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
@@ -573,7 +581,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0) // INOUT
         .addValue("msj", "")
         .addValue("idguia", "")
-        .addValue("guia", "");
+        .addValue("guia", "")
+        .addValue("hash_intento", "");
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
@@ -596,42 +605,50 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
 
   @Override
   public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(
-      String orderNumber, String newOrderNumber, Integer idGuiaRemision, String guiaRemision) {
-    String SQL = """
-          SELECT TOP (1)
-            mc_id      AS idMovimiento,
-            mc_numdoc  AS numDoc,
-            mc_numdocori  AS numDocOri,
-            mc_origen  AS origen,
-            RTRIM(mc_usring) AS userIngreso,
-            mc_fecgp   AS fechaGp,
-            RTRIM(mc_docgp)  AS docGp,
-            mc_guia_remision_id as idGuiaRemision,
-            mc_guia_remision as guiaRemision
+      ValidateGuideDispatchRequest req) {
+    // 1. Quitamos el ORDER BY del bloque principal
+    StringBuilder sql = new StringBuilder("""
+        SELECT
+            mc_id                 AS idMovimiento,
+            mc_numdoc             AS numDoc,
+            mc_numdocori          AS numDocOri,
+            mc_origen             AS origen,
+            RTRIM(mc_usring)      AS userIngreso,
+            mc_fecgp              AS fechaGp,
+            RTRIM(mc_docgp)       AS docGp,
+            mc_guia_remision_id   AS idGuiaRemision,
+            mc_guia_remision      AS guiaRemision
         FROM dbo.tbmsw_movimiento_cab
         WHERE mc_numdoc = ?
-        AND mc_docgp IS NOT NULL
-        AND mc_tipotrx = 'DSP'
-        AND mc_guia_remision_id = ?
-        AND mc_guia_remision = ?
-        """;
+          AND mc_docgp IS NOT NULL
+          AND mc_tipotrx = ?
+          AND mc_guia_remision_id = ?
+          AND mc_guia_remision = ?
+          AND mc_tipomov = ?
+          AND mc_hash_intento = ?
+        """);
 
     List<Object> args = new ArrayList<>();
-    args.add(orderNumber);
-    args.add(idGuiaRemision);
-    args.add(guiaRemision);
-    if (newOrderNumber != null && !newOrderNumber.isBlank()) {
-      SQL += " AND mc_numdocori = ?";
-      args.add(newOrderNumber);
+    args.add(req.getOrderNumber());
+    args.add(req.getTipoTrx());
+    args.add(req.getIdGuiaRemision());
+    args.add(req.getGuiaRemision());
+    args.add(req.getTipo());
+    args.add(req.getHashInterno()); // Se mapea al mc_hash_intento de la BD
+
+    // 2. Agregamos condiciones dinámicas
+    if (req.getNewOrderNumber() != null && !req.getNewOrderNumber().isBlank()) {
+      sql.append(" AND mc_numdocori = ?");
+      args.add(req.getNewOrderNumber());
     }
-    SQL += " ORDER BY mc_fecgp DESC";
+
+
     try {
       var mapper = new BeanPropertyRowMapper<>(HeaderCheckGuideDispatchResponse.class);
-      return jdbcTemplate.queryForObject(SQL, mapper, args.toArray());
+      return jdbcTemplate.queryForObject(sql.toString(), mapper, args.toArray());
     } catch (EmptyResultDataAccessException e) {
       return null;
     } catch (DataAccessException e) {
-      System.out.println("getAjusteGuideDispatchVtaDao" + e.getMessage());
       throw new IllegalStateException("Error al consultar la base de datos", e);
     }
   }
@@ -1061,7 +1078,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0) // INOUT
         .addValue("msj", "")
         .addValue("idguia", req.getIdGuiaRemision())
-        .addValue("guia", req.getGuiaRemision());
+        .addValue("guia", req.getGuiaRemision())
+        .addValue("hash_intento", req.getHasInterno());
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
@@ -1116,7 +1134,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0)
         .addValue("msj", "")
         .addValue("idguia", cab.getIdGuiaRemision())
-        .addValue("guia", cab.getGuiaRemision());
+        .addValue("guia", cab.getGuiaRemision())
+        .addValue("hash_intento", "");
 
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
@@ -1167,7 +1186,9 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0) // INOUT
         .addValue("msj", "")
         .addValue("idguia", "")
-        .addValue("guia", "");
+        .addValue("guia", "")
+        .addValue("hash_intento", "");
+
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
@@ -1222,7 +1243,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0) // INOUT
         .addValue("msj", "")
         .addValue("idguia", req.getIdGuiaRemision())
-        .addValue("guia", req.getGuiaRemision());
+        .addValue("guia", req.getGuiaRemision())
+        .addValue("hash_intento", req.getHasInterno());
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
@@ -1277,7 +1299,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0)
         .addValue("msj", "")
         .addValue("idguia", cab.getIdGuiaRemision())
-        .addValue("guia", cab.getGuiaRemision());
+        .addValue("guia", cab.getGuiaRemision())
+        .addValue("hash_intento", "");
 
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
@@ -1329,7 +1352,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0) // INOUT
         .addValue("msj", "")
         .addValue("idguia", "")
-        .addValue("guia", "");
+        .addValue("guia", "")
+        .addValue("hash_intento", "");
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
@@ -1350,12 +1374,10 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     }
   }
 
-
   public HeaderCheckGuideDispatchResponse getAdjustmentGuideSalesTransferedDao(
-     ValidateGuideSalesTransferedRequest req
-    ) {
+      ValidateGuideSalesTransferedRequest req) {
     String sqlText = """
-          SELECT 
+          SELECT
             mc_id             AS idMovimiento,
             mc_numdoc         AS numDoc,
             mc_numdocori      AS numDocOri,
@@ -1374,7 +1396,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
           AND mc_origen = ?
           AND mc_destino = ?
           AND mc_tipotrx = ?
-          AND mc_tipomov = 'I'
+          AND mc_tipomov = ?
+          AND mc_hash_intento = ?
           ORDER BY mc_fecgp DESC
         """;
     List<Object> args = new ArrayList<>();
@@ -1383,7 +1406,9 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     args.add(req.getGuiaRemision());
     args.add(req.getOrigen());
     args.add(req.getDestino());
+    args.add(req.getTipoTrx());
     args.add(req.getTipo());
+    args.add(req.getHashInterno());
 
     try {
       var mapper = new BeanPropertyRowMapper<>(HeaderCheckGuideDispatchResponse.class);
@@ -1395,10 +1420,9 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     }
   }
 
-
   /** funcion para el almacenamiento del detalle de guias de reposiciones */
 
-   @Override
+  @Override
   public DetailGuideTransferVtaResponse executeSpStoreDetailReceivedGuideReplenishmentTransferDao(
       DetailGuideTransferVtaRequest det,
       HeaderGuideTransferVtaRequest cab,
@@ -1430,7 +1454,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codret", 0)
         .addValue("msj", "")
         .addValue("idguia", cab.getIdGuiaRemision())
-        .addValue("guia", cab.getGuiaRemision());
+        .addValue("guia", cab.getGuiaRemision())
+        .addValue("hash_intento", "");
 
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);

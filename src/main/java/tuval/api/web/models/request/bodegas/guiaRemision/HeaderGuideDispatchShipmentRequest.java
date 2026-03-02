@@ -2,7 +2,13 @@ package tuval.api.web.models.request.bodegas.guiaremision;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class HeaderGuideDispatchShipmentRequest {
 
   @NotBlank private String idCompany;
@@ -13,68 +19,7 @@ public class HeaderGuideDispatchShipmentRequest {
   @Valid @NotBlank private String usuario;
   private Integer idGuiaRemision;
   private String guiaRemision;
+  private String hashInterno;
 
-  public String getIdCompany() {
-    return idCompany;
-  }
-
-  public void setIdCompany(String idCompany) {
-    this.idCompany = idCompany;
-  }
-
-  public String getPedido() {
-    return pedido;
-  }
-
-  public void setPedido(String pedido) {
-    this.pedido = pedido;
-  }
-
-  public String getPedidoNuevo() {
-    return pedidoNuevo;
-  }
-
-  public void setPedidoNuevo(String pedidoNuevo) {
-    this.pedidoNuevo = pedidoNuevo;
-  }
-
-  public String getBodegaOrigen() {
-    return bodegaOrigen;
-  }
-
-  public void setBodegaOrigen(String bodegaOrigen) {
-    this.bodegaOrigen = bodegaOrigen;
-  }
-
-  public String getObservacion() {
-    return observacion;
-  }
-
-  public void setObservacion(String observacion) {
-    this.observacion = observacion;
-  }
-
-  public String getUsuario() {
-    return usuario;
-  }
-
-  public void setUsuario(String usuario) {
-    this.usuario = usuario;
-  }
-
-  public String getGuiaRemision() {
-    return guiaRemision;
-  }
-
-  public void setGuiaRemision(String guiaRemision) {
-    this.guiaRemision = guiaRemision;
-  }
-
-  public Integer getIdGuiaRemision() {
-    return idGuiaRemision;
-  }
-
-  public void setIdGuiaRemision(Integer idGuiaRemision) {
-    this.idGuiaRemision = idGuiaRemision;
-  }
+ 
 }
