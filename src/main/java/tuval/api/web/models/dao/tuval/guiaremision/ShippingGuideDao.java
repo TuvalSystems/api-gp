@@ -87,13 +87,6 @@ public interface ShippingGuideDao {
     public ValidateExistsDeliveryNoteResponse executeSpValidateExistsDeliveryNoteResponse(
             String docu);
 
-    /** reservas */
-    public HeaderCheckGuideDispatchResponse getAjusteGuideReservedDao(
-            String orderNumber,
-            String newOrderNumber,
-            String origen,
-            Integer idGuiaRemision,
-            String guiaRemision);
 
     /** VALIDAR EXISTENCIA DE AJUSTE DE RECIBIDO */
     public HeaderCheckGuideDispatchResponse getAjusttmentReceivedReservedDao(

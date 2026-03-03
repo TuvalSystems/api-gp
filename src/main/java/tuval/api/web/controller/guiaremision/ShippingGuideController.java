@@ -1,9 +1,7 @@
 package tuval.api.web.controller.guiaremision;
 
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-
 import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
@@ -238,11 +239,11 @@ public class ShippingGuideController {
   @CrossOrigin
   @PostMapping("/inventario/validar-existencia-guia-despacho")
   public ResponseEntity<Map<String, Object>> obtenerMovimientoGuiaDespacho(
-    @Valid @RequestBody ValidateGuideDispatchRequest req) {
+      @Valid @RequestBody ValidateGuideDispatchRequest req) {
 
     try {
       HeaderCheckGuideDispatchResponse resp = shippingGuideService.checkAjusteGuideDispatchVtaService(
-        req);
+          req);
 
       if (resp == null) {
         return ResponseJsonUtils.buildNoFound("No existe guía para mc_numdoc=" + req.getOrderNumber());
@@ -295,25 +296,18 @@ public class ShippingGuideController {
    */
 
   @CrossOrigin
-  @GetMapping("/inventario/reservas/validar-existencia-guia")
+  @PostMapping("/inventario/reservas/validar-existencia-guia")
   public ResponseEntity<Map<String, Object>> obtenerMovimientoGuiaReserva(
-      @Valid @RequestParam String orderNumber,
-      @RequestParam(required = false) String newOrderNumber,
-      @RequestParam(required = false) String origen,
-      @Valid @RequestParam Integer idGuiaRemision,
-      @Valid @RequestParam String guiaRemision) {
+      @Valid @RequestBody ValidateGuideSalesTransferedRequest request) {
 
     try {
       HeaderCheckGuideDispatchResponse resp = shippingGuideService.checkAjusteGuideReservationService(
-          orderNumber, newOrderNumber, origen, idGuiaRemision, guiaRemision);
-
+          request);
       if (resp == null) {
-        return ResponseJsonUtils.buildNoFound("No existe guía para mc_numdoc=" + orderNumber);
+        return ResponseJsonUtils.buildNoFound("No existe guía para mc_numdoc=" + request.getOrderNumber());
       }
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resp);
-
     } catch (Exception e) {
-      // e.printStackTrace(); // para ver la traza completa
       return ResponseJsonUtils.buildException(e);
     }
   }

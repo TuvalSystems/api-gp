@@ -4,6 +4,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -15,6 +16,7 @@ import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
+
 import tuval.api.web.models.Utils.CoerceHelperUtils;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
@@ -247,17 +249,17 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("msj", "")
         .addValue("idguia", req.getIdGuiaRemision())
         .addValue("guia", req.getGuiaRemision())
-        .addValue("hash_intento", req.getHasInterno());
+        .addValue("hash_intento", req.getHashInterno());
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
-      int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
-      int idmov = CoerceHelperUtils.getInt(out.get("idmov"), 0);
-      String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
-      String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
+      int codret    = CoerceHelperUtils.getInt(out.get("codret"), 0);
+      int idmov     = CoerceHelperUtils.getInt(out.get("idmov"), 0);
+      String docgp  = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
+      String msj    = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
 
       if (codret != 0) {
         throw new IllegalStateException("""
-            Error al guardar la cabecera de egreso de transferencia de venta.
+            Error al guardar la cabecera de egreso de transferencia.
               Pedido: %s
               ID Movimiento: %d
               Código de retorno: %d
@@ -943,56 +945,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
     }
   }
 
-  public HeaderCheckGuideDispatchResponse getAjusteGuideReservedDao(
-      String orderNumber,
-      String newOrderNumber,
-      String origen,
-      Integer idGuiaRemision,
-      String guiaRemision) {
-    String SQL = """
-          SELECT
-            mc_id             AS idMovimiento,
-            mc_numdoc         AS numDoc,
-            mc_numdocori      AS numDocOri,
-            mc_origen         AS origen,
-            mc_destino        AS destino,
-            RTRIM(mc_usring)  AS userIngreso,
-            mc_fecgp          AS fechaGp,
-            RTRIM(mc_docgp)   AS docGp,
-            mc_guia_remision_id AS idGuiaRemision,
-            mc_guia_remision AS guiaRemision
-        FROM dbo.tbmsw_movimiento_cab
-        WHERE mc_numdoc   = ?
-          AND mc_tipotrx  = 'TRC'
-          AND mc_docgp IS NOT NULL
-          AND mc_guia_remision_id = ?
-          AND mc_guia_remision = ?
-        """;
-    List<Object> args = new ArrayList<>();
-    args.add(orderNumber);
-    args.add(idGuiaRemision);
-    args.add(guiaRemision);
-    if (newOrderNumber != null && !newOrderNumber.isBlank()) {
-      SQL += " AND mc_numdocori = ?";
-      args.add(newOrderNumber);
-    }
-
-    if (origen != null && !origen.isBlank()) {
-      SQL += " AND mc_origen = ?";
-      args.add(origen);
-    }
-    SQL += " ORDER BY mc_fecgp DESC";
-
-    try {
-      var mapper = new BeanPropertyRowMapper<>(HeaderCheckGuideDispatchResponse.class);
-      return jdbcTemplate.queryForObject(SQL, mapper, args.toArray());
-    } catch (EmptyResultDataAccessException e) {
-      return null;
-    } catch (DataAccessException e) {
-      throw new IllegalStateException("Error al consultar la base de datos", e);
-    }
-  }
-
+ 
   public HeaderCheckGuideDispatchResponse getAjusttmentReceivedReservedDao(
       String orderNumber,
       String newOrderNumber,
@@ -1079,7 +1032,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("msj", "")
         .addValue("idguia", req.getIdGuiaRemision())
         .addValue("guia", req.getGuiaRemision())
-        .addValue("hash_intento", req.getHasInterno());
+        .addValue("hash_intento", req.getHashInterno());
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
@@ -1244,7 +1197,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("msj", "")
         .addValue("idguia", req.getIdGuiaRemision())
         .addValue("guia", req.getGuiaRemision())
-        .addValue("hash_intento", req.getHasInterno());
+        .addValue("hash_intento", req.getHashInterno());
     try {
       Map<String, Object> out = spMovimientosIv.execute(in);
       int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);

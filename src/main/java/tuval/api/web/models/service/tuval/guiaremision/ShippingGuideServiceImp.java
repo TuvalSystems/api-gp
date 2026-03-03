@@ -1,5 +1,7 @@
 package tuval.api.web.models.service.tuval.guiaremision;
+
 import org.springframework.stereotype.Service;
+
 import lombok.RequiredArgsConstructor;
 import tuval.api.web.models.dao.tuval.guiaremision.ShippingGuideDao;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
@@ -80,7 +82,7 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
 
   @Override
   public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(
-     ValidateGuideDispatchRequest req) {
+      ValidateGuideDispatchRequest req) {
     return shippingGuideDao.getAjusteGuideDispatchVtaDao(
         req);
   }
@@ -138,11 +140,12 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
   /** proceso de validacion de existencia de guia de remision - reservas */
   @Override
   public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationService(
-      String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision) {
-    return shippingGuideDao.getAjusteGuideReservedDao(
-        orderN, newOrderN, origen, idGuiaRemision, guiaRemision);
+      ValidateGuideSalesTransferedRequest req) {
+    return shippingGuideDao.getAdjustmentGuideSalesTransferedDao(
+        req);
   }
 
+  @Override
   public HeaderGuideTransferVtaResponse generateGuideReservationService(TransferVtaRequest req) {
     // cabecera
     HeaderGuideTransferVtaResponse header;
@@ -205,14 +208,12 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
 
   }
 
-
-   @Override
+  @Override
   public HeaderCheckGuideDispatchResponse checkAjusteGuideSalesTransferReceivedService(
-       ValidateGuideSalesTransferedRequest req) {
+      ValidateGuideSalesTransferedRequest req) {
     return shippingGuideDao.getAdjustmentGuideSalesTransferedDao(
         req);
   }
-
 
   @Override
   public HeaderGuideTransferVtaResponse receivedGuideReplenishmentTransferService(TransferVtaRequest req) {
