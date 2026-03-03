@@ -328,30 +328,7 @@ public class ShippingGuideController {
 
   /*** procesar recibir transferencias de reservas */
 
-  @CrossOrigin
-  @GetMapping("/inventario/reservas/validar-existencia-ajuste-recibir")
-  public ResponseEntity<Map<String, Object>> obtenerMovimientoGuiaReservaRecibida(
-      @Valid @RequestParam String orderNumber,
-      @RequestParam(required = false) String newOrderNumber,
-      @RequestParam(required = false) String origen,
-      @Valid @RequestParam Integer idGuiaRemision,
-      @Valid @RequestParam String guiaRemision) {
-
-    try {
-      HeaderCheckGuideDispatchResponse resp = shippingGuideService.checkAjusteGuideReservationReceivedService(
-          orderNumber, newOrderNumber, origen, idGuiaRemision, guiaRemision);
-
-      if (resp == null) {
-        return ResponseJsonUtils.buildNoFound("No existe ajuste de recibido para mc_numdoc = " + orderNumber);
-      }
-      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resp);
-
-    } catch (Exception e) {
-      // e.printStackTrace(); // para ver la traza completa
-      return ResponseJsonUtils.buildException(e);
-    }
-  }
-
+ 
   @CrossOrigin
   @PostMapping("/inventario/reservas/guardar-generar-movimiento/recibir")
   public ResponseEntity<Map<String, Object>> recibirTransferenciaReserva(

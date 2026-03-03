@@ -56,8 +56,6 @@ public interface ShippingGuideService {
     public HeaderGuideTransferVtaResponse generateGuideReservationService(TransferVtaRequest req);
 
     /** reservas - recibir */
-    public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationReceivedService(
-            String orderN, String newOrderN, String origen, Integer idGuiaRemision, String guiaRemision);
 
     public HeaderGuideTransferVtaResponse receiveGuideReservationService(TransferVtaRequest req);
 
