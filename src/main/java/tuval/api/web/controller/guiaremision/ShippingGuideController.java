@@ -84,7 +84,7 @@ public class ShippingGuideController {
 
   // DESPACHO DE GUIA DE TRANSFERENCUIA DE VENTA
   @CrossOrigin
-  @PostMapping("/inventario/guardar-generar-movimiento-transferencia-venta")
+  @PostMapping("inventario/transferencia-ventas/enviar/guardar-generar-movimiento")
   public ResponseEntity<Map<String, Object>> generarTranasferenciaVenta(
       @Valid @RequestBody TransferVtaRequest req) {
     try {
@@ -137,7 +137,7 @@ public class ShippingGuideController {
 
   // VALIDAR EXISTENCIA DE GUIAS DE TRANSFERENCIAS DE VENTAS - RECIBIDO
   @CrossOrigin
-  @PostMapping("inventario/transferencia-ventas/validar-existencia-ajuste-recibir")
+  @PostMapping("inventario/guia-remision/validar-existencia")
   public ResponseEntity<Map<String, Object>> obtenerMovimientoIngresoTransferenciaVenta(
       @Valid @RequestBody ValidateGuideSalesTransferedRequest request) {
 
