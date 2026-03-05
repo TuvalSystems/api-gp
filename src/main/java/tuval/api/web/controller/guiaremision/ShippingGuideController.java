@@ -168,9 +168,7 @@ public class ShippingGuideController {
     try {
       HeaderGuideTransferVtaResponse response = shippingGuideService.generateGuideReposicionService(req);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
-
     } catch (Exception e) {
-      // e.printStackTrace(); // para ver la traza completa
       return ResponseJsonUtils.buildException(e);
     }
   }
