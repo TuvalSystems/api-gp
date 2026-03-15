@@ -3,6 +3,7 @@ package tuval.api.web.models.dao.tuval.otros;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,7 +36,22 @@ public class GeneralDao {
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
-    public List<OrderHeaderDto> getAllOrderPendingUpdate(Date fechaInicio, Date fechaFin) {
+    public List<OrderHeaderDto> getAllOrderPendingUpdate(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
+        String SQL = """
+                select
+                I_vDOCU_ORIGEN as docOrigen,
+                I_vID_TIPO as idTipo,
+                I_vPUNTO_VENTA as ptoVta,
+                DOC_GENERADO as docGenerado,
+                DEX_ROW_ID as dexRowId,
+                I_vLOCNCODE as bodega
+                from
+                MSW_TB_FACTURA_CAB
+                WHERE USERID IS NULL
+                AND COND_PAGO_ORG IS NULL
+                AND I_vDOCDATE BETWEEN ? AND ?
+                ORDER BY DEX_ROW_ID
+                """;
         // String SQL = """
         // select
         // I_vDOCU_ORIGEN as docOrigen,
@@ -46,24 +62,9 @@ public class GeneralDao {
         // I_vLOCNCODE as bodega
         // from
         // MSW_TB_FACTURA_CAB
-        // WHERE USERID IS NULL
-        // AND COND_PAGO_ORG IS NULL
-        // AND I_vDOCDATE BETWEEN ? AND ?
+        // WHERE I_vDOCDATE BETWEEN ? AND ?
         // ORDER BY DEX_ROW_ID
         // """;
-        String SQL = """
-                select
-                I_vDOCU_ORIGEN as docOrigen,
-                I_vID_TIPO as idTipo,
-                I_vPUNTO_VENTA as ptoVta,
-                DOC_GENERADO as docGenerado,
-                DEX_ROW_ID   as dexRowId,
-                I_vLOCNCODE as bodega
-                from
-                MSW_TB_FACTURA_CAB
-                WHERE I_vDOCDATE BETWEEN ? AND ?
-                ORDER BY DEX_ROW_ID
-                """;
         try {
             var mapper = new org.springframework.jdbc.core.BeanPropertyRowMapper<>(OrderHeaderDto.class);
             return jdbcTemplate.query(SQL, mapper, fechaInicio, fechaFin);

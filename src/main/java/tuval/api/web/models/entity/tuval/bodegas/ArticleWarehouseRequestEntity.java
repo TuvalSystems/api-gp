@@ -1,23 +1,15 @@
 package tuval.api.web.models.entity.tuval.bodegas;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+
 public class ArticleWarehouseRequestEntity {
-    
-    public String articulo;
-    public String bodega;
+    private String articulo;
+    private String bodega;
 
-    public String getArticulo() {
-        return articulo;
-    }
-
-    public void setArticulo(String articulo) {
-        this.articulo = articulo;
-    }
-
-    public String getBodega() {
-        return bodega;
-    }
-
-    public void setBodega(String bodega) {
-        this.bodega = bodega;
-    }
 }

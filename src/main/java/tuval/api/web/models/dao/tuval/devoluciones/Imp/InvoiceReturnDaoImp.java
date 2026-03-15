@@ -67,7 +67,8 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
                 new SqlInOutParameter("codret", Types.INTEGER),
                 new SqlInOutParameter("msj", Types.VARCHAR),
                 new SqlParameter("idguia", Types.INTEGER),
-                new SqlParameter("guia", Types.VARCHAR));
+                new SqlParameter("guia", Types.VARCHAR),
+                new SqlParameter("hash_intento", Types.VARCHAR));
 
     this.spValidadGeneracionNc =
         new SimpleJdbcCall(jdbcTemplate)
@@ -510,6 +511,7 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
             .addValue("msj", "")
             .addValue("idguia", 0)
             .addValue("guia", "")
+            .addValue("hash_intento", "")
         // .addValue("docgp", "")
         ;
     try {
@@ -566,7 +568,8 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
             .addValue("codret", 0)
             .addValue("msj", "")
             .addValue("idguia", 0)
-            .addValue("guia", "");
+            .addValue("guia", "")
+            .addValue("hash_intento", "");
 
     try {
       Map<String, Object> out = spDevolucionIv.execute(in);
@@ -620,7 +623,8 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
             .addValue("codret", 0) // INOUT
             .addValue("msj", "")
             .addValue("idguia", 0)
-            .addValue("guia", "");
+            .addValue("guia", "")
+            .addValue("hash_intento", "");
     try {
       Map<String, Object> out = spDevolucionIv.execute(in);
       int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
@@ -674,7 +678,8 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
             .addValue("codret", 0) // INOUT
             .addValue("msj", "")
             .addValue("idguia", 0)
-            .addValue("guia", "");
+            .addValue("guia", "")
+            .addValue("hash_intento", "");
     try {
 
       Map<String, Object> result = spDevolucionIv.execute(in);

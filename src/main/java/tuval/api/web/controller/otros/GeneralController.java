@@ -1,10 +1,12 @@
 package tuval.api.web.controller.otros;
 
 import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,8 +35,9 @@ public class GeneralController {
 
     @CrossOrigin
     @GetMapping("facturas-cabecera-pendientes")
-    public ResponseEntity<Map<String, Object>> obtenerListaCabeceraPedidosPendientes(@RequestParam Date fechaInicio,
-            @RequestParam Date fechaFin) {
+    public ResponseEntity<Map<String, Object>> obtenerListaCabeceraPedidosPendientes(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss.SS") LocalDateTime fechaInicio,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss.SS") LocalDateTime fechaFin) {
         try {
             List<OrderHeaderDto> response = generalService.getAllOrderPendingUpdate(fechaInicio, fechaFin);
             return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);

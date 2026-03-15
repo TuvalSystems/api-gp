@@ -1,19 +1,22 @@
 package tuval.api.web.models.dao.tuval.transferencia;
 
-import java.sql.Date;
+import java.util.List;
+
+import tuval.api.web.models.dto.tranferencias.RepositionDetailDto;
+import tuval.api.web.models.dto.tranferencias.RepositionHeaderDto;
 import tuval.api.web.models.dto.tranferencias.TransfersCompartmentsOrderDto;
-import tuval.api.web.models.entity.tuval.transferencia.TransferDetailResponseEntity;
-import tuval.api.web.models.entity.tuval.transferencia.TransferHeaderResponseEntity;
+import tuval.api.web.models.request.bodegas.reposiciones.DetailRepositionRequest;
+import tuval.api.web.models.request.bodegas.reposiciones.HeaderRepositionRequest;
 import tuval.api.web.models.request.bodegas.transferencias.TransferCompartmentOrdersRequest;
 
 public interface TransferDao {
 
-  TransferHeaderResponseEntity consultDocumentTransfer(
-      Date date, String userid, int Modo, String numDoc);
+    public List<RepositionHeaderDto> consultDocumentTransfer(
+            HeaderRepositionRequest req, int Modo);
 
-  TransferDetailResponseEntity consultarDocumentodetalleTransferencia(
-      String userid, int Modo, String numDoc);
+    List<RepositionDetailDto> consultarDocumentodetalleTransferencia(
+            DetailRepositionRequest req, int modo);
 
-  TransfersCompartmentsOrderDto TransferenciaCompartimento(
-      TransferCompartmentOrdersRequest transfers);
+    TransfersCompartmentsOrderDto transferenciaCompartimento(
+            TransferCompartmentOrdersRequest transfers);
 }

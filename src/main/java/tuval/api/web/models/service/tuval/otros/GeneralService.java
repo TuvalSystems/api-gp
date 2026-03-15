@@ -1,6 +1,7 @@
 package tuval.api.web.models.service.tuval.otros;
 
 import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +21,7 @@ public class GeneralService {
 
     private final GeneralDao generalDao;
 
-    public List<OrderHeaderDto> getAllOrderPendingUpdate(Date fechaInicio, Date fechaFin) {
+    public List<OrderHeaderDto> getAllOrderPendingUpdate(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
         return generalDao.getAllOrderPendingUpdate(fechaInicio, fechaFin);
     }
 
