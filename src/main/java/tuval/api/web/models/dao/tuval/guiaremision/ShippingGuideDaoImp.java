@@ -69,6 +69,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             new SqlParameter("placa", Types.VARCHAR),
             new SqlParameter("correo_electronico", Types.VARCHAR),
             new SqlParameter("observacion", Types.VARCHAR),
+            new SqlParameter("OrdenCompra", Types.VARCHAR),
             new SqlOutParameter("codret", Types.INTEGER));
     // guardar destinatario guia remision
 
@@ -91,6 +92,7 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             new SqlParameter("docu_sustento", Types.VARCHAR),
             new SqlParameter("nume_autorizacion", Types.VARCHAR),
             new SqlParameter("fecha", Types.DATE),
+            new SqlParameter("OrdenCompra", Types.VARCHAR),
             new SqlOutParameter("codret", Types.INTEGER));
 
     // guardar detalle guia remision
@@ -823,7 +825,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("fecha_fin", h.getFechaFin())
         .addValue("placa", h.getPlaca())
         .addValue("correo_electronico", h.getCorreoElectronico())
-        .addValue("observacion", h.getObservacion());
+        .addValue("observacion", h.getObservacion())
+        .addValue("OrdenCompra", h.getOrdenCompra());
 
     try {
       Map<String, Object> out = spCabeceraGuiaRemision.execute(in);
@@ -855,7 +858,8 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("codigo_sustento", CoerceHelperUtils.emptyIfNull(h.getDocSustento()))
         .addValue("docu_sustento", CoerceHelperUtils.emptyIfNull(h.getNumDocSustento()))
         .addValue("nume_autorizacion", CoerceHelperUtils.emptyIfNull(h.getNumAutoDocSustento()))
-        .addValue("fecha", h.getFechaEmisionDocSustento());
+        .addValue("fecha", h.getFechaEmisionDocSustento())
+        .addValue("OrdenCompra", h.getOrdenCompra());
     try {
       Map<String, Object> out = spDestinatarioGuiaRemision.execute(in);
       Integer codret = (Integer) out.get("codret");
