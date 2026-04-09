@@ -1,13 +1,17 @@
 package tuval.api.web.models.dao.dynamics.bodegas;
 
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
+
+import tuval.api.web.models.dto.articulos.ItemExpoDto;
 import tuval.api.web.models.dto.cliente.SegmentsAbcDto;
+import tuval.api.web.models.request.bodegas.articulos.ItemsExpoRequest;
 
 @Repository
 public class WarehouseDynamicsDao {
@@ -20,8 +24,7 @@ public class WarehouseDynamicsDao {
   }
 
   public List<SegmentsAbcDto> findAllSegmentsAbcDao(List<String> items) {
-    String SQL =
-        """
+    String SQL = """
             SELECT
             TRIM(tx_itm) as item,
             TRIM("Valor Venta") as valorVenta,
@@ -40,4 +43,35 @@ public class WarehouseDynamicsDao {
       throw new IllegalStateException("Ocurrio un error al consultar la base de datos", e);
     }
   }
+
+  public ItemExpoDto findItemExpoByPtoVta(ItemsExpoRequest req) {
+
+    String SQL = """
+        SELECT TOP (1)
+          TRIM(ITEMNMBR) AS item,
+          TOTAL as cantidad,
+          trim(tx_codSer) as puntoVenta,
+          trim(BIN) as bodega
+          FROM dbo.vw_ConsultaItemsExpo
+          WHERE ITEMNMBR = :item
+          AND tx_codSer = :puntoVenta
+          ORDER BY ITEMNMBR
+        """;
+    try {
+      // Preparamos los parámetros mapeándolos por nombre
+      MapSqlParameterSource params = new MapSqlParameterSource()
+          .addValue("item", req.getItem())
+          .addValue("puntoVenta", req.getPuntoVenta());
+
+      var mapper = new BeanPropertyRowMapper<>(ItemExpoDto.class);
+
+      List<ItemExpoDto> results = jdbcTemplate.query(SQL, params, mapper);
+
+      return results.isEmpty() ? null : results.get(0);
+
+    } catch (org.springframework.dao.DataAccessException e) {
+      throw new IllegalStateException("Ocurrió un error al consultar la base de datos para el item: " + req.getItem(), e);
+    }
+  }
+
 }

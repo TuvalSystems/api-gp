@@ -1,10 +1,13 @@
 package tuval.api.web.controller.bodegas;
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.cliente.SegmentsAbcDto;
 import tuval.api.web.models.entity.tuval.bodegas.ListPriceItemResponseEntity;
@@ -19,13 +23,23 @@ import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseEntity;
 import tuval.api.web.models.entity.tuval.bodegas.StockWarehouseResponseEntity;
 import tuval.api.web.models.request.bodegas.ItemRequest;
 import tuval.api.web.models.request.bodegas.StockWarehouseParamsRequest;
+import tuval.api.web.models.request.bodegas.articulos.ItemsExpoRequest;
+import tuval.api.web.models.service.dynamics.bodegas.WarehouseDynamicsService;
 import tuval.api.web.models.service.tuval.bodegas.StockWarehouseService;
 
 @RestController
 @RequestMapping("/api")
 public class StockWarehouseController {
 
-  @Autowired private StockWarehouseService stockWarehouseService;
+  private final StockWarehouseService stockWarehouseService;
+  private final WarehouseDynamicsService warehouseDynamicsService;
+
+  public StockWarehouseController(
+      WarehouseDynamicsService warehouseDynamicsService,
+      StockWarehouseService stockWarehouseService) {
+    this.warehouseDynamicsService = warehouseDynamicsService;
+    this.stockWarehouseService = stockWarehouseService;
+  }
 
   @CrossOrigin
   @PostMapping("/consultar-stock-bodega")
@@ -47,8 +61,8 @@ public class StockWarehouseController {
       @RequestParam String bodega,
       @RequestParam String compartimento) {
     try {
-      StockWarehouseEntity response =
-          stockWarehouseService.consultarStockBodegaCompartimento(articulo, bodega, compartimento);
+      StockWarehouseEntity response = stockWarehouseService.consultarStockBodegaCompartimento(articulo, bodega,
+          compartimento);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
     } catch (Exception e) {
       e.printStackTrace(); // para ver la traza completa
@@ -56,14 +70,16 @@ public class StockWarehouseController {
     }
   }
 
-  /** utiliza el mismo sp que consultar stock bodega pero en este caso lo hace por lote */
+  /**
+   * utiliza el mismo sp que consultar stock bodega pero en este caso lo hace por
+   * lote
+   */
   @CrossOrigin
   @PostMapping("/consultar-stock-bodega-lotes")
   public ResponseEntity<Map<String, Object>> consultaStockBodegasBatch(
       @RequestBody List<StockWarehouseParamsRequest> requests) {
     try {
-      StockWarehouseResponseEntity response =
-          stockWarehouseService.consultarStockBodegaBatch(requests);
+      StockWarehouseResponseEntity response = stockWarehouseService.consultarStockBodegaBatch(requests);
       return ResponseJsonUtils.buildSuccessWithData("Lote Obtenido exitosamente", response);
     } catch (Exception e) {
       e.printStackTrace(); // para ver la traza completa
@@ -104,4 +120,23 @@ public class StockWarehouseController {
       return ResponseJsonUtils.buildException(e);
     }
   }
+
+  @CrossOrigin
+  @PostMapping("consultas/items-exposiciones")
+  public ResponseEntity<Map<String, Object>> obtenerStockItemExposiciones(@Valid @RequestBody ItemsExpoRequest req, BindingResult result) {
+    
+    if (result.hasErrors()) {
+        String mensaje = result.getFieldError().getDefaultMessage();
+        return ResponseJsonUtils.buildError(mensaje);
+    }
+    
+    try {
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa",
+          warehouseDynamicsService.findItemExpoByPtoVta(req));
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+
+  }
+
 }
