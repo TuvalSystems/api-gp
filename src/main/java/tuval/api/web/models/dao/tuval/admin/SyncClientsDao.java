@@ -117,7 +117,7 @@ public class SyncClientsDao {
         e.setGrupoEconomico(CoerceHelperUtils.stringOrEmpty(rows.get("GRUPO_ECONOMICO")));
         e.setGrupo(CoerceHelperUtils.stringOrEmpty(rows.get("GRUPO")));
         e.setSubGrupo(CoerceHelperUtils.stringOrEmpty(rows.get("SUBGRUPO")));
-        e.setDiaMaxMesFacturacion(CoerceHelperUtils.toInt(rows.get("DIA_MAX_MES_FACTURACION"), 0));
+        e.setDiaMaxMesFacturacion(CoerceHelperUtils.toInt(rows.get("DIA_MAXIMO_MES_FACTURACION"), 0));
         e.setFactPostAlDespacho(
             CoerceHelperUtils.toInt(rows.get("FACTURA_POSTERIOR_AL_DESPACHO"), 0));
         e.setRetFte(CoerceHelperUtils.stringOrEmpty(rows.get("RetFte")));
