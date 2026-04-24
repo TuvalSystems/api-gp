@@ -79,10 +79,7 @@ public class transactionDao {
 
       if (resultados == null || resultados.isEmpty()) {
         // Lanza excepción si no hay registros
-        validateDto emptyResp = new validateDto();
-        emptyResp.setCodigo("404"); // Código personalizado de "No encontrado"
-        emptyResp.setMensaje("No existe registro para los parámetros proporcionados");
-        return emptyResp;
+      throw new RuntimeException("No existe registro para los parámetros proporcionados");
       }
       return resultados.get(0);
     } catch (RuntimeException e) {
@@ -228,10 +225,7 @@ public class transactionDao {
 
       if (resultados == null || resultados.isEmpty()) {
         // Lanza excepción si no hay registros
-        validateDto emptyResp = new validateDto();
-        emptyResp.setCodigo("404");
-        emptyResp.setMensaje("No existe registro para los parámetros proporcionados");
-        return emptyResp;
+      throw new RuntimeException("No existe registro para los parámetros proporcionados");
       }
       return resultados.get(0);
     } catch (RuntimeException e) {
@@ -252,8 +246,7 @@ public class transactionDao {
       @SuppressWarnings("unchecked")
       List<Map<String, Object>> rs = (List<Map<String, Object>>) out.get("#result-set-1");
       if (rs == null || rs.isEmpty()) {
-        dto.setEstado("NO_ENCONTRADO"); // Un estado seguro para tu lógica
-        return dto;
+         throw new RuntimeException("SP no retornó filas para cliente=" + request.getDocumento());
       }
       Map<String, Object> row = rs.get(0);
       dto.setDocuOrigen(CoerceHelperUtils.stringOrEmpty(row.get("I_vDOCU_ORIGEN")));
@@ -401,10 +394,7 @@ public class transactionDao {
       @SuppressWarnings("unchecked")
       List<responseInvoiceVtaDto> resultados = (List<responseInvoiceVtaDto>) out.get("response");
       if (resultados == null || resultados.isEmpty()) {
-        responseInvoiceVtaDto emptyResp = new responseInvoiceVtaDto();
-        emptyResp.setCodigo("404");
-        emptyResp.setMensaje("No existe registro para los parámetros proporcionados");
-        return emptyResp;
+       throw new RuntimeException("No existe registro para los parámetros proporcionados");
       }
       return resultados.get(0);
     } catch (Exception e) {
