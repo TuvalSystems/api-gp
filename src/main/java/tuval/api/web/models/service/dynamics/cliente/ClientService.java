@@ -13,6 +13,7 @@ import tuval.api.web.models.dto.cliente.ListSegmentClientDto;
 import tuval.api.web.models.dto.cliente.ListSellerDto;
 import tuval.api.web.models.dto.cliente.NewAddressStatusDto;
 import tuval.api.web.models.dto.cliente.TypeSellerDto;
+import tuval.api.web.models.request.cliente.ClientBranchRequets;
 import tuval.api.web.models.request.cliente.ClientRequest;
 import tuval.api.web.models.request.cliente.ClientSubsegmentRucRequest;
 import tuval.api.web.models.request.cliente.NewAddressRequest;
@@ -59,6 +60,10 @@ public class ClientService {
 
     public NewAddressStatusDto storeNewAddressService(NewAddressRequest request) {
         return clientTuvalDao.executeSpCreateOrModifyAddress(request);
+    }
+
+    public void updateStatusClientBranchService(ClientBranchRequets request) {
+        clientDynamicDao.executeSpUpdateStatusBranchClient(request);
     }
 
 }

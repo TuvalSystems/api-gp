@@ -1,8 +1,8 @@
 package tuval.api.web.controller.cliente;
 
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.validation.Valid;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.cliente.ListAllSegmentsDto;
 import tuval.api.web.models.dto.cliente.ListAllSubsegmentsDto;
@@ -19,6 +21,7 @@ import tuval.api.web.models.dto.cliente.ListSegmentClientDto;
 import tuval.api.web.models.dto.cliente.ListSellerDto;
 import tuval.api.web.models.dto.cliente.NewAddressStatusDto;
 import tuval.api.web.models.dto.cliente.TypeSellerDto;
+import tuval.api.web.models.request.cliente.ClientBranchRequets;
 import tuval.api.web.models.request.cliente.ClientRequest;
 import tuval.api.web.models.request.cliente.ClientSubsegmentRucRequest;
 import tuval.api.web.models.request.cliente.NewAddressRequest;
@@ -132,5 +135,17 @@ public class ClienteController {
         return ResponseJsonUtils.buildException(e);
     }
     
+  }
+
+
+  @CrossOrigin
+  @PostMapping("actualizar-o-crear-registro-sucursal-cliente")
+  public ResponseEntity<Map<String, Object>> actualizarEstadoSucursal(@RequestBody ClientBranchRequets request) {
+    try {
+      clienteService.updateStatusClientBranchService(request);
+      return ResponseJsonUtils.buildSuccess("Estado de sucursal actualizado exitosamente");
+    } catch (Exception e) {
+        return ResponseJsonUtils.buildException(e);
+    }
   }
 }
