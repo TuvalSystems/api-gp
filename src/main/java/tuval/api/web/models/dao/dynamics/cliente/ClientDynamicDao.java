@@ -1,36 +1,55 @@
 package tuval.api.web.models.dao.dynamics.cliente;
 
-import jakarta.annotation.PostConstruct;
+import java.sql.Types;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
+
 import tuval.api.web.models.dto.cliente.ListAllSegmentsDto;
 import tuval.api.web.models.dto.cliente.ListAllSubsegmentsDto;
 import tuval.api.web.models.dto.cliente.ListSegmentClientDto;
 import tuval.api.web.models.dto.cliente.ListSellerDto;
 import tuval.api.web.models.dto.cliente.TypeSellerDto;
+import tuval.api.web.models.request.cliente.ClientBranchRequets;
 import tuval.api.web.models.request.cliente.ClientSubsegmentRucRequest;
 import tuval.api.web.models.request.cliente.SellerRequest;
 
 @Repository
 public class ClientDynamicDao {
-  @PostConstruct
-  public void init() {
-    validateConfiguration();
-  }
 
-  @Autowired
-  @Qualifier("dynamicsJdbcTemplate")
-  private JdbcTemplate jdbcTemplate;
+  private final JdbcTemplate jdbcTemplate;
+  private final SimpleJdbcCall spUpdateinfoSucursal;
 
-  public void validateConfiguration() {
-    if (jdbcTemplate == null) {
-      throw new IllegalStateException("JdbcTemplate no ha sido inyectado correctamente");
-    }
-  }
+
+   public ClientDynamicDao(@Qualifier("dynamicsJdbcTemplate") JdbcTemplate jdbcTemplate) {
+    this.jdbcTemplate = jdbcTemplate;
+      this.spUpdateinfoSucursal = new SimpleJdbcCall(jdbcTemplate)
+        .withSchemaName("dbo")
+        .withProcedureName("sp_actDirCli")
+        .withoutProcedureColumnMetaDataAccess()
+        .declareParameters(
+            new SqlParameter("modo", Types.SMALLINT),
+            new SqlParameter("CUSTNMBR", Types.CHAR),
+            new SqlParameter("ADRSCODE", Types.CHAR),
+            new SqlParameter("ADDRESS1", Types.CHAR),
+            new SqlParameter("st_reg", Types.CHAR),
+            new SqlParameter("tx_usring", Types.NVARCHAR),
+            new SqlParameter("fe_ing", Types.TIMESTAMP),
+            new SqlParameter("tx_usrmod", Types.NVARCHAR),
+            new SqlParameter("fe_ultmod", Types.TIMESTAMP),
+            new SqlOutParameter("codret", Types.INTEGER),
+            new SqlOutParameter("msj", Types.VARCHAR));
+   }
+
+
 
   public ListSellerDto findByTxUsr(SellerRequest req) {
     String SQL =
@@ -146,6 +165,52 @@ public class ClientDynamicDao {
     }
   }
 
+   public void executeSpUpdateStatusBranchClient(ClientBranchRequets req) {
+    try {
+      // 1. Preparamos los parámetros (Asegúrate de que los nombres coincidan con
+      // declareParameters)
+      MapSqlParameterSource in = new MapSqlParameterSource()
+          .addValue("modo", req.getModo())
+          .addValue("CUSTNMBR", req.getRuc())
+          .addValue("ADRSCODE", req.getIdDireccion())
+          .addValue("ADDRESS1", req.getDireccion())
+          .addValue("st_reg", req.getEstado())
+          .addValue("tx_usring", req.getUsuarioIngreso())
+          .addValue("fe_ing", req.getFechaIngreso())
+          .addValue("tx_usrmod", req.getUsuarioModificacion())
+          .addValue("fe_ultmod", req.getFechaModificacion());
+
+      // 2. Ejecución
+      Map<String, Object> out = spUpdateinfoSucursal.execute(in);
+
+      System.out.println("CONTENIDO REAL DE OUT: " + out);
+
+      Integer codRet = 0;
+      String mensaje = "Operación realizada (Sin mensaje)";
+
+      for (Map.Entry<String, Object> entry : out.entrySet()) {
+        String key = entry.getKey().toLowerCase();
+        if (key.contains("codret")) {
+          codRet = (entry.getValue() != null) ? ((Number) entry.getValue()).intValue() : 0;
+        } else if (key.contains("msj")) {
+          mensaje = (entry.getValue() != null) ? entry.getValue().toString() : mensaje;
+        }
+      }
+
+      if (codRet != 0) {
+        throw new RuntimeException("Error del SP [" + codRet + "]: " + mensaje);
+      }
+
+      System.out.println("ÉXITO: " + mensaje);
+
+    } catch (RuntimeException e) {
+      // Lanzamos el error de negocio para que el Controller lo atrape
+      throw e;
+    } catch (Exception e) {
+      // Capturamos errores de red, SQL o casting
+      throw new RuntimeException("Fallo técnico en la base de datos: " + e.getMessage());
+    }
+  }
 
  
 }
