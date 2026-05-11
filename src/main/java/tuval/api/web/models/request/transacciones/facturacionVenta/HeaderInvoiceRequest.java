@@ -79,6 +79,7 @@ public class HeaderInvoiceRequest {
 
     private String userIdCreator;
     private String condIdOriginal;
+    private String userApprovalId;
     
 
 }

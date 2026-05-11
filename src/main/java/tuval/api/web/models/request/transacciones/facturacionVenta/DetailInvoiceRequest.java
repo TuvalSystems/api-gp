@@ -55,6 +55,7 @@ public class DetailInvoiceRequest {
     private String descripcionOrginal;
     private BigDecimal valorOrginal;
     private BigDecimal descuentoOrginal;
+    private BigDecimal descuento;
 
     
 }
