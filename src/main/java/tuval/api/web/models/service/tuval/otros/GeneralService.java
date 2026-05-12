@@ -14,7 +14,6 @@ import tuval.api.web.models.dao.tuval.otros.GeneralDao;
 import tuval.api.web.models.dto.otros.pedidos.OrderDetailDto;
 import tuval.api.web.models.dto.otros.pedidos.OrderHeaderDto;
 import tuval.api.web.models.request.otros.pedidos.OrderDetailListRequest;
-import tuval.api.web.models.request.otros.pedidos.OrderDetailWebRequest;
 import tuval.api.web.models.request.otros.pedidos.OrderListRequest;
 import tuval.api.web.models.request.otros.pedidos.OrdersDetailListUpdateRequest;
 import tuval.api.web.models.request.otros.pedidos.OrdersDetailRequest;
