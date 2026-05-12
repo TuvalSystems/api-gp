@@ -56,6 +56,9 @@ public class DetailInvoiceRequest {
     private BigDecimal valorOrginal;
     private BigDecimal descuentoOrginal;
     private BigDecimal descuento;
+    private Long pedidoId;                     
+    private Long detalleId;                     
+
 
     
 }
