@@ -3,27 +3,30 @@ package tuval.api.web.controller.otros;
 import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.otros.pedidos.OrderDetailDto;
 import tuval.api.web.models.dto.otros.pedidos.OrderHeaderDto;
+import tuval.api.web.models.request.otros.pedidos.OrderListRequest;
+import tuval.api.web.models.request.otros.pedidos.OrdersDetailListUpdateRequest;
 import tuval.api.web.models.request.otros.pedidos.OrdersDetailRequest;
 import tuval.api.web.models.request.otros.pedidos.OrdersHeadersRequest;
 import tuval.api.web.models.service.tuval.otros.GeneralService;
 
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import tuval.api.web.models.request.otros.pedidos.OrderDetailListRequest;
+import tuval.api.web.models.request.otros.pedidos.OrdersHeadersListUpdateRequest;
 
 @RestController
 @RequestMapping(value = "/api", produces = "application/json")
@@ -34,12 +37,11 @@ public class GeneralController {
     private final GeneralService generalService;
 
     @CrossOrigin
-    @GetMapping("facturas-cabecera-pendientes")
+    @PostMapping("facturas-cabecera-pendientes")
     public ResponseEntity<Map<String, Object>> obtenerListaCabeceraPedidosPendientes(
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss.SS") LocalDateTime fechaInicio,
-            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss.SS") LocalDateTime fechaFin) {
+            @RequestBody OrderListRequest request) {
         try {
-            List<OrderHeaderDto> response = generalService.getAllOrderPendingUpdate(fechaInicio, fechaFin);
+            List<OrderHeaderDto> response = generalService.getAllOrderPendingUpdate(request);
             return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
         } catch (Exception e) {
             return ResponseJsonUtils.buildException(e);
@@ -49,7 +51,7 @@ public class GeneralController {
     @CrossOrigin
     @PostMapping("facturas-detalles-pendientes")
     public ResponseEntity<Map<String, Object>> obtenerListaDetallePedidosPendientes(
-            @RequestBody Map<String, List<String>> payload) {
+            @RequestBody OrderDetailListRequest payload) {
         try {
             List<OrderDetailDto> response = generalService.getAllOrderDetailsPendingUpdate(payload);
             return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
@@ -59,24 +61,44 @@ public class GeneralController {
     }
 
     @PostMapping("update-headers")
-    public ResponseEntity<Map<String, Object>> updateHeaders(@RequestBody List<OrdersHeadersRequest> payload) {
+    public ResponseEntity<Map<String, Object>> updateHeaders(@RequestBody OrdersHeadersListUpdateRequest payload) {
         try {
-            var result = generalService.processMassiveHeaderUpdate(payload);
-            return ResponseJsonUtils.buildSuccessWithData("Actualización de cabeceras exitosa", result);
+            int[] result = generalService.processMassiveHeaderUpdate(payload);
+
+            int totalActualizados = Arrays.stream(result).sum();
+
+            Map<String, Object> data = Map.of(
+                    "totalEnviados", payload.getHeaders().size(),
+                    "totalActualizados", totalActualizados,
+                    "resultadoBatch", result);
+
+            return ResponseJsonUtils.buildSuccessWithData(
+                    "Actualización de cabeceras exitosa",
+                    data);
+
         } catch (Exception e) {
-            e.printStackTrace(); // Log
             return ResponseJsonUtils.buildException(e);
         }
     }
 
     // Endpoint para DETALLES
     @PostMapping("update-details")
-    public ResponseEntity<Map<String, Object>> updateDetails(@RequestBody List<OrdersDetailRequest> payload) {
+    public ResponseEntity<Map<String, Object>> updateDetails(@RequestBody OrdersDetailListUpdateRequest payload) {
         try {
-            var result = generalService.processMassiveDetailUpdate(payload);
-            return ResponseJsonUtils.buildSuccessWithData("Actualización de detalles exitosa", result);
+            int[] result = generalService.processMassiveDetailUpdate(payload);
+
+            int totalActualizados = Arrays.stream(result).sum();
+
+            Map<String, Object> data = Map.of(
+                    "totalEnviados", payload.getDetalles().size(),
+                    "totalActualizados", totalActualizados,
+                    "resultadoBatch", result);
+
+            return ResponseJsonUtils.buildSuccessWithData(
+                    "Actualización de detalles exitosa",
+                    data);
+
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseJsonUtils.buildException(e);
         }
     }
