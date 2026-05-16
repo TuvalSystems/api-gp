@@ -3,7 +3,6 @@ package tuval.api.web.controller.guiaremision;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,7 +38,6 @@ public class ShippingGuideController {
    * 
    */
 
-  @CrossOrigin
   @PostMapping("/inventario/crear-guia-remision")
   public ResponseEntity<Map<String, Object>> crearGuiaRemision(
       @Valid @RequestBody DeliveryNoteRequest req) {
@@ -51,7 +49,6 @@ public class ShippingGuideController {
     }
   }
 
-  @CrossOrigin
   @GetMapping("/inventario/validar-existencia-guia-remision")
   public ResponseEntity<Map<String, Object>> validarExistenciaGuiaRemision(
       @Valid @RequestParam String numDoc) {
@@ -63,7 +60,6 @@ public class ShippingGuideController {
     }
   }
 
-  @CrossOrigin
   @GetMapping("/inventario/guia-remision-obtener-claveacceso")
   public ResponseEntity<Map<String, Object>> respuestaGuiaRemision(@RequestParam String numDoc) {
     if (numDoc == null || numDoc.trim().isEmpty()) {
@@ -83,7 +79,6 @@ public class ShippingGuideController {
    */
 
   // DESPACHO DE GUIA DE TRANSFERENCUIA DE VENTA
-  @CrossOrigin
   @PostMapping("inventario/transferencia-ventas/enviar/guardar-generar-movimiento")
   public ResponseEntity<Map<String, Object>> generarTranasferenciaVenta(
       @Valid @RequestBody TransferVtaRequest req) {
@@ -97,7 +92,6 @@ public class ShippingGuideController {
     }
   }
 
-  @CrossOrigin
   @GetMapping("/inventario/validar-existencia-guia-transferencia")
   public ResponseEntity<Map<String, Object>> obtenerMovimientoGuiaTransferencia(
       @Valid @RequestParam String orderNumber,
@@ -122,7 +116,6 @@ public class ShippingGuideController {
   }
 
   // RECIBIR GUIAS DE TRANSFERENCIAS DE VENTAS
-  @CrossOrigin
   @PostMapping("inventario/transferencia-ventas/recibir/guardar-generar-movimiento")
   public ResponseEntity<Map<String, Object>> recibirTransferenciaVenta(@Valid @RequestBody TransferVtaRequest req) {
     try {
@@ -136,7 +129,6 @@ public class ShippingGuideController {
   }
 
   // VALIDAR EXISTENCIA DE GUIAS DE TRANSFERENCIAS DE VENTAS - RECIBIDO
-  @CrossOrigin
   @PostMapping("inventario/guia-remision/validar-existencia")
   public ResponseEntity<Map<String, Object>> obtenerMovimientoIngresoTransferenciaVenta(
       @Valid @RequestBody ValidateGuideSalesTransferedRequest request) {
@@ -161,7 +153,6 @@ public class ShippingGuideController {
    * 
    */
 
-  @CrossOrigin
   @PostMapping("/inventario/guardar-generar-movimiento-reposicion")
   public ResponseEntity<Map<String, Object>> generarDepachoReposicion(
       @Valid @RequestBody TransferVtaRequest req) {
@@ -173,7 +164,6 @@ public class ShippingGuideController {
     }
   }
 
-  @CrossOrigin
   @GetMapping("/inventario/validar-existencia-guia-reposicion")
   public ResponseEntity<Map<String, Object>> obtenerMovimientoGuiaReposicion(
       @Valid @RequestParam String orderNumber,
@@ -198,7 +188,6 @@ public class ShippingGuideController {
   }
 
   // RECIBIR GUIAS DE REPOSICION
-  @CrossOrigin
   @PostMapping("inventario/reposiciones/recibir/guardar-generar-movimiento")
   public ResponseEntity<Map<String, Object>> recibirReposiciones(@Valid @RequestBody TransferVtaRequest req) {
     try {
@@ -219,7 +208,6 @@ public class ShippingGuideController {
 
   // DESPACHO DE GUIAS DE DESPACHO
 
-  @CrossOrigin
   @PostMapping("/inventario/guardar-generar-movimiento-despacho")
   public ResponseEntity<Map<String, Object>> generarDespachoVta(
       @Valid @RequestBody DispatchVtaRequest req) {
@@ -234,7 +222,6 @@ public class ShippingGuideController {
   }
 
   // validar existencia de ajuste de guia de remision
-  @CrossOrigin
   @PostMapping("/inventario/validar-existencia-guia-despacho")
   public ResponseEntity<Map<String, Object>> obtenerMovimientoGuiaDespacho(
       @Valid @RequestBody ValidateGuideDispatchRequest req) {
@@ -254,7 +241,6 @@ public class ShippingGuideController {
     }
   }
 
-  @CrossOrigin
   @GetMapping("/inventario/validar-existencia-detalle-guia-ajuste")
   public ResponseEntity<Map<String, Object>> obtenerExistenciaDetalleGuia(
       @Valid @RequestParam String orderNumber,
@@ -293,7 +279,6 @@ public class ShippingGuideController {
    * 
    */
 
-  @CrossOrigin
   @PostMapping("/inventario/reservas/validar-existencia-guia")
   public ResponseEntity<Map<String, Object>> obtenerMovimientoGuiaReserva(
       @Valid @RequestBody ValidateGuideSalesTransferedRequest request) {
@@ -310,7 +295,6 @@ public class ShippingGuideController {
     }
   }
 
-  @CrossOrigin
   @PostMapping("/inventario/reservas/guardar-generar-movimiento/transferencia")
   public ResponseEntity<Map<String, Object>> generarTransferenciaReserva(
       @Valid @RequestBody TransferVtaRequest req) {
@@ -327,7 +311,6 @@ public class ShippingGuideController {
   /*** procesar recibir transferencias de reservas */
 
  
-  @CrossOrigin
   @PostMapping("/inventario/reservas/guardar-generar-movimiento/recibir")
   public ResponseEntity<Map<String, Object>> recibirTransferenciaReserva(
       @Valid @RequestBody TransferVtaRequest req) {
@@ -343,7 +326,6 @@ public class ShippingGuideController {
 
   /** FIX PARA GENERAR LOS MOVIMIENTOS DE GUIAS */
 
-  @CrossOrigin
   @PostMapping("/inventario/despacho-generar-movimiento")
   public ResponseEntity<Map<String, Object>> generarMovimientoGuiaDespacho(
       @Valid @RequestBody DispatchDeliveryNoteMovementRequest req) {

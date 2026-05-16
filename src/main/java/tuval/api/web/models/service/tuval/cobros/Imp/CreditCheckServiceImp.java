@@ -1,8 +1,9 @@
 package tuval.api.web.models.service.tuval.cobros.Imp;
 
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
 import tuval.api.web.models.dao.tuval.cobros.CreditCheckDao;
 import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
@@ -17,13 +18,12 @@ import tuval.api.web.models.entity.tuval.cobros.ListaClientSinSoporteEntity;
 import tuval.api.web.models.service.tuval.cobros.CreditCheckService;
 
 @Service
+@RequiredArgsConstructor
 public class CreditCheckServiceImp implements CreditCheckService {
 
   private final CreditCheckDao creditCheckDao;
 
-  public CreditCheckServiceImp(CreditCheckDao creditCheckDao) {
-    this.creditCheckDao = creditCheckDao;
-  }
+
 
   public ClientOverdueDocumentDto getConsultExpiredClientDocument(String ruc, String idCompania) {
     int modo = 1;
@@ -68,8 +68,9 @@ public class CreditCheckServiceImp implements CreditCheckService {
     int modo = 14;
     return creditCheckDao.executeSpGetBusinessDaysCheck(fecha, modo);
   }
-
   public List<CollectionSummaryDTO> getConsultCollectionSummaryService(String ruc, String idCompania) {
    return  creditCheckDao.executeSpGetCollectionSumaryClientDao(ruc, 9);
   }
+
+
 }
