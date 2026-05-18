@@ -66,6 +66,7 @@ public class CollectionDao {
             rs.getString("Establecimiento_Factura"),
             rs.getString("Factura"),
             rs.getBigDecimal("Valor_Factura"),
+            rs.getInt("RMDTYPAL"),
             rs.getString("Cobro"),
             rs.getBigDecimal("Valor_Cobro"),
             rs.getDate("fechaDelDocumentoCobro") != null

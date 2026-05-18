@@ -20,6 +20,7 @@ public class CustomerCollectionDto {
     private String establishment;
     private String invoiceNumber;
     private BigDecimal invoiceAmount;
+    private Integer typePayment;
     private String collectionId; // cobro
     private BigDecimal collectionAmount;
     private LocalDate collectionDocDate;
