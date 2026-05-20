@@ -43,7 +43,6 @@ public class ClienteController {
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {
-      e.printStackTrace();
       return ResponseJsonUtils.buildException(e);
     }
   }
@@ -55,7 +54,6 @@ public class ClienteController {
       List<ListAllSegmentsDto> response = clienteService.getAllSegmentos();
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
     } catch (Exception e) {
-      e.printStackTrace();
       return ResponseJsonUtils.buildException(e);
     }
   }
@@ -68,7 +66,6 @@ public class ClienteController {
       List<ListAllSubsegmentsDto> response = clienteService.getAllSubSegmentsBySegment(coAtrPadre);
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
     } catch (Exception e) {
-      e.printStackTrace();
       return ResponseJsonUtils.buildException(e);
     }
   }
@@ -85,7 +82,6 @@ public class ClienteController {
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", response);
 
     } catch (Exception e) {
-      e.printStackTrace();
       return ResponseJsonUtils.buildException(e);
     }
   }
