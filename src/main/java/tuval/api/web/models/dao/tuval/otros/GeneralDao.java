@@ -1,13 +1,10 @@
 package tuval.api.web.models.dao.tuval.otros;
 
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
+import java.sql.Types;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -15,10 +12,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
-
-import jakarta.transaction.Transactional;
 import tuval.api.web.models.dto.otros.pedidos.OrderDetailDto;
 import tuval.api.web.models.dto.otros.pedidos.OrderHeaderDto;
+import tuval.api.web.models.request.otros.pedidos.OrderDetailListRequest;
+import tuval.api.web.models.request.otros.pedidos.OrderDetailWebRequest;
+import tuval.api.web.models.request.otros.pedidos.OrderListRequest;
 import tuval.api.web.models.request.otros.pedidos.OrdersDetailRequest;
 import tuval.api.web.models.request.otros.pedidos.OrdersHeadersRequest;
 
@@ -36,84 +34,104 @@ public class GeneralDao {
         this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
 
-    public List<OrderHeaderDto> getAllOrderPendingUpdate(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
-        String SQL = """
-                select
-                I_vDOCU_ORIGEN as docOrigen,
-                I_vID_TIPO as idTipo,
-                I_vPUNTO_VENTA as ptoVta,
-                DOC_GENERADO as docGenerado,
-                DEX_ROW_ID as dexRowId,
-                I_vLOCNCODE as bodega
-                from
-                MSW_TB_FACTURA_CAB
-                WHERE USERID IS NULL
-                AND COND_PAGO_ORG IS NULL
-                AND I_vDOCDATE BETWEEN ? AND ?
+    public List<OrderHeaderDto> getAllOrderPendingUpdate(OrderListRequest payload) {
+        String query = """
+                SELECT
+                    I_vDOCU_ORIGEN AS docOrigen,
+                    I_vID_TIPO AS idTipo,
+                    I_vPUNTO_VENTA AS ptoVta,
+                    DOC_GENERADO AS docGenerado,
+                    DEX_ROW_ID AS dexRowId,
+                    I_vLOCNCODE AS bodega
+                FROM MSW_TB_FACTURA_CAB
+                WHERE I_vDOCU_ORIGEN IN (:pedidos)
                 ORDER BY DEX_ROW_ID
                 """;
-        // String SQL = """
-        // select
-        // I_vDOCU_ORIGEN as docOrigen,
-        // I_vID_TIPO as idTipo,
-        // I_vPUNTO_VENTA as ptoVta,
-        // DOC_GENERADO as docGenerado,
-        // DEX_ROW_ID as dexRowId,
-        // I_vLOCNCODE as bodega
-        // from
-        // MSW_TB_FACTURA_CAB
-        // WHERE I_vDOCDATE BETWEEN ? AND ?
-        // ORDER BY DEX_ROW_ID
-        // """;
+
         try {
-            var mapper = new org.springframework.jdbc.core.BeanPropertyRowMapper<>(OrderHeaderDto.class);
-            return jdbcTemplate.query(SQL, mapper, fechaInicio, fechaFin);
+            if (payload == null || payload.getPedidos() == null || payload.getPedidos().isEmpty()) {
+                return List.of();
+            }
+
+            var params = new MapSqlParameterSource();
+            params.addValue("pedidos", payload.getPedidos());
+
+            var mapper = new BeanPropertyRowMapper<>(OrderHeaderDto.class);
+
+            return namedParameterJdbcTemplate.query(query, params, mapper);
+
         } catch (Exception e) {
-            throw new IllegalStateException("Ocurrio un error al consultar la base de datos", e);
+            throw new IllegalStateException("Ocurrió un error al consultar la base de datos", e);
         }
     }
 
-    public List<OrderDetailDto> getAllOrderDetailsPendingUpdate(Map<String, List<String>> payload) {
+    public List<OrderDetailDto> getAllOrderDetailsPendingUpdate(OrderDetailListRequest payload) {
 
-        List<String> listaPedidos = payload.getOrDefault("pedidos", List.of());
-        if (listaPedidos.isEmpty()) {
-            return List.of(); // Si no hay pedidos, retornamos vacío sin ir a la BD
+        if (payload == null || payload.getDetalles() == null || payload.getDetalles().isEmpty()) {
+            return List.of();
+        }
+
+        List<OrderDetailWebRequest> detalles = payload.getDetalles()
+                .stream()
+                .filter(det -> det.getPedido() != null && !det.getPedido().isBlank())
+                .filter(det -> det.getArtCodigo() != null && !det.getArtCodigo().isBlank())
+                .filter(det -> det.getOrden() != null)
+                .toList();
+
+        if (detalles.isEmpty()) {
+            return List.of();
+        }
+        StringBuilder condiciones = new StringBuilder();
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+
+        for (int i = 0; i < detalles.size(); i++) {
+            OrderDetailWebRequest det = detalles.get(i);
+
+            if (i > 0) {
+                condiciones.append(" OR ");
+            }
+
+            condiciones.append("""
+                        (
+                            I_vDOCU_ORIGEN = :pedido%s
+                            AND I_vITEMNMBR = :artCodigo%s
+                            AND I_vLINEA = :orden%s
+                        )
+                    """.formatted(i, i, i));
+
+            parameters.addValue("pedido" + i, det.getPedido());
+            parameters.addValue("artCodigo" + i, det.getArtCodigo());
+            parameters.addValue("orden" + i, det.getOrden());
         }
         String SQL = """
                 SELECT
-                I_vDOCU_ORIGEN as docOrigen,
-                I_vID_TIPO     as idTipo,
-                I_vITEMNMBR    as artCodigo,
-                I_vLOCNCODE    as bodega,
-                I_vLINEA       as linea,
-                DEX_ROW_ID     as dexRowId
-                FROM
-                MSW_TB_FACTURA_DET
-                WHERE DESCRIPCION_ORG IS NULL
-                AND VALOR_ORG IS NULL
-                AND DESCUENTO_ORG IS NULL
-                AND I_vDOCU_ORIGEN IN (:listaPedidos)
+                    I_vDOCU_ORIGEN AS docOrigen,
+                    I_vID_TIPO     AS idTipo,
+                    I_vITEMNMBR    AS artCodigo,
+                    I_vLOCNCODE    AS bodega,
+                    I_vLINEA       AS linea,
+                    DEX_ROW_ID     AS dexRowId
+                FROM MSW_TB_FACTURA_DET
+                WHERE  (
+                      %s
+                  )
                 ORDER BY DEX_ROW_ID
-                """;
-        try {
-            MapSqlParameterSource parameters = new MapSqlParameterSource();
-            // 3. Pasamos SOLO la lista, no el mapa completo
-            parameters.addValue("listaPedidos", listaPedidos);
+                """.formatted(condiciones.toString());
 
+        try {
             var mapper = new BeanPropertyRowMapper<>(OrderDetailDto.class);
             return namedParameterJdbcTemplate.query(SQL, parameters, mapper);
         } catch (Exception e) {
-            throw new IllegalStateException("Ocurrio un error al consultar la base de datos", e);
+            throw new IllegalStateException("Ocurrió un error al consultar la base de datos", e);
         }
     }
 
-    // actualizacion masiva de datos
-    @Transactional
     public int[] updateMassiveHeaders(List<OrdersHeadersRequest> headers) {
+
         String sql = """
                 UPDATE MSW_TB_FACTURA_CAB
-                SET USERID = ?,
-                    COND_PAGO_ORG = ?
+                SET PEDIDO_ID = ?,
+                    APRO_COMER_USERID = ?
                 WHERE DEX_ROW_ID = ?
                 """;
 
@@ -121,9 +139,15 @@ public class GeneralDao {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 OrdersHeadersRequest header = headers.get(i);
-                // Orden de los ? en el SQL
-                ps.setString(1, header.getUserIdCreator());
-                ps.setString(2, header.getCondIdOriginal());
+
+                ps.setLong(1, header.getOrderId());
+
+                if (header.getUserApprovalId() != null && !header.getUserApprovalId().isBlank()) {
+                    ps.setString(2, header.getUserApprovalId());
+                } else {
+                    ps.setNull(2, Types.VARCHAR);
+                }
+
                 ps.setLong(3, header.getDexRowId());
             }
 
@@ -134,34 +158,38 @@ public class GeneralDao {
         });
     }
 
-    @Transactional
-    public int[] updateMassiveDetails(List<OrdersDetailRequest> details) {
+   public int[] updateMassiveDetails(List<OrdersDetailRequest> details) {
 
-        String sql = """
-                UPDATE MSW_TB_FACTURA_DET
-                SET
-                DESCRIPCION_ORG = ?,
-                VALOR_ORG = ?,
-                DESCUENTO_ORG = ?
-                WHERE DEX_ROW_ID = ?
-                """;
+    String sql = """
+            UPDATE MSW_TB_FACTURA_DET
+            SET DETALLE_ID = ?,
+                PEDIDO_ID = ?,
+                DESCUENTO_FINAL = ?
+            WHERE DEX_ROW_ID = ?
+            """;
 
-        return jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws SQLException {
-                OrdersDetailRequest detail = details.get(i);
-                // Asegúrate de manejar BigDecimal correctamente
-                ps.setString(1, detail.getDescripcionOrginal());
-                ps.setBigDecimal(2, detail.getValorOrginal());
-                ps.setBigDecimal(3, detail.getDescuentoOrginal());
-                ps.setLong(4, detail.getDexRowId()); // WHERE
+    return jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+        @Override
+        public void setValues(PreparedStatement ps, int i) throws SQLException {
+            OrdersDetailRequest detail = details.get(i);
+
+            ps.setLong(1, detail.getPedidoDetalleId());
+            ps.setLong(2, detail.getPedidoId());
+
+            if (detail.getDescuento() != null) {
+                ps.setBigDecimal(3, detail.getDescuento());
+            } else {
+                ps.setNull(3, Types.DECIMAL);
             }
 
-            @Override
-            public int getBatchSize() {
-                return details.size();
-            }
-        });
-    }
+            ps.setLong(4, detail.getDexRowId());
+        }
+
+        @Override
+        public int getBatchSize() {
+            return details.size();
+        }
+    });
+}
 
 }

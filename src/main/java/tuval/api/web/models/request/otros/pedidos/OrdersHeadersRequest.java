@@ -9,9 +9,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrdersHeadersRequest {
+     private Long orderId;
+
     private Long dexRowId;
+    private String docGenerado;
     private String pedido;
-    private String userIdCreator;
-    private String condIdOriginal;
+    private String ptoVta;
+    private String bodega;
+
+    private String userApprovalId;
 
 }

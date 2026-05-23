@@ -1,0 +1,21 @@
+package tuval.api.web.models.service.dynamics.cobros;
+
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import tuval.api.web.models.dao.dynamics.cobros.CollectionDao;
+import tuval.api.web.models.dto.cobros.CustomerCollectionDto;
+import tuval.api.web.models.request.cobros.CustomerCollectionRequest;
+
+@Service
+@RequiredArgsConstructor
+public class ReceivablesServiceImp implements ReceivablesService {
+  private final CollectionDao collectionDao;
+
+  @Override
+  public List<CustomerCollectionDto> getInvoicePaymentApplications(
+      CustomerCollectionRequest payload) {
+
+    return collectionDao.executeSpCxC32(payload.getDocumento(), payload.getRuc());
+  }
+}

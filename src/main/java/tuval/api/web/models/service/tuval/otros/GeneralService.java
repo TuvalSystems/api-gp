@@ -1,6 +1,7 @@
 package tuval.api.web.models.service.tuval.otros;
 
 import java.sql.Date;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +13,11 @@ import lombok.RequiredArgsConstructor;
 import tuval.api.web.models.dao.tuval.otros.GeneralDao;
 import tuval.api.web.models.dto.otros.pedidos.OrderDetailDto;
 import tuval.api.web.models.dto.otros.pedidos.OrderHeaderDto;
+import tuval.api.web.models.request.otros.pedidos.OrderDetailListRequest;
+import tuval.api.web.models.request.otros.pedidos.OrderListRequest;
+import tuval.api.web.models.request.otros.pedidos.OrdersDetailListUpdateRequest;
 import tuval.api.web.models.request.otros.pedidos.OrdersDetailRequest;
+import tuval.api.web.models.request.otros.pedidos.OrdersHeadersListUpdateRequest;
 import tuval.api.web.models.request.otros.pedidos.OrdersHeadersRequest;
 
 @Service
@@ -21,34 +26,116 @@ public class GeneralService {
 
     private final GeneralDao generalDao;
 
-    public List<OrderHeaderDto> getAllOrderPendingUpdate(LocalDateTime fechaInicio, LocalDateTime fechaFin) {
-        return generalDao.getAllOrderPendingUpdate(fechaInicio, fechaFin);
+    public List<OrderHeaderDto> getAllOrderPendingUpdate(OrderListRequest payload) {
+        return generalDao.getAllOrderPendingUpdate(payload);
     }
 
-    public List<OrderDetailDto> getAllOrderDetailsPendingUpdate(Map<String, List<String>> payload) {
+    public List<OrderDetailDto> getAllOrderDetailsPendingUpdate(OrderDetailListRequest payload) {
         return generalDao.getAllOrderDetailsPendingUpdate(payload);
     }
 
-    /** proceso de update masivo */
     @Transactional(rollbackFor = Exception.class)
-    public int[] processMassiveHeaderUpdate(List<OrdersHeadersRequest> headers) {
-        if (headers == null || headers.isEmpty()) {
-            throw new IllegalArgumentException("La lista de cabeceras esta vacia");
+    public int[] processMassiveHeaderUpdate(OrdersHeadersListUpdateRequest payload) {
+
+        if (payload == null || payload.getHeaders() == null || payload.getHeaders().isEmpty()) {
+            throw new IllegalArgumentException("La lista de cabeceras está vacía");
         }
 
-        // int[] rowsAffected = generalDao.updateMassiveHeaders(headers);
-        // rowsAffected es un array con un 1 por cada fila actualizada exitosamente
-        // return Map.of("updated", rowsAffected.length, "message", "Cabeceras actualizadas");
-         return generalDao.updateMassiveHeaders(headers);
+        List<OrdersHeadersRequest> headers = payload.getHeaders();
+
+        validateHeaders(headers);
+
+        int[] rowsAffected = generalDao.updateMassiveHeaders(headers);
+
+        validateBatchResult("cabeceras", headers.size(), rowsAffected);
+
+        return rowsAffected;
     }
 
+    /**
+     * Proceso de update masivo de detalles
+     */
     @Transactional(rollbackFor = Exception.class)
-    public int[] processMassiveDetailUpdate(List<OrdersDetailRequest> details) {
-        if (details == null || details.isEmpty()) {
-            throw new IllegalArgumentException("La lista de DETALLES esta vacia");
+    public int[] processMassiveDetailUpdate(OrdersDetailListUpdateRequest payload) {
+
+        if (payload == null || payload.getDetalles() == null || payload.getDetalles().isEmpty()) {
+            throw new IllegalArgumentException("La lista de detalles está vacía");
         }
 
-        // int[] rowsAffected = generalDao.updateMassiveDetails(details);
-        return generalDao.updateMassiveDetails(details);
+        List<OrdersDetailRequest> details = payload.getDetalles();
+
+        validateDetails(details);
+
+        int[] rowsAffected = generalDao.updateMassiveDetails(details);
+
+        validateBatchResult("detalles", details.size(), rowsAffected);
+
+        return rowsAffected;
     }
+
+    private void validateHeaders(List<OrdersHeadersRequest> headers) {
+        for (int i = 0; i < headers.size(); i++) {
+            OrdersHeadersRequest item = headers.get(i);
+
+            if (item == null) {
+                throw new IllegalArgumentException("La cabecera en la posición " + i + " es nula");
+            }
+
+            if (item.getDexRowId() == null) {
+                throw new IllegalArgumentException("La cabecera en la posición " + i + " no tiene dexRowId");
+            }
+
+            if (item.getOrderId() == null) {
+                throw new IllegalArgumentException("La cabecera en la posición " + i + " no tiene orderId");
+            }
+        }
+    }
+
+    private void validateDetails(List<OrdersDetailRequest> details) {
+        for (int i = 0; i < details.size(); i++) {
+            OrdersDetailRequest item = details.get(i);
+
+            if (item == null) {
+                throw new IllegalArgumentException("El detalle en la posición " + i + " es nulo");
+            }
+
+            if (item.getPedidoDetalleId() == null) {
+                throw new IllegalArgumentException("El detalle en la posición " + i + " no tiene pedidoDetalleId");
+            }
+
+            if (item.getPedidoId() == null) {
+                throw new IllegalArgumentException("El detalle en la posición " + i + " no tiene pedidoId");
+            }
+
+            if (item.getDexRowId() == null) {
+                throw new IllegalArgumentException("El detalle en la posición " + i + " no tiene dexRowId");
+            }
+        }
+    }
+
+    private void validateBatchResult(String proceso, int expectedRows, int[] rowsAffected) {
+        if (rowsAffected == null) {
+            throw new IllegalStateException("El update masivo de " + proceso + " no devolvió resultado");
+        }
+
+        if (rowsAffected.length != expectedRows) {
+            throw new IllegalStateException(
+                    "El update masivo de " + proceso + " no procesó todos los registros. Esperados: "
+                            + expectedRows + ", procesados: " + rowsAffected.length);
+        }
+
+        for (int i = 0; i < rowsAffected.length; i++) {
+            int affected = rowsAffected[i];
+
+            boolean success = affected > 0 ||
+                    affected == Statement.SUCCESS_NO_INFO;
+
+            if (!success) {
+                throw new IllegalStateException(
+                        "El update masivo de " + proceso + " falló en la posición " + i
+                                + ". Filas afectadas: " + affected);
+            }
+        }
+    }
+
 }

@@ -79,7 +79,7 @@ public class transactionDao {
 
       if (resultados == null || resultados.isEmpty()) {
         // Lanza excepción si no hay registros
-      throw new RuntimeException("No existe registro para los parámetros proporcionados");
+        throw new RuntimeException("No existe registro para los parámetros proporcionados");
       }
       return resultados.get(0);
     } catch (RuntimeException e) {
@@ -225,7 +225,7 @@ public class transactionDao {
 
       if (resultados == null || resultados.isEmpty()) {
         // Lanza excepción si no hay registros
-      throw new RuntimeException("No existe registro para los parámetros proporcionados");
+        throw new RuntimeException("No existe registro para los parámetros proporcionados");
       }
       return resultados.get(0);
     } catch (RuntimeException e) {
@@ -246,7 +246,7 @@ public class transactionDao {
       @SuppressWarnings("unchecked")
       List<Map<String, Object>> rs = (List<Map<String, Object>>) out.get("#result-set-1");
       if (rs == null || rs.isEmpty()) {
-         throw new RuntimeException("SP no retornó filas para cliente=" + request.getDocumento());
+        throw new RuntimeException("SP no retornó filas para cliente=" + request.getDocumento());
       }
       Map<String, Object> row = rs.get(0);
       dto.setDocuOrigen(CoerceHelperUtils.stringOrEmpty(row.get("I_vDOCU_ORIGEN")));
@@ -265,6 +265,7 @@ public class transactionDao {
       InvoiceHelperUtils.validateHeaderInvoiceRequired(req);
       var call = new SimpleJdbcCall(jdbcTemplate).withProcedureName("MSW_SP_GUARDAR_FACTURA_VTA_CAB");
       MapSqlParameterSource p = new MapSqlParameterSource()
+          .addValue("pedido_id", req.getPedidoId())
           .addValue("docu", InvoiceHelperUtils.str(req.getFactVtaDocuOrigen(), 30))
           .addValue("id_tipo", InvoiceHelperUtils.str(req.getFactVtaIdTipo(), 15))
           .addValue("punto_venta", InvoiceHelperUtils.str(req.getFacVtaPuntoVenta(), 15))
@@ -287,7 +288,8 @@ public class transactionDao {
           .addValue("total", InvoiceHelperUtils.dec(req.getFacVtaTotal()), java.sql.Types.DECIMAL)
           .addValue("nota_cliente", InvoiceHelperUtils.str(req.getFacVtaNotaCliente(), 300))
           .addValue("userid", InvoiceHelperUtils.str(req.getUserIdCreator(), 100))
-          .addValue("cond_pago_org", InvoiceHelperUtils.str(req.getCondIdOriginal(), 100));
+          .addValue("cond_pago_org", InvoiceHelperUtils.str(req.getCondIdOriginal(), 100))
+          .addValue("apro_comer_userid", InvoiceHelperUtils.str(req.getUserApprovalId(), 20));
 
       call.execute(p);
     } catch (jakarta.validation.ValidationException ve) {
@@ -307,6 +309,8 @@ public class transactionDao {
       var call = new SimpleJdbcCall(jdbcTemplate).withProcedureName("MSW_SP_GUARDAR_FACTURA_VTA_DET");
 
       MapSqlParameterSource p = new MapSqlParameterSource()
+          .addValue("detalle_id", req.getDetalleId())
+          .addValue("pedido_id", req.getPedidoId())
           .addValue("docu", InvoiceHelperUtils.str(req.getFacVtaDetDocuOrigen(), 30))
           .addValue("tipo", InvoiceHelperUtils.str(req.getFacVtaDetIdTipo(), 15)) // usa el mismo nombre
           .addValue("linea", InvoiceHelperUtils.str(req.getFacVtaDetLinea(), 5)) // o Types.INTEGER si el SP
@@ -322,7 +326,8 @@ public class transactionDao {
           .addValue("total", InvoiceHelperUtils.dec(req.getFacVtaDetTotal()), java.sql.Types.DECIMAL)
           .addValue("descripcion_org", InvoiceHelperUtils.str(req.getDescripcionOrginal(), 300))
           .addValue("valor_org", InvoiceHelperUtils.dec(req.getValorOrginal()), java.sql.Types.DECIMAL)
-          .addValue("descuento_org", InvoiceHelperUtils.dec(req.getDescuentoOrginal()), java.sql.Types.DECIMAL);
+          .addValue("descuento_org", InvoiceHelperUtils.dec(req.getDescuentoOrginal()), java.sql.Types.DECIMAL)
+          .addValue("descuento_final", InvoiceHelperUtils.dec(req.getDescuento()), java.sql.Types.DECIMAL);
 
       call.execute(p);
     } catch (jakarta.validation.ValidationException ve) {
@@ -394,7 +399,7 @@ public class transactionDao {
       @SuppressWarnings("unchecked")
       List<responseInvoiceVtaDto> resultados = (List<responseInvoiceVtaDto>) out.get("response");
       if (resultados == null || resultados.isEmpty()) {
-       throw new RuntimeException("No existe registro para los parámetros proporcionados");
+        throw new RuntimeException("No existe registro para los parámetros proporcionados");
       }
       return resultados.get(0);
     } catch (Exception e) {
