@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -16,7 +15,6 @@ import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
-
 import tuval.api.web.models.dto.cobros.CustomerCollectionDto;
 
 @Repository
@@ -72,7 +70,8 @@ public class CollectionDao {
             rs.getDate("fechaDelDocumentoCobro") != null
                 ? rs.getDate("fechaDelDocumentoCobro").toLocalDate()
                 : null,
-            rs.getString("Customer_PO_Number"));
+            rs.getString("Customer_PO_Number"),
+            rs.getString("cf_numrecibo"));
   }
 
   private LocalDate toLocalDate(Date date) {
@@ -80,18 +79,14 @@ public class CollectionDao {
   }
 
   private Comparator<CustomerCollectionDto> customerCollectionComparator() {
-  return Comparator
-      .comparing(
-          CustomerCollectionDto::getInvoiceNumber,
-          Comparator.nullsLast(Comparator.naturalOrder())
-      )
-      .thenComparing(
-          CustomerCollectionDto::getCollectionApplyDate,
-          Comparator.nullsLast(Comparator.naturalOrder())
-      )
-      .thenComparing(
-          CustomerCollectionDto::getCollectionId,
-          Comparator.nullsLast(Comparator.naturalOrder())
-      );
-}
+    return Comparator.comparing(
+            CustomerCollectionDto::getInvoiceNumber,
+            Comparator.nullsLast(Comparator.naturalOrder()))
+        .thenComparing(
+            CustomerCollectionDto::getCollectionApplyDate,
+            Comparator.nullsLast(Comparator.naturalOrder()))
+        .thenComparing(
+            CustomerCollectionDto::getCollectionId,
+            Comparator.nullsLast(Comparator.naturalOrder()));
+  }
 }
