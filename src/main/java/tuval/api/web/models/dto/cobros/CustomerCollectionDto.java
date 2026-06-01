@@ -25,4 +25,5 @@ public class CustomerCollectionDto {
     private BigDecimal collectionAmount;
     private LocalDate collectionDocDate;
     private String customerPoNumber;
+    private String numeroRecibo;
 }
