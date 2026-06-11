@@ -19,6 +19,7 @@ import tuval.api.web.models.dto.cobros.CheckValidatorDto;
 import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
 import tuval.api.web.models.dto.cobros.CollectionSummaryDTO;
 import tuval.api.web.models.dto.cobros.CustomerCollectionDto;
+import tuval.api.web.models.dto.cobros.CustomerInvoiceCheckReceiptDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountResponseEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListClientOverdueDocumentEntity;
@@ -197,6 +198,18 @@ public class CollectorController {
     try {
       List<CustomerCollectionDto> result =
           receivablesService.getInvoicePaymentApplications(payload);
+      return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @PostMapping("consulta-recibos-cheques")
+  public ResponseEntity<Map<String, Object>> obetenerRecibosCheques(
+      @RequestBody CustomerCollectionRequest payload) {
+    try {
+      List<CustomerInvoiceCheckReceiptDto> result =
+          receivablesService.getCheckInvoicePayments(payload);
       return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
