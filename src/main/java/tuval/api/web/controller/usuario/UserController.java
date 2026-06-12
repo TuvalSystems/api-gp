@@ -8,8 +8,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
-import tuval.api.web.models.dto.usuarios.UserRequest;
+import tuval.api.web.models.dto.usuarios.UserEmailDto;
 import tuval.api.web.models.entity.dynamics.usuario.UserValidatorEntity;
+import tuval.api.web.models.request.usuarios.UserRequest;
+import tuval.api.web.models.request.usuarios.UserSearchEmailRequest;
 import tuval.api.web.models.service.dynamics.usuario.UserService;
 
 @RestController
@@ -28,8 +30,19 @@ public class UserController {
   public ResponseEntity<Map<String, Object>> validateUser(@RequestBody UserRequest userRequest) {
 
     try {
-      UserValidatorEntity resp  = userService.validateUserCredentials(userRequest);
+      UserValidatorEntity resp = userService.validateUserCredentials(userRequest);
       return ResponseJsonUtils.buildSuccessWithData("Validacion Exitosa", resp);
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @PostMapping("/buscar-correo-usuario")
+  public ResponseEntity<Map<String, Object>> buscarCorreoUsuario(
+      @RequestBody UserSearchEmailRequest req) {
+    try {
+      UserEmailDto resp = userService.findEmailService(req);
+      return ResponseJsonUtils.buildSuccessWithData("Correo Obtenido correctamente", resp);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
     }

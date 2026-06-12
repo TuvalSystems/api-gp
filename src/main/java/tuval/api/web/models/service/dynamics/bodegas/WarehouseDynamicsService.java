@@ -16,7 +16,6 @@ public class WarehouseDynamicsService {
     }
 
 
-
     public ItemExpoDto findItemExpoByPtoVta(ItemsExpoRequest req) {
         return warehouseDynamicsDao.findItemExpoByPtoVta(req);
     }
