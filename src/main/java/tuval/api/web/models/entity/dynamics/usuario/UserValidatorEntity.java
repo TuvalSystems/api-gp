@@ -1,13 +1,15 @@
 package tuval.api.web.models.entity.dynamics.usuario;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserValidatorEntity {
 
-    private int codRet;
+  private int codRet;
   private String userId;
   private String interId;
   private String message;

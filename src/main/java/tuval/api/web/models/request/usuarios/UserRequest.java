@@ -1,4 +1,4 @@
-package tuval.api.web.models.dto.usuarios;
+package tuval.api.web.models.request.usuarios;
 
 import lombok.Getter;
 import lombok.Setter;

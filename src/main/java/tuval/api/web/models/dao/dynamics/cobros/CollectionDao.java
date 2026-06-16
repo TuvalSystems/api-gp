@@ -16,10 +16,12 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.models.dto.cobros.CustomerCollectionDto;
+import tuval.api.web.models.dto.cobros.CustomerInvoiceCheckReceiptDto;
 
 @Repository
 public class CollectionDao {
   private final SimpleJdbcCall spCxC32;
+  private final SimpleJdbcCall spCxC33;
 
   public CollectionDao(@Qualifier("dynamicsJdbcTemplate") JdbcTemplate jdbcTemplate) {
     JdbcTemplate dynamicsJdbcTemplate =
@@ -32,6 +34,14 @@ public class CollectionDao {
             .declareParameters(
                 new SqlParameter("SOPNUMBE", Types.VARCHAR), new SqlParameter("RUC", Types.VARCHAR))
             .returningResultSet("data", customerCollectionMapper());
+
+    this.spCxC33 =
+        new SimpleJdbcCall(dynamicsJdbcTemplate)
+            .withProcedureName("spCxC33")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("SOPNUMBE", Types.VARCHAR), new SqlParameter("RUC", Types.VARCHAR))
+            .returningResultSet("data", customerInvoiceCheckReceiptMapper());
   }
 
   @SuppressWarnings("unchecked")
@@ -50,6 +60,24 @@ public class CollectionDao {
     List<CustomerCollectionDto> rows = (List<CustomerCollectionDto>) data;
 
     return rows.stream().sorted(customerCollectionComparator()).toList();
+  }
+
+  @SuppressWarnings("unchecked")
+  public List<CustomerInvoiceCheckReceiptDto> executeSpCxC33(String documento, String ruc) {
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("SOPNUMBE", documento).addValue("RUC", ruc);
+    Map<String, Object> result = spCxC33.execute(params);
+
+    Object data = result.get("data");
+
+    if (data == null) {
+      return Collections.emptyList();
+    }
+
+    List<CustomerInvoiceCheckReceiptDto> rows = (List<CustomerInvoiceCheckReceiptDto>) data;
+
+    return rows.stream().sorted(customerInvoiceCheckReceipComparator()).toList();
   }
 
   private RowMapper<CustomerCollectionDto> customerCollectionMapper() {
@@ -74,6 +102,20 @@ public class CollectionDao {
             rs.getString("cf_numrecibo"));
   }
 
+  private RowMapper<CustomerInvoiceCheckReceiptDto> customerInvoiceCheckReceiptMapper() {
+    return (rs, rowNum) ->
+        new CustomerInvoiceCheckReceiptDto(
+            rs.getString("cq_numrecibo"),
+            rs.getString("cq_idcliente"),
+            rs.getString("cf_cobrogp").trim(),
+            rs.getString("cf_numfac"),
+            rs.getString("cq_numchq"),
+            rs.getBigDecimal("montoCheque"),
+            rs.getBigDecimal("cf_montoapl"),
+            rs.getString("cq_estado"),
+            toLocalDate(rs.getDate("cf_fecmod")));
+  }
+
   private LocalDate toLocalDate(Date date) {
     return date != null ? date.toLocalDate() : null;
   }
@@ -88,5 +130,11 @@ public class CollectionDao {
         .thenComparing(
             CustomerCollectionDto::getCollectionId,
             Comparator.nullsLast(Comparator.naturalOrder()));
+  }
+
+  private Comparator<CustomerInvoiceCheckReceiptDto> customerInvoiceCheckReceipComparator() {
+    return Comparator.comparing(
+        CustomerInvoiceCheckReceiptDto::getInvoice,
+        Comparator.nullsLast(Comparator.naturalOrder()));
   }
 }
