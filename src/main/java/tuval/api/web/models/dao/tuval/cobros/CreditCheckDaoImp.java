@@ -1,6 +1,5 @@
-package tuval.api.web.models.dao.tuval.cobros.Imp;
+package tuval.api.web.models.dao.tuval.cobros;
 
-import jakarta.annotation.PostConstruct;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
@@ -8,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlOutParameter;
@@ -16,12 +15,12 @@ import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
+
 import tuval.api.web.models.Utils.CoerceHelperUtils;
-import tuval.api.web.models.dao.tuval.cobros.CreditCheckDao;
 import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
 import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
-import tuval.api.web.models.dto.cobros.CollectionSummaryDTO;
+import tuval.api.web.models.dto.cobros.CustomerPendingApplicationDocumentDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountDetailEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountHeaderEntity;
@@ -31,25 +30,12 @@ import tuval.api.web.models.entity.tuval.cobros.ListaClientSinSoporteEntity;
 @Repository
 public class CreditCheckDaoImp implements CreditCheckDao {
 
-  @Autowired
-  @Qualifier("tuvalJdbcTemplate")
-  private JdbcTemplate jdbcTemplate;
+  private final JdbcTemplate jdbcTemplate;
+  private final SimpleJdbcCall spValidacionCrediticia;
+  private final SimpleJdbcCall spConsultaDocSaldo;
 
-  /** variables globales para el manejo de sp */
-  private SimpleJdbcCall spValidacionCrediticia;
-
-  /** variable de sp sp_mc_consulta_docsaldo */
-  private SimpleJdbcCall spConsultaDocSaldo;
-
-  public void validateConfiguration() {
-    if (jdbcTemplate == null) {
-      throw new IllegalStateException("JdbcTemplate no ha sido inyectado correctamente");
-    }
-  }
-
-  @PostConstruct
-  public void init() {
-    validateConfiguration();
+  public CreditCheckDaoImp(@Qualifier("tuvalJdbcTemplate") JdbcTemplate jdbcTemplate) {
+    this.jdbcTemplate = jdbcTemplate;
     this.spValidacionCrediticia =
         new SimpleJdbcCall(jdbcTemplate)
             .withProcedureName("sp_mc_validacion_creditica")
@@ -84,8 +70,10 @@ public class CreditCheckDaoImp implements CreditCheckDao {
                 new SqlParameter("equipo", Types.VARCHAR),
                 new SqlOutParameter("codret", Types.INTEGER),
                 new SqlOutParameter("msj", Types.VARCHAR));
+
   }
 
+  @Override
   public ClientOverdueDocumentDto executeSpConsultExpiredClientDocument(
       String ruc, String idCompania, int modo) {
 
@@ -123,6 +111,7 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
+  @Override
   public ListClientOverdueDocumentEntity executeSpConsultExpiredClientDocumentList(
       String ruc, String idCompania, int modo) {
 
@@ -165,6 +154,7 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
+  @Override
   public CheckValidatorDto getConsultCreditValidation(String ruc, String idCompania, int modo) {
     MapSqlParameterSource in =
         new MapSqlParameterSource()
@@ -206,6 +196,7 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
+  @Override
   public ClientSinSoporteEntity executeSpConsultDocumentClientDontSupport(
       String ruc, String idCompania, int modo) {
 
@@ -242,6 +233,7 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
+  @Override
   public ListaClientSinSoporteEntity executeSpConsultDocumentClientDontSupport2(
       String ruc, String idCompania, int modo) {
 
@@ -286,6 +278,7 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
+  @Override
   public ClientStatusAccountHeaderEntity executeSpConsultClientStatusAccountHeader(
       String ruc, int modo) {
     MapSqlParameterSource in =
@@ -333,6 +326,7 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
+  @Override
   public List<ClientStatusAccountDetailEntity> executeSpConsultClientStatusAccountDetail(
       String ruc, int modo) {
     MapSqlParameterSource in =
@@ -379,6 +373,7 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
+  @Override
   public BusinessDaysDto executeSpGetBusinessDaysCheck(String fecha, int modo) {
 
     Timestamp fechaTimestamp = null;
@@ -412,8 +407,10 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
-  public List<CollectionSummaryDTO> executeSpGetCollectionSumaryClientDao(String ruc, int modo) {
-    List<CollectionSummaryDTO> lista = new ArrayList<>();
+
+   @Override
+  public List<CustomerPendingApplicationDocumentDto> executeSpGetApplyPendingPayment(String ruc, int modo) {
+    List<CustomerPendingApplicationDocumentDto> lista = new ArrayList<>();
     try {
       MapSqlParameterSource in =
           new MapSqlParameterSource()
@@ -436,8 +433,8 @@ public class CreditCheckDaoImp implements CreditCheckDao {
       List<Map<String, Object>> rs = (List<Map<String, Object>>) out.get("#result-set-1");
       if (rs != null && !rs.isEmpty()) {
         for (Map<String, Object> row : rs) {
-          CollectionSummaryDTO e = new CollectionSummaryDTO();
-          e.setRuc(CoerceHelperUtils.stringOrEmpty(row.get("Identificacion")));
+          CustomerPendingApplicationDocumentDto e = new CustomerPendingApplicationDocumentDto();
+          e.setIdentificacion(CoerceHelperUtils.stringOrEmpty(row.get("Identificacion")));
           e.setDocumento(CoerceHelperUtils.stringOrEmpty(row.get("Documento")));
           e.setTipo(CoerceHelperUtils.stringOrEmpty(row.get("Tipo")));
           e.setObservacion(CoerceHelperUtils.stringOrEmpty(row.get("Observacion")));

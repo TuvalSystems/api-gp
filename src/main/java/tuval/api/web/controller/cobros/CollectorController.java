@@ -14,7 +14,6 @@ import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
 import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
-import tuval.api.web.models.dto.cobros.CollectionSummaryDTO;
 import tuval.api.web.models.dto.cobros.CustomerCollectionDto;
 import tuval.api.web.models.dto.cobros.CustomerInvoiceCheckReceiptDto;
 import tuval.api.web.models.dto.cobros.CustomerPendingApplicationDocumentDto;
@@ -179,25 +178,28 @@ public class CollectorController {
     }
   }
 
-  @GetMapping("consultar-cobros-sin-aplicar")
-  public ResponseEntity<Map<String, Object>> obtenerConsultaCobrosSinAplicar(
-      @RequestParam(required = true) String ruc, @RequestParam(required = true) String idCompania) {
+  @GetMapping("consultar-documentos-pendientes-aplicacion")
+  public ResponseEntity<Map<String, Object>> obtenerDocumentosPendientesAplicacion(
+      @RequestParam String ruc) {
     try {
-      List<CollectionSummaryDTO> result =
-          creditCheckService.getConsultCollectionSummaryService(ruc, idCompania);
-      return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
+      List<CustomerPendingApplicationDocumentDto> result =
+          creditCheckService.getPendingApplicationDocuments(ruc);
+
+      return ResponseJsonUtils.buildSuccessWithData(
+          "Documentos pendientes de aplicación obtenidos correctamente", result);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
     }
   }
 
-  @PostMapping("consulta-aplicaciones-pago")
+  @PostMapping("consulta-documentos-aplicaciones-pago")
   public ResponseEntity<Map<String, Object>> obtenerAplicacionesPagoFactura(
       @RequestBody CustomerCollectionRequest payload) {
     try {
       List<CustomerCollectionDto> result =
           receivablesService.getInvoicePaymentApplications(payload);
-      return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
+      return ResponseJsonUtils.buildSuccessWithData(
+          "Lista de Documentos Obtenidos Correctamente", result);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
     }
@@ -215,13 +217,13 @@ public class CollectorController {
     }
   }
 
-  @PostMapping("consulta-aplicaciones-pendientes")
-  public ResponseEntity<Map<String, Object>> obtenerAplicacionesPendintes(
+  @PostMapping("consulta-aplicaciones-pendientes-por-documento")
+  public ResponseEntity<Map<String, Object>> obtenerAplicacionPendientePorDocumento(
       @RequestBody CustomerApplicationPendingRequest req) {
     try {
       CustomerPendingApplicationDocumentDto response =
           receivablesService.getPendingApplicationDocuments(req.getDocumento(), req.getRuc());
-          return ResponseJsonUtils.buildSuccessWithData("Aplicaciones obtenidas correctamente", response);
+      return ResponseJsonUtils.buildSuccessWithData("Aplicacion obtenidas correctamente", response);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
     }
