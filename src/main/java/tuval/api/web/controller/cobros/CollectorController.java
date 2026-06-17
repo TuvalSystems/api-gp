@@ -2,9 +2,7 @@ package tuval.api.web.controller.cobros;
 
 import java.util.List;
 import java.util.Map;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
@@ -20,10 +17,12 @@ import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
 import tuval.api.web.models.dto.cobros.CollectionSummaryDTO;
 import tuval.api.web.models.dto.cobros.CustomerCollectionDto;
 import tuval.api.web.models.dto.cobros.CustomerInvoiceCheckReceiptDto;
+import tuval.api.web.models.dto.cobros.CustomerPendingApplicationDocumentDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountResponseEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListClientOverdueDocumentEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListaClientSinSoporteEntity;
+import tuval.api.web.models.request.cobros.CustomerApplicationPendingRequest;
 import tuval.api.web.models.request.cobros.CustomerCollectionRequest;
 import tuval.api.web.models.service.dynamics.cobros.ReceivablesService;
 import tuval.api.web.models.service.tuval.cobros.CreditCheckService;
@@ -211,6 +210,18 @@ public class CollectorController {
       List<CustomerInvoiceCheckReceiptDto> result =
           receivablesService.getCheckInvoicePayments(payload);
       return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @PostMapping("consulta-aplicaciones-pendientes")
+  public ResponseEntity<Map<String, Object>> obtenerAplicacionesPendintes(
+      @RequestBody CustomerApplicationPendingRequest req) {
+    try {
+      CustomerPendingApplicationDocumentDto response =
+          receivablesService.getPendingApplicationDocuments(req.getDocumento(), req.getRuc());
+          return ResponseJsonUtils.buildSuccessWithData("Aplicaciones obtenidas correctamente", response);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
     }
