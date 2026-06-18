@@ -192,7 +192,7 @@ public class CollectorController {
     }
   }
 
-  @PostMapping("consulta-documentos-aplicaciones-pago")
+  @PostMapping("consulta-documentos-cobros-aplicados")
   public ResponseEntity<Map<String, Object>> obtenerAplicacionesPagoFactura(
       @RequestBody CustomerCollectionRequest payload) {
     try {
