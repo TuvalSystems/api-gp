@@ -10,13 +10,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CustomerInvoiceCheckReceiptDto {
-  private String receiptNum; // cq_numrecibo
+  private String numeroRecibo; // cq_numrecibo
   private String ruc; // cq_idcliente
-  private String documentGp; // cf_cobrogp
-  private String invoice; // cf_numfac
-  private String checkNumber; // cq_numchq
-  private BigDecimal checkAmount; // montoCheque
-  private BigDecimal appliedAmount; // cf_montoapl
-  private String status; // cq_estado
-  private LocalDate modifiedAt; // cf_fecmod
+  private String documentoGp; // cf_cobrogp
+  private String factura; // cf_numfac
+  private String numeroCheque; // cq_numchq
+  private BigDecimal montoCheque; // montoCheque
+  private BigDecimal montoAplicado; // cf_montoapl
+  private String estado; // cq_estado
+  private LocalDate fechaModificacion; // cf_fecmod
 }

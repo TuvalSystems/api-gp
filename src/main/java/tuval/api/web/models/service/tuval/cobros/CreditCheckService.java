@@ -1,36 +1,31 @@
 package tuval.api.web.models.service.tuval.cobros;
 
 import java.util.List;
-
 import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
 import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
-import tuval.api.web.models.dto.cobros.CollectionSummaryDTO;
-import tuval.api.web.models.dto.cobros.CustomerCollectionDto;
+import tuval.api.web.models.dto.cobros.CustomerPendingApplicationDocumentDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountResponseEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListClientOverdueDocumentEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListaClientSinSoporteEntity;
-import tuval.api.web.models.request.cobros.CustomerCollectionRequest;
 
 public interface CreditCheckService {
 
-  public CheckValidatorDto getConsultCreditValidation(String ruc, String idCompania);
+  CheckValidatorDto getConsultCreditValidation(String ruc, String idCompania);
 
-  public ClientOverdueDocumentDto getConsultExpiredClientDocument(String ruc, String idCompania);
+  ClientOverdueDocumentDto getConsultExpiredClientDocument(String ruc, String idCompania);
 
-  public ListClientOverdueDocumentEntity getConsultExpiredClientDocumentList(
+  ListClientOverdueDocumentEntity getConsultExpiredClientDocumentList(
       String ruc, String idCompania);
 
-  public ClientSinSoporteEntity getConsultDocumentClientDontSupport(String ruc, String idCompania);
+  ClientSinSoporteEntity getConsultDocumentClientDontSupport(String ruc, String idCompania);
 
-  public ListaClientSinSoporteEntity getConsultDocumentClientDontSupport2(
-      String ruc, String idCompania);
+  ListaClientSinSoporteEntity getConsultDocumentClientDontSupport2(String ruc, String idCompania);
 
-  public ClientStatusAccountResponseEntity getConsultaEstadoCuentaDetalleCliente(String ruc);
+  ClientStatusAccountResponseEntity getConsultaEstadoCuentaDetalleCliente(String ruc);
 
+  BusinessDaysDto getBusinessDaysCheck(String fecha);
 
-  public BusinessDaysDto getBusinessDaysCheck(String fecha);
-  public List<CollectionSummaryDTO> getConsultCollectionSummaryService(String ruc, String idCompania);
-
+  List<CustomerPendingApplicationDocumentDto> getPendingApplicationDocuments(String ruc);
 }

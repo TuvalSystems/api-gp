@@ -11,19 +11,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CustomerCollectionDto {
-    private String docId;
-    private LocalDate docDate;
-    private LocalDate collectionApplyDate;
-    private String collectionMonth;
-    private String customerNumber;
-    private String customerName;
-    private String establishment;
-    private String invoiceNumber;
-    private BigDecimal invoiceAmount;
-    private Integer typePayment;
-    private String collectionId; // cobro
-    private BigDecimal collectionAmount;
-    private LocalDate collectionDocDate;
-    private String customerPoNumber;
+    private String documentoId;
+    private LocalDate documentoFecha;
+    private LocalDate fechaAplicacion;
+    private String mesCobro;
+    private String ruc;
+    private String cliente;
+    private String establecimiento;
+    private String factura;
+    private BigDecimal valorFactura;
+    private Integer tipoPago;
+    private String documentoCobro; // cobro
+    private BigDecimal valorCobro;
+    private LocalDate fechaCobro;
+    private String numeroPoCliente;
     private String numeroRecibo;
 }

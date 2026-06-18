@@ -20,6 +20,8 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import com.zaxxer.hikari.HikariDataSource;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 
@@ -31,8 +33,11 @@ public class DynamicsJpaConfig {
     @Primary
     @Bean(name = "dynamicsDataSource")
     @ConfigurationProperties(prefix = "dynamics.datasource")
-    public DataSource dynamicsDataSource() {
-        return DataSourceBuilder.create().build();
+    public HikariDataSource dynamicsDataSource() {
+        // return DataSourceBuilder.create().build();
+          return DataSourceBuilder.create()
+            .type(HikariDataSource.class)
+            .build();
     }
 
     // para las conexiones sp de dynamics

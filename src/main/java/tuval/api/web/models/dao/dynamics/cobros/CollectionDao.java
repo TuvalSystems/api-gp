@@ -1,8 +1,6 @@
 package tuval.api.web.models.dao.dynamics.cobros;
 
-import java.sql.Date;
 import java.sql.Types;
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -15,13 +13,16 @@ import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
+import tuval.api.web.models.Utils.CoerceHelperUtils;
 import tuval.api.web.models.dto.cobros.CustomerCollectionDto;
 import tuval.api.web.models.dto.cobros.CustomerInvoiceCheckReceiptDto;
+import tuval.api.web.models.dto.cobros.CustomerPendingApplicationDocumentDto;
 
 @Repository
 public class CollectionDao {
   private final SimpleJdbcCall spCxC32;
   private final SimpleJdbcCall spCxC33;
+  private final SimpleJdbcCall spCxC34;
 
   public CollectionDao(@Qualifier("dynamicsJdbcTemplate") JdbcTemplate jdbcTemplate) {
     JdbcTemplate dynamicsJdbcTemplate =
@@ -42,6 +43,14 @@ public class CollectionDao {
             .declareParameters(
                 new SqlParameter("SOPNUMBE", Types.VARCHAR), new SqlParameter("RUC", Types.VARCHAR))
             .returningResultSet("data", customerInvoiceCheckReceiptMapper());
+
+    this.spCxC34 =
+        new SimpleJdbcCall(dynamicsJdbcTemplate)
+            .withProcedureName("spCxC34")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("DOCNUMBR", Types.VARCHAR), new SqlParameter("RUC", Types.VARCHAR))
+            .returningResultSet("data", customerPendingApplicationDocumentDto());
   }
 
   @SuppressWarnings("unchecked")
@@ -80,61 +89,85 @@ public class CollectionDao {
     return rows.stream().sorted(customerInvoiceCheckReceipComparator()).toList();
   }
 
+  @SuppressWarnings("unchecked")
+  public CustomerPendingApplicationDocumentDto executeSpCxC34(String documento, String ruc) {
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("DOCNUMBR", documento).addValue("RUC", ruc);
+    Map<String, Object> result = spCxC34.execute(params);
+
+    List<CustomerPendingApplicationDocumentDto> rows =
+        (List<CustomerPendingApplicationDocumentDto>) result.get("data");
+
+    if (rows == null || rows.isEmpty()) {
+      return null;
+    }
+
+    return rows.get(0);
+  }
+
   private RowMapper<CustomerCollectionDto> customerCollectionMapper() {
     return (rs, rowNum) ->
         new CustomerCollectionDto(
-            rs.getString("DOCID"),
-            toLocalDate(rs.getDate("docdate")),
-            toLocalDate(rs.getDate("FechaAplicacionCobro")),
-            rs.getString("mesCobro"),
-            rs.getString("CUSTNMBR"),
-            rs.getString("Cliente"),
-            rs.getString("Establecimiento_Factura"),
-            rs.getString("Factura"),
-            rs.getBigDecimal("Valor_Factura"),
-            rs.getInt("RMDTYPAL"),
-            rs.getString("Cobro"),
-            rs.getBigDecimal("Valor_Cobro"),
-            rs.getDate("fechaDelDocumentoCobro") != null
-                ? rs.getDate("fechaDelDocumentoCobro").toLocalDate()
-                : null,
-            rs.getString("Customer_PO_Number"),
-            rs.getString("cf_numrecibo"));
+            CoerceHelperUtils.emptyIfNull(rs.getString("DOCID")),
+            CoerceHelperUtils.toLocalDate(rs.getDate("docdate")),
+            CoerceHelperUtils.toLocalDate(rs.getDate("FechaAplicacionCobro")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("mesCobro")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("CUSTNMBR")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("Cliente")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("Establecimiento_Factura")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("Factura")),
+            CoerceHelperUtils.toBigDecimal(rs.getBigDecimal("Valor_Factura")),
+            CoerceHelperUtils.toInt(rs.getInt("RMDTYPAL"), 0),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("Cobro")),
+            CoerceHelperUtils.toBigDecimal(rs.getBigDecimal("Valor_Cobro")),
+            CoerceHelperUtils.toLocalDate(rs.getDate("fechaDelDocumentoCobro")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("Customer_PO_Number")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("cf_numrecibo")));
   }
 
   private RowMapper<CustomerInvoiceCheckReceiptDto> customerInvoiceCheckReceiptMapper() {
     return (rs, rowNum) ->
         new CustomerInvoiceCheckReceiptDto(
-            rs.getString("cq_numrecibo"),
-            rs.getString("cq_idcliente"),
-            rs.getString("cf_cobrogp").trim(),
-            rs.getString("cf_numfac"),
-            rs.getString("cq_numchq"),
-            rs.getBigDecimal("montoCheque"),
-            rs.getBigDecimal("cf_montoapl"),
-            rs.getString("cq_estado"),
-            toLocalDate(rs.getDate("cf_fecmod")));
+            CoerceHelperUtils.stringOrEmpty(rs.getString("cq_numrecibo")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("cq_idcliente")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("cf_cobrogp")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("cf_numfac")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("cq_numchq")),
+            CoerceHelperUtils.toBigDecimal(rs.getBigDecimal("montoCheque")),
+            CoerceHelperUtils.toBigDecimal(rs.getBigDecimal("cf_montoapl")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("cq_estado")),
+            CoerceHelperUtils.toLocalDate(rs.getDate("cf_fecmod")));
   }
 
-  private LocalDate toLocalDate(Date date) {
-    return date != null ? date.toLocalDate() : null;
+  private RowMapper<CustomerPendingApplicationDocumentDto> customerPendingApplicationDocumentDto() {
+
+    return (rs, rowNum) ->
+        new CustomerPendingApplicationDocumentDto(
+            CoerceHelperUtils.stringOrEmpty(rs.getString("Identificacion")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("Documento")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("tipo")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("Observacion")),
+            CoerceHelperUtils.toLocalDate(rs.getDate("Fecha_Emision")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("Condicion_Pago")),
+            CoerceHelperUtils.toBigDecimal(rs.getBigDecimal("Monto_Original")),
+            CoerceHelperUtils.toBigDecimal(rs.getBigDecimal("Saldo_Cliente")));
   }
 
   private Comparator<CustomerCollectionDto> customerCollectionComparator() {
     return Comparator.comparing(
-            CustomerCollectionDto::getInvoiceNumber,
+            CustomerCollectionDto::getFactura,
             Comparator.nullsLast(Comparator.naturalOrder()))
         .thenComparing(
-            CustomerCollectionDto::getCollectionApplyDate,
+            CustomerCollectionDto::getFechaAplicacion,
             Comparator.nullsLast(Comparator.naturalOrder()))
         .thenComparing(
-            CustomerCollectionDto::getCollectionId,
+            CustomerCollectionDto::getDocumentoCobro,
             Comparator.nullsLast(Comparator.naturalOrder()));
   }
 
   private Comparator<CustomerInvoiceCheckReceiptDto> customerInvoiceCheckReceipComparator() {
     return Comparator.comparing(
-        CustomerInvoiceCheckReceiptDto::getInvoice,
+        CustomerInvoiceCheckReceiptDto::getFactura,
         Comparator.nullsLast(Comparator.naturalOrder()));
   }
 }
