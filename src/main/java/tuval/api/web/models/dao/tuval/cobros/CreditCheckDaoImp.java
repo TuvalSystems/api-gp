@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlOutParameter;
@@ -15,7 +14,6 @@ import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
-
 import tuval.api.web.models.Utils.CoerceHelperUtils;
 import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
@@ -70,7 +68,6 @@ public class CreditCheckDaoImp implements CreditCheckDao {
                 new SqlParameter("equipo", Types.VARCHAR),
                 new SqlOutParameter("codret", Types.INTEGER),
                 new SqlOutParameter("msj", Types.VARCHAR));
-
   }
 
   @Override
@@ -407,9 +404,9 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
-
-   @Override
-  public List<CustomerPendingApplicationDocumentDto> executeSpGetApplyPendingPayment(String ruc, int modo) {
+  @Override
+  public List<CustomerPendingApplicationDocumentDto> executeSpGetApplyPendingPayment(
+      String ruc, int modo) {
     List<CustomerPendingApplicationDocumentDto> lista = new ArrayList<>();
     try {
       MapSqlParameterSource in =
@@ -424,29 +421,50 @@ public class CreditCheckDaoImp implements CreditCheckDao {
               .addValue("fecini", null, Types.TIMESTAMP)
               .addValue("saldofac", null, Types.DECIMAL)
               .addValue("userid", "wsrvmc")
-              .addValue("equipo", "wserver")
-              .addValue("codret", null)
-              .addValue("msj", null);
+              .addValue("equipo", "wserver");
 
       Map<String, Object> out = spConsultaDocSaldo.execute(in);
+
       @SuppressWarnings("unchecked")
-      List<Map<String, Object>> rs = (List<Map<String, Object>>) out.get("#result-set-1");
-      if (rs != null && !rs.isEmpty()) {
-        for (Map<String, Object> row : rs) {
-          CustomerPendingApplicationDocumentDto e = new CustomerPendingApplicationDocumentDto();
-          e.setIdentificacion(CoerceHelperUtils.stringOrEmpty(row.get("Identificacion")));
-          e.setDocumento(CoerceHelperUtils.stringOrEmpty(row.get("Documento")));
-          e.setTipo(CoerceHelperUtils.stringOrEmpty(row.get("Tipo")));
-          e.setObservacion(CoerceHelperUtils.stringOrEmpty(row.get("Observacion")));
-          e.setFechaEmision(CoerceHelperUtils.toLocalDate(row.get("Fecha_Emision")));
-          e.setMontoOriginal(CoerceHelperUtils.toBigDecimal(row.get("Monto_Original")));
-          e.setSaldoCliente(CoerceHelperUtils.toBigDecimal(row.get("Saldo_Cliente")));
-          lista.add(e);
-        }
+      List<Map<String, Object>> rows = (List<Map<String, Object>>) out.get("#result-set-1");
+
+      if (rows == null || rows.isEmpty()) {
+        return new ArrayList<>();
       }
-      return lista;
+
+      List<CustomerPendingApplicationDocumentDto> result = new ArrayList<>();
+
+      for (Map<String, Object> row : rows) {
+        result.add(mapCustomerPendingApplicationDocument(row));
+      }
+
+      return result;
+
     } catch (Exception e) {
-      throw new RuntimeException("Error en executeSpGetBusinessDaysCheck: " + e.getMessage(), e);
+      throw new RuntimeException(
+          "Error consultando documentos pendientes de aplicación. Cliente="
+              + ruc
+              + ", modo="
+              + modo
+              + ": "
+              + e.getMessage(),
+          e);
     }
+  }
+
+  private CustomerPendingApplicationDocumentDto mapCustomerPendingApplicationDocument(
+      Map<String, Object> row) {
+
+    CustomerPendingApplicationDocumentDto dto = new CustomerPendingApplicationDocumentDto();
+
+    dto.setIdentificacion(CoerceHelperUtils.stringOrEmpty(row.get("Identificacion")));
+    dto.setDocumento(CoerceHelperUtils.stringOrEmpty(row.get("Documento")));
+    dto.setTipo(CoerceHelperUtils.stringOrEmpty(row.get("Tipo")));
+    dto.setObservacion(CoerceHelperUtils.stringOrEmpty(row.get("Observacion")));
+    dto.setFechaEmision(CoerceHelperUtils.toLocalDate(row.get("Fecha_Emision")));
+    dto.setMontoOriginal(CoerceHelperUtils.toBigDecimal(row.get("Monto_Original")));
+    dto.setSaldoCliente(CoerceHelperUtils.toBigDecimal(row.get("Saldo_Cliente")));
+
+    return dto;
   }
 }
