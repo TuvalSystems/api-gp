@@ -6,11 +6,14 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
+import tuval.api.web.models.dto.articulos.ArticlePurchaseClassificationDto;
 import tuval.api.web.models.dto.articulos.ArticleSegmentConfigurationDto;
 import tuval.api.web.models.dto.articulos.TravapItemSelectionResponse;
 import tuval.api.web.models.request.bodegas.articulos.ArticleConfigSegmentRequest;
@@ -43,6 +46,19 @@ public class ArticleController {
       List<ArticleSegmentConfigurationDto> response =
           articleService.getArticlesConfigurationSegmentService(req);
       return ResponseJsonUtils.buildSuccessWithData("Lista Obtenida Correctamente", response);
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @GetMapping("obtener-clasificacion")
+  public ResponseEntity<Map<String, Object>> obtenerClasificacionArticulo(
+      @Valid @RequestParam String item) {
+    try {
+      ArticlePurchaseClassificationDto response =
+          articleService.getArticlePurchaseClassification(item);
+      return ResponseJsonUtils.buildSuccessWithData(
+          "Datos de Articulo Obtenido Correctamente", response);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
     }
