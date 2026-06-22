@@ -39,7 +39,7 @@ public class ArticleController {
   }
 
   @CrossOrigin
-  @PostMapping("/configuracion-segmentacion")
+  @PostMapping("configuracion-segmentacion")
   public ResponseEntity<Map<String, Object>> obtenerConfiguracionSegmento(
       @RequestBody ArticleConfigSegmentRequest req) {
     try {
