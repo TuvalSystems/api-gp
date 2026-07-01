@@ -96,9 +96,13 @@ public class ArticleDynamicsDao {
                     RTRIM(segmento_cliente) AS segmentoCliente,
                     RTRIM(co_claatritm) AS codigoClaseAtributoItem,
                     RTRIM(codCategoriaCompra) AS codigoCategoria,
+                    nivelCategoria as nivelCategoria,
                     RTRIM(codLineaCompra) AS codigoLinea,
+                    nivelLinea as nivelLinea,
                     RTRIM(codClaseCompra) AS codigoClase,
+                    nivelClase as nivelClase,
                     RTRIM(codMarca) AS codigoMarca,
+                    nivelMarca as nivelMarca,
                     co_nivpri AS codigoNivel,
                     nivel AS nivel,
                     RTRIM(descripcion_nivel) AS descripcionNivel

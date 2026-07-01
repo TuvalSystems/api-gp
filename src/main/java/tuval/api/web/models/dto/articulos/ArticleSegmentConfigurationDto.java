@@ -14,11 +14,14 @@ public class ArticleSegmentConfigurationDto {
     private String segmentoCliente;
     private Integer codigoClaseAtributoItem;
     private String codigoCategoria;
+    private Integer nivelCategoria;
     private String codigoLinea;
+    private Integer nivelLinea;
     private String codigoClase;
+    private Integer nivelClase;
     private String codigoMarca;
     private Integer codigoNivel;
-    private Integer nivel;
+    private Integer nivelMarca;
     private String descripcionNivel;
 }
     
