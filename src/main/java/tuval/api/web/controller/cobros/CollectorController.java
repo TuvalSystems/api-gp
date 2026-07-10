@@ -17,6 +17,7 @@ import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
 import tuval.api.web.models.dto.cobros.CustomerCollectionDto;
 import tuval.api.web.models.dto.cobros.CustomerInvoiceCheckReceiptDto;
 import tuval.api.web.models.dto.cobros.CustomerPendingApplicationDocumentDto;
+import tuval.api.web.models.dto.cobros.CustomerStatusAccountDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountResponseEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListClientOverdueDocumentEntity;
@@ -224,6 +225,16 @@ public class CollectorController {
       CustomerPendingApplicationDocumentDto response =
           receivablesService.getPendingApplicationDocuments(req.getDocumento(), req.getRuc());
       return ResponseJsonUtils.buildSuccessWithData("Aplicacion obtenidas correctamente", response);
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @GetMapping("consultar-estado-cuenta-cliente")
+  public ResponseEntity<Map<String, Object>> obtenerEstadoCuentaCliente(@RequestParam String ruc) {
+    try {
+      List<CustomerStatusAccountDto> result = creditCheckService.getCustomerStatusAccount(ruc);
+      return ResponseJsonUtils.buildSuccessWithData("Estado cuenta obtenido correctamente", result);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
     }

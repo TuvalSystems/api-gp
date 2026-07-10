@@ -5,6 +5,7 @@ import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
 import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
 import tuval.api.web.models.dto.cobros.CustomerPendingApplicationDocumentDto;
+import tuval.api.web.models.dto.cobros.CustomerStatusAccountDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountResponseEntity;
 import tuval.api.web.models.entity.tuval.cobros.ListClientOverdueDocumentEntity;
@@ -28,4 +29,6 @@ public interface CreditCheckService {
   BusinessDaysDto getBusinessDaysCheck(String fecha);
 
   List<CustomerPendingApplicationDocumentDto> getPendingApplicationDocuments(String ruc);
+   public List<CustomerStatusAccountDto> getCustomerStatusAccount(String ruc);
+
 }
