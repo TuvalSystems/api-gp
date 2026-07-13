@@ -19,6 +19,7 @@ import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
 import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
 import tuval.api.web.models.dto.cobros.CustomerPendingApplicationDocumentDto;
+import tuval.api.web.models.dto.cobros.CustomerResumenAccountDto;
 import tuval.api.web.models.dto.cobros.CustomerStatusAccountDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountDetailEntity;
@@ -496,6 +497,45 @@ public class CreditCheckDaoImp implements CreditCheckDao {
               + ": "
               + e.getMessage(),
           e);
+    }
+  }
+
+  @Override
+  public CustomerResumenAccountDto executeSpGetCustomerResumenAccount(String ruc, int modo) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("modo", modo)
+            .addValue("fecpro", "")
+            .addValue("idcliente", ruc)
+            .addValue("idvendedor", "")
+            .addValue("documento", "")
+            .addValue("factura", "")
+            .addValue("numcobro", "")
+            .addValue("fecini", "")
+            .addValue("saldofac", null)
+            .addValue("userid", "wsrvmc")
+            .addValue("equipo", "wserver")
+            .addValue("codret", null)
+            .addValue("msj", "");
+
+    try {
+    Map<String, Object> out = spConsultaDocSaldo.execute(in);
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> rows = (List<Map<String, Object>>) out.get("#result-set-1");  
+     
+      CustomerResumenAccountDto e = new CustomerResumenAccountDto();
+      Map<String, Object> row = rows.get(0);
+
+      e.setIdentificacion(CoerceHelperUtils.stringOrEmpty(row.get("Identificacion")));
+      e.setActual(CoerceHelperUtils.toBigDecimal(row.get("actual")));
+      e.setDias030(CoerceHelperUtils.toBigDecimal(row.get("0_30")));
+      e.setDias3160(CoerceHelperUtils.toBigDecimal(row.get("31_60")));
+      e.setDias6190(CoerceHelperUtils.toBigDecimal(row.get("61_90")));
+      e.setDias91Mas(CoerceHelperUtils.toBigDecimal(row.get("91_mas")));
+      e.setTotal(CoerceHelperUtils.toBigDecimal(row.get("total")));
+      return e ;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 

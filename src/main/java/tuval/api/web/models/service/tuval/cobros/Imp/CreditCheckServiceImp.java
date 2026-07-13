@@ -8,6 +8,7 @@ import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
 import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
 import tuval.api.web.models.dto.cobros.CustomerPendingApplicationDocumentDto;
+import tuval.api.web.models.dto.cobros.CustomerResumenAccountDto;
 import tuval.api.web.models.dto.cobros.CustomerStatusAccountDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountDetailEntity;
@@ -79,7 +80,13 @@ public class CreditCheckServiceImp implements CreditCheckService {
     return creditCheckDao.executeSpGetApplyPendingPayment(ruc, 9);
   }
 
+  @Override
   public List<CustomerStatusAccountDto> getCustomerStatusAccount(String ruc) {
     return creditCheckDao.executeSpGetCustomerStatusAccount(ruc, 11);
+  }
+
+ 
+  public CustomerResumenAccountDto getCustomerResumenAccount(String ruc){
+    return creditCheckDao.executeSpGetCustomerResumenAccount(ruc, 12);
   }
 }

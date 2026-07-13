@@ -2,7 +2,9 @@ package tuval.api.web.controller.cobros;
 
 import java.util.List;
 import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
@@ -17,6 +20,7 @@ import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
 import tuval.api.web.models.dto.cobros.CustomerCollectionDto;
 import tuval.api.web.models.dto.cobros.CustomerInvoiceCheckReceiptDto;
 import tuval.api.web.models.dto.cobros.CustomerPendingApplicationDocumentDto;
+import tuval.api.web.models.dto.cobros.CustomerResumenAccountDto;
 import tuval.api.web.models.dto.cobros.CustomerStatusAccountDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountResponseEntity;
@@ -234,6 +238,16 @@ public class CollectorController {
   public ResponseEntity<Map<String, Object>> obtenerEstadoCuentaCliente(@RequestParam String ruc) {
     try {
       List<CustomerStatusAccountDto> result = creditCheckService.getCustomerStatusAccount(ruc);
+      return ResponseJsonUtils.buildSuccessWithData("Estado cuenta obtenido correctamente", result);
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+   @GetMapping("consultar-estado-cuenta-cliente-resumen")
+  public ResponseEntity<Map<String, Object>> obtenerEstadoCuentaResument(@RequestParam String ruc) {
+    try {
+      CustomerResumenAccountDto result = creditCheckService.getCustomerResumenAccount(ruc);
       return ResponseJsonUtils.buildSuccessWithData("Estado cuenta obtenido correctamente", result);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
