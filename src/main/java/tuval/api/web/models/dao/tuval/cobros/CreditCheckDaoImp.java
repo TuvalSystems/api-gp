@@ -19,6 +19,8 @@ import tuval.api.web.models.dto.cobros.BusinessDaysDto;
 import tuval.api.web.models.dto.cobros.CheckValidatorDto;
 import tuval.api.web.models.dto.cobros.ClientOverdueDocumentDto;
 import tuval.api.web.models.dto.cobros.CustomerPendingApplicationDocumentDto;
+import tuval.api.web.models.dto.cobros.CustomerResumenAccountDto;
+import tuval.api.web.models.dto.cobros.CustomerStatusAccountDto;
 import tuval.api.web.models.entity.tuval.cobros.ClientSinSoporteEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountDetailEntity;
 import tuval.api.web.models.entity.tuval.cobros.ClientStatusAccountHeaderEntity;
@@ -452,6 +454,91 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     }
   }
 
+  @Override
+  public List<CustomerStatusAccountDto> executeSpGetCustomerStatusAccount(String ruc, int modo) {
+    try {
+      MapSqlParameterSource in =
+          new MapSqlParameterSource()
+              .addValue("modo", modo)
+              .addValue("fecpro", null, Types.TIMESTAMP)
+              .addValue("idcliente", ruc)
+              .addValue("idvendedor", null, Types.VARCHAR)
+              .addValue("documento", null, Types.VARCHAR)
+              .addValue("numcobro", null, Types.VARCHAR)
+              .addValue("factura", null, Types.VARCHAR)
+              .addValue("fecini", null, Types.TIMESTAMP)
+              .addValue("saldofac", null, Types.DECIMAL)
+              .addValue("userid", "wsrvmc")
+              .addValue("equipo", "wserver");
+
+      Map<String, Object> out = spConsultaDocSaldo.execute(in);
+
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> rows = (List<Map<String, Object>>) out.get("#result-set-1");
+
+      if (rows == null || rows.isEmpty()) {
+        return new ArrayList<>();
+      }
+
+      List<CustomerStatusAccountDto> result = new ArrayList<>();
+
+      for (Map<String, Object> row : rows) {
+        result.add(mapCustomerStatusAccountDocuments(row));
+      }
+
+      return result;
+
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Error consultando documentos pendientes de aplicación. Cliente="
+              + ruc
+              + ", modo="
+              + modo
+              + ": "
+              + e.getMessage(),
+          e);
+    }
+  }
+
+  @Override
+  public CustomerResumenAccountDto executeSpGetCustomerResumenAccount(String ruc, int modo) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            .addValue("modo", modo)
+            .addValue("fecpro", "")
+            .addValue("idcliente", ruc)
+            .addValue("idvendedor", "")
+            .addValue("documento", "")
+            .addValue("factura", "")
+            .addValue("numcobro", "")
+            .addValue("fecini", "")
+            .addValue("saldofac", null)
+            .addValue("userid", "wsrvmc")
+            .addValue("equipo", "wserver")
+            .addValue("codret", null)
+            .addValue("msj", "");
+
+    try {
+    Map<String, Object> out = spConsultaDocSaldo.execute(in);
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> rows = (List<Map<String, Object>>) out.get("#result-set-1");  
+     
+      CustomerResumenAccountDto e = new CustomerResumenAccountDto();
+      Map<String, Object> row = rows.get(0);
+
+      e.setIdentificacion(CoerceHelperUtils.stringOrEmpty(row.get("Identificacion")));
+      e.setActual(CoerceHelperUtils.toBigDecimal(row.get("actual")));
+      e.setDias030(CoerceHelperUtils.toBigDecimal(row.get("0_30")));
+      e.setDias3160(CoerceHelperUtils.toBigDecimal(row.get("31_60")));
+      e.setDias6190(CoerceHelperUtils.toBigDecimal(row.get("61_90")));
+      e.setDias91Mas(CoerceHelperUtils.toBigDecimal(row.get("91_mas")));
+      e.setTotal(CoerceHelperUtils.toBigDecimal(row.get("total")));
+      return e ;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private CustomerPendingApplicationDocumentDto mapCustomerPendingApplicationDocument(
       Map<String, Object> row) {
 
@@ -465,6 +552,22 @@ public class CreditCheckDaoImp implements CreditCheckDao {
     dto.setMontoOriginal(CoerceHelperUtils.toBigDecimal(row.get("Monto_Original")));
     dto.setSaldoCliente(CoerceHelperUtils.toBigDecimal(row.get("Saldo_Cliente")));
 
+    return dto;
+  }
+
+  private CustomerStatusAccountDto mapCustomerStatusAccountDocuments(Map<String, Object> row) {
+    CustomerStatusAccountDto dto = new CustomerStatusAccountDto();
+    dto.setIdentificacion(CoerceHelperUtils.stringOrEmpty(row.get("Identificacion")));
+    dto.setTipo(CoerceHelperUtils.stringOrEmpty(row.get("Tipo")));
+    dto.setDocumento(CoerceHelperUtils.stringOrEmpty(row.get("Documento")));
+    dto.setFechaEmision(CoerceHelperUtils.toLocalDate(row.get("Fecha_Emision")));
+    dto.setFechaVencimiento(CoerceHelperUtils.toLocalDate(row.get("Fecha_Vencimiento")));
+    dto.setCondicionPago(CoerceHelperUtils.stringOrEmpty(row.get("Condicion_Pago")));
+    dto.setMontoOriginal(CoerceHelperUtils.toBigDecimal(row.get("Monto_Original")));
+    dto.setAbono(CoerceHelperUtils.toBigDecimal(row.get("Abono")));
+    dto.setSaldoPendiente(CoerceHelperUtils.toBigDecimal(row.get("Saldo_Pendiente")));
+    dto.setDias(CoerceHelperUtils.toInt(row.get("Dias"), 0));
+    dto.setObservacion(CoerceHelperUtils.stringOrEmpty(row.get("Observacion")));
     return dto;
   }
 }
