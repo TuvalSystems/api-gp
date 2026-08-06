@@ -49,7 +49,7 @@ public class DispatchDeliveryNoteDao {
       MapSqlParameterSource parameters =
           new MapSqlParameterSource().addValue("json", json, Types.NVARCHAR);
       Map<String, Object> result = spDispatchDeliveryNote.execute(parameters);
-      return getProcedureResponse(result);
+      return getProcedureResponse(result, request);
 
     } catch (JsonProcessingException exception) {
       throw new RuntimeException("No se pudo convertir la guía de despacho a JSON.", exception);
@@ -57,7 +57,8 @@ public class DispatchDeliveryNoteDao {
   }
 
   @SuppressWarnings("unchecked")
-  private HeaderGuideTransferVtaResponse getProcedureResponse(Map<String, Object> result) {
+  private HeaderGuideTransferVtaResponse getProcedureResponse(
+      Map<String, Object> result, DispatchVtaRequest request) {
     List<HeaderGuideTransferVtaResponse> responses =
         (List<HeaderGuideTransferVtaResponse>) result.get("resultado");
 
@@ -65,6 +66,21 @@ public class DispatchDeliveryNoteDao {
       throw new RuntimeException("El procedimiento sp_despacho_nuevo no devolvió una respuesta.");
     }
 
-    return responses.get(0);
+    HeaderGuideTransferVtaResponse response = responses.get(0);
+    if (response.getCodRet() != 0) {
+      String pedido =
+          request.getCabecera() != null
+              ? CoerceHelperUtils.defaultIfBlank(request.getCabecera().getPedido(), "sin pedido")
+              : "sin pedido";
+      String detalle =
+          CoerceHelperUtils.defaultIfBlank(
+              response.getMensaje(), "El procedimiento no devolvió detalle del error.");
+      throw new IllegalStateException(
+          ("No se pudo generar el movimiento de despacho para el pedido %s. "
+                  + "ID movimiento: %d. Código de retorno: %d. Detalle: %s")
+              .formatted(pedido, response.getIdMovimiento(), response.getCodRet(), detalle));
+    }
+
+    return response;
   }
 }
