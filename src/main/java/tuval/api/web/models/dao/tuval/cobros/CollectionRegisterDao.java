@@ -1,16 +1,14 @@
 package tuval.api.web.models.dao.tuval.cobros;
 
+import static tuval.api.web.models.Utils.CoerceHelperUtils.defaultIfBlank;
+import static tuval.api.web.models.Utils.CoerceHelperUtils.emptyIfNull;
+import static tuval.api.web.models.Utils.CoerceHelperUtils.toBigDecimalOrZero;
+import static tuval.api.web.models.Utils.CoerceHelperUtils.toTimestamp;
+
 import com.microsoft.sqlserver.jdbc.SQLServerDataTable;
 import com.microsoft.sqlserver.jdbc.SQLServerException;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.sql.Types;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -22,14 +20,12 @@ import org.springframework.jdbc.core.SqlTypeValue;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
-import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionCashInvoiceRequest;
+import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionDefaultInvoiceRequest;
 import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionDetailInvoicesRequest;
 import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionHeaderRequest;
 
 @Repository
 public class CollectionRegisterDao {
-  private static final ZoneId ECUADOR_ZONE = ZoneId.of("America/Guayaquil");
-
   private final SimpleJdbcCall spRegisterCollectionMs;
   private final SimpleJdbcCall spRegisterCollection;
 
@@ -133,7 +129,7 @@ public class CollectionRegisterDao {
                 new SqlOutParameter("msj", Types.VARCHAR));
   }
 
-  public String registerCashCollection(CollectionCashInvoiceRequest request, Integer modo) {
+  public String registerCashCollection(CollectionDefaultInvoiceRequest request, Integer modo) {
     try {
       CollectionHeaderRequest header = request.getCabecera();
 
@@ -143,22 +139,22 @@ public class CollectionRegisterDao {
       MapSqlParameterSource in =
           new MapSqlParameterSource()
               // Cabecera del cobro
-              .addValue("numrecibo", empty(header.getNumeroRecibo()))
-              .addValue("idcliente", empty(header.getRuc()))
+              .addValue("numrecibo", emptyIfNull(header.getNumeroRecibo()))
+              .addValue("idcliente", emptyIfNull(header.getRuc()))
               .addValue("fechacobro", toTimestamp(header.getFechaCobro()), Types.TIMESTAMP)
-              .addValue("tipo", empty(header.getTipoCobro()))
-              .addValue("observacion", empty(header.getObservacion()))
-              .addValue("soldscto", empty(header.getSolicitudDescuento()))
-              .addValue("idvendedor", empty(header.getIdVendedor()))
-              .addValue("monto", zeroIfNull(header.getMontoCobro()), Types.NUMERIC)
-              .addValue("saldopend", zeroIfNull(header.getSaldoPendiente()), Types.NUMERIC)
-              .addValue("bancomax", empty(header.getBancoTuval()))
+              .addValue("tipo", emptyIfNull(header.getTipoCobro()))
+              .addValue("observacion", emptyIfNull(header.getObservacion()))
+              .addValue("soldscto", emptyIfNull(header.getSolicitudDescuento()))
+              .addValue("idvendedor", emptyIfNull(header.getIdVendedor()))
+              .addValue("monto", toBigDecimalOrZero(header.getMontoCobro()), Types.NUMERIC)
+              .addValue("saldopend", toBigDecimalOrZero(header.getSaldoPendiente()), Types.NUMERIC)
+              .addValue("bancomax", emptyIfNull(header.getBancoTuval()))
               .addValue("fecdeptrf", toTimestamp(header.getFechaDeposito()), Types.TIMESTAMP)
-              .addValue("papeleta", empty(header.getNumeroPapeleta()))
+              .addValue("papeleta", emptyIfNull(header.getNumeroPapeleta()))
 
               // Retenciones
-              .addValue("idretencion", empty(header.getNumeroRetencion()))
-              .addValue("porcenret", zeroIfNull(header.getPorcentajeRetencion()), Types.NUMERIC)
+              .addValue("idretencion", emptyIfNull(header.getNumeroRetencion()))
+              .addValue("porcenret", toBigDecimalOrZero(header.getPorcentajeRetencion()), Types.NUMERIC)
 
               /*
                * Parámetros individuales de factura.
@@ -181,7 +177,7 @@ public class CollectionRegisterDao {
 
               // Datos adicionales de retención
               .addValue("feccad", toTimestamp(header.getFechaCaducidad()), Types.TIMESTAMP)
-              .addValue("numautor", empty(header.getNumeroAutorizacion()))
+              .addValue("numautor", emptyIfNull(header.getNumeroAutorizacion()))
 
               // Table-Valued Parameters
               .addValue("chequescobro", checksTable, SqlTypeValue.TYPE_UNKNOWN)
@@ -226,11 +222,11 @@ public class CollectionRegisterDao {
     MapSqlParameterSource in =
         new MapSqlParameterSource()
             // Cabecera del cobro
-            .addValue("numrecibo", empty(req.getRecibo()))
-            .addValue("idcliente", empty(req.getIdcliente()))
+            .addValue("numrecibo", emptyIfNull(req.getRecibo()))
+            .addValue("idcliente", emptyIfNull(req.getIdcliente()))
             .addValue("fechacobro", null, Types.TIMESTAMP)
             .addValue("tipo", null)
-            .addValue("observacion", empty(req.getObservacion()))
+            .addValue("observacion", emptyIfNull(req.getObservacion()))
             .addValue("soldscto", "")
             .addValue("idvendedor", "")
             .addValue("monto", BigDecimal.ZERO, Types.NUMERIC)
@@ -247,8 +243,8 @@ public class CollectionRegisterDao {
              * Parametros individuales de factura.
              * En modo 6 se usan para aplicar un cobro existente a una factura.
              */
-            .addValue("numfac", empty(req.getFactura()))
-            .addValue("montoapl", zeroIfNull(req.getMonto()), Types.NUMERIC)
+            .addValue("numfac", emptyIfNull(req.getFactura()))
+            .addValue("montoapl", toBigDecimalOrZero(req.getMonto()), Types.NUMERIC)
 
             /*
              * Parametros individuales de cheque.
@@ -282,8 +278,7 @@ public class CollectionRegisterDao {
           exception);
     }
 
-    int returnCode =
-        result.get("codret") != null ? ((Number) result.get("codret")).intValue() : -1;
+    int returnCode = result.get("codret") != null ? ((Number) result.get("codret")).intValue() : -1;
     String message =
         result.get("msj") != null
             ? result.get("msj").toString()
@@ -293,6 +288,82 @@ public class CollectionRegisterDao {
     }
     return "Registro de cobro guardado correctamente.";
   }
+
+  public String registerRetentionHeaderCollection(CollectionHeaderRequest header, int modo) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource()
+            // Cabecera del cobro
+            .addValue("numrecibo", emptyIfNull(header.getNumeroRecibo()))
+            .addValue("idcliente", emptyIfNull(header.getRuc()))
+            .addValue("fechacobro", toTimestamp(header.getFechaCobro()), Types.TIMESTAMP)
+            .addValue("tipo", emptyIfNull(header.getTipoCobro()))
+            .addValue("observacion", emptyIfNull(header.getObservacion()))
+            .addValue("soldscto", "")
+            .addValue("idvendedor", emptyIfNull(header.getIdVendedor()))
+            .addValue("monto", toBigDecimalOrZero(header.getMontoCobro()), Types.NUMERIC)
+            .addValue("saldopend", BigDecimal.ZERO, Types.NUMERIC)
+            .addValue("bancomax", "")
+            .addValue("fecdeptrf", null, Types.TIMESTAMP)
+            .addValue("papeleta", emptyIfNull(header.getNumeroRetencion()))
+
+            // Retenciones
+            .addValue("idretencion", emptyIfNull(header.getNumeroRetencion()))
+            .addValue("porcenret", toBigDecimalOrZero(header.getPorcentajeRetencion()), Types.NUMERIC)
+
+            /*
+             * Parametros individuales de factura.
+             * En modo 6 se usan para aplicar un cobro existente a una factura.
+             */
+            .addValue("numfac", "")
+            .addValue("montoapl", BigDecimal.ZERO, Types.NUMERIC)
+
+            /*
+             * Parametros individuales de cheque.
+             * En aplicacion directa no se utilizan.
+             */
+            .addValue("bcocliente", null)
+            .addValue("numcta", null)
+            .addValue("fecvcto", null, Types.TIMESTAMP)
+            .addValue("numchq", null)
+            .addValue("montochq", BigDecimal.ZERO, Types.NUMERIC)
+            .addValue("origencta", null)
+
+            // Datos adicionales de retencion
+            .addValue("feccad", toTimestamp(header.getFechaCaducidad()), Types.TIMESTAMP)
+            .addValue("numautor", emptyIfNull(header.getNumeroAutorizacion()))
+
+            // Table-Valued Parameters
+
+            // Control
+            .addValue("userid", "apigp")
+            .addValue("modo", modo, Types.SMALLINT)
+            .addValue("submodo", 0, Types.SMALLINT)
+            .addValue("equipo", "apigp");
+    Map<String, Object> result;
+    try {
+      result = spRegisterCollection.execute(in);
+    } catch (DataAccessException exception) {
+      throw new RuntimeException(
+          "No se pudo ejecutar la retencion del cobro en SQL Server. "
+              + "SQL Server no respondio o la conexion fue cerrada.",
+          exception);
+    }
+
+    int returnCode = result.get("codret") != null ? ((Number) result.get("codret")).intValue() : -1;
+    String message =
+        result.get("msj") != null
+            ? result.get("msj").toString()
+            : "El procedimiento no devolvió ningún mensaje.";
+    if (returnCode != 0) {
+      throw new RuntimeException("Código " + returnCode + ": " + message);
+    }
+    return "Registro de cobro guardado correctamente.";
+  }
+
+
+
+
+  
 
   private SQLServerDataTable buildInvoicesTable(
       CollectionHeaderRequest header, List<CollectionDetailInvoicesRequest> invoices)
@@ -320,9 +391,9 @@ public class CollectionRegisterDao {
       table.addRow(
           defaultIfBlank(invoice.getRecibo(), header.getNumeroRecibo()),
           defaultIfBlank(invoice.getIdcliente(), header.getRuc()),
-          empty(invoice.getFactura()),
-          zeroIfNull(invoice.getMonto()),
-          empty(invoice.getObservacion()));
+          emptyIfNull(invoice.getFactura()),
+          toBigDecimalOrZero(invoice.getMonto()),
+          emptyIfNull(invoice.getObservacion()));
     }
 
     return table;
@@ -352,49 +423,4 @@ public class CollectionRegisterDao {
     return table;
   }
 
-  private String empty(String value) {
-    return value == null ? "" : value.trim();
-  }
-
-  private String defaultIfBlank(String value, String defaultValue) {
-    return value == null || value.trim().isEmpty() ? empty(defaultValue) : value.trim();
-  }
-
-  private BigDecimal zeroIfNull(BigDecimal value) {
-    return value == null ? BigDecimal.ZERO : value;
-  }
-
-  private Timestamp toTimestamp(String value) {
-    if (value == null || value.trim().isEmpty()) {
-      return null;
-    }
-
-    String text = value.trim();
-
-    try {
-      LocalDateTime localDateTime =
-          OffsetDateTime.parse(text).atZoneSameInstant(ECUADOR_ZONE).toLocalDateTime();
-      return Timestamp.valueOf(localDateTime);
-    } catch (DateTimeParseException ignored) {
-    }
-
-    try {
-      return Timestamp.valueOf(LocalDateTime.parse(text, DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-    } catch (DateTimeParseException ignored) {
-    }
-
-    try {
-      return Timestamp.valueOf(
-          LocalDate.parse(text, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay());
-    } catch (DateTimeParseException ignored) {
-    }
-
-    try {
-      return Timestamp.valueOf(
-          LocalDateTime.parse(text, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-    } catch (DateTimeParseException ignored) {
-    }
-
-    throw new IllegalArgumentException("Formato de fecha invalido para registrar cobro: " + value);
-  }
 }
