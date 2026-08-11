@@ -1,8 +1,8 @@
 package tuval.api.web.models.service.tuval.guiaremision;
 
-import org.springframework.stereotype.Service;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import tuval.api.web.models.dao.dynamics.guiaremision.DispatchDeliveryNoteDao;
 import tuval.api.web.models.dao.tuval.guiaremision.ShippingGuideDao;
 import tuval.api.web.models.entity.tuval.guiaremision.CheckCodeAccessDeliveryNoteResponse;
 import tuval.api.web.models.entity.tuval.guiaremision.DetailCheckGuideAnyResponse;
@@ -22,6 +22,7 @@ import tuval.api.web.models.request.bodegas.guiaremision.crearGuia.DetailDeliver
 @RequiredArgsConstructor
 public class ShippingGuideServiceImp implements ShippingGuideService {
   private final ShippingGuideDao shippingGuideDao;
+  private final DispatchDeliveryNoteDao dispatchDeliveryNoteDao;
 
   @Override
   public CheckCodeAccessDeliveryNoteResponse checkGuiaRemisionService(String numDoc) {
@@ -30,8 +31,8 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
 
   @Override
   public HeaderGuideTransferVtaResponse generateGuideTransferVtaService(TransferVtaRequest req) {
-    HeaderGuideTransferVtaResponse responseHeader = shippingGuideDao.executeSpStoreHeaderTransferVta(req.getCabecera(),
-        1);
+    HeaderGuideTransferVtaResponse responseHeader =
+        shippingGuideDao.executeSpStoreHeaderTransferVta(req.getCabecera(), 1);
 
     if (req.getDetalle() != null) {
       for (DetailGuideTransferVtaRequest det : req.getDetalle()) {
@@ -56,35 +57,34 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
     }
     return shippingGuideDao.executeSpGenerateMovimentTransferVta(
         req.getCabecera(), header.getIdMovimiento(), 12);
-
   }
 
   // @Transactional(rollbackFor = Exception.class)
   @Override
   public HeaderGuideTransferVtaResponse generateGuideDispatchVtaService(DispatchVtaRequest req) {
-    HeaderGuideTransferVtaResponse responseHeader = shippingGuideDao
-        .executeSpStoreHeaderGuideDispatchVta(req.getCabecera(), 7);
-    if (req.getDetalle() != null) {
-      for (DetailGuideTransferVtaRequest det : req.getDetalle()) {
-        shippingGuideDao.executeSpStoreDetailGuideDispatchVta(
-            det, req.getCabecera(), responseHeader.getIdMovimiento(), 1, 8);
-      }
-    }
-    return shippingGuideDao.executeSpGenerateMovimentDispatchVta(
-        req.getCabecera(), responseHeader.getIdMovimiento(), 9);
+       return dispatchDeliveryNoteDao.processDispatch(req);
+    // HeaderGuideTransferVtaResponse responseHeader =
+    //     shippingGuideDao.executeSpStoreHeaderGuideDispatchVta(req.getCabecera(), 7);
+    // if (req.getDetalle() != null) {
+    //   for (DetailGuideTransferVtaRequest det : req.getDetalle()) {
+    //     shippingGuideDao.executeSpStoreDetailGuideDispatchVta(
+    //         det, req.getCabecera(), responseHeader.getIdMovimiento(), 1, 8);
+    //   }
+    // }
+    // return shippingGuideDao.executeSpGenerateMovimentDispatchVta(
+    //     req.getCabecera(), responseHeader.getIdMovimiento(), 9);
   }
 
   @Override
-  public HeaderGuideTransferVtaResponse generateMovementDispatchGuide(DispatchDeliveryNoteMovementRequest req) {
-    return shippingGuideDao.executeFixSpGenerateMovementDispatchDeliveryNote(
-        req, 9);
+  public HeaderGuideTransferVtaResponse generateMovementDispatchGuide(
+      DispatchDeliveryNoteMovementRequest req) {
+    return shippingGuideDao.executeFixSpGenerateMovementDispatchDeliveryNote(req, 9);
   }
 
   @Override
   public HeaderCheckGuideDispatchResponse checkAjusteGuideDispatchVtaService(
       ValidateGuideDispatchRequest req) {
-    return shippingGuideDao.getAjusteGuideDispatchVtaDao(
-        req);
+    return shippingGuideDao.getAjusteGuideDispatchVtaDao(req);
   }
 
   @Override
@@ -129,7 +129,6 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
     }
     shippingGuideDao.executeSpCreateAccesoCodeDeliveryNote(req.getCabecera());
     shippingGuideDao.executeSpUpdateAccesoCodeDeliveryNote(req.getCabecera());
-
   }
 
   @Override
@@ -141,8 +140,7 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
   @Override
   public HeaderCheckGuideDispatchResponse checkAjusteGuideReservationService(
       ValidateGuideSalesTransferedRequest req) {
-    return shippingGuideDao.getAdjustmentGuideSalesTransferedDao(
-        req);
+    return shippingGuideDao.getAdjustmentGuideSalesTransferedDao(req);
   }
 
   @Override
@@ -162,12 +160,9 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
     // movimiento
     return shippingGuideDao.executeSpGenerateMovimentTransferVta(
         req.getCabecera(), header.getIdMovimiento(), 22);
-
   }
 
   /** validar existencia de guia de reserva recibida */
-
-
   @Override
   public HeaderGuideTransferVtaResponse receiveGuideReservationService(TransferVtaRequest req) {
     HeaderGuideTransferVtaResponse header;
@@ -200,18 +195,17 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
     // //movimiento
     return shippingGuideDao.executeSpGenerateMovimentReceivedGuideTransferedDao(
         req.getCabecera(), header.getIdMovimiento(), 6);
-
   }
 
   @Override
   public HeaderCheckGuideDispatchResponse checkAjusteGuideSalesTransferReceivedService(
       ValidateGuideSalesTransferedRequest req) {
-    return shippingGuideDao.getAdjustmentGuideSalesTransferedDao(
-        req);
+    return shippingGuideDao.getAdjustmentGuideSalesTransferedDao(req);
   }
 
   @Override
-  public HeaderGuideTransferVtaResponse receivedGuideReplenishmentTransferService(TransferVtaRequest req) {
+  public HeaderGuideTransferVtaResponse receivedGuideReplenishmentTransferService(
+      TransferVtaRequest req) {
     // cabecera
     HeaderGuideTransferVtaResponse header;
     header = shippingGuideDao.executeSpStoreHeaderReceivedSalesTransferedDao(req.getCabecera(), 13);
@@ -226,6 +220,5 @@ public class ShippingGuideServiceImp implements ShippingGuideService {
     // //movimiento
     return shippingGuideDao.executeSpGenerateMovimentReceivedGuideTransferedDao(
         req.getCabecera(), header.getIdMovimiento(), 15);
-
   }
 }

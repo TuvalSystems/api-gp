@@ -1,11 +1,16 @@
 package tuval.api.web.models.Utils;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class CoerceHelperUtils {
+  private static final ZoneId DEFAULT_ZONE = ZoneId.of("America/Guayaquil");
 
   public static int getInt(Object o, int dflt) {
     if (o == null) return dflt;
@@ -113,11 +118,72 @@ public class CoerceHelperUtils {
     return new BigDecimal(v.toString().trim());
   }
 
+  public static BigDecimal toBigDecimalOrZero(Object v) {
+    BigDecimal value = toBigDecimal(v);
+    return value == null ? BigDecimal.ZERO : value;
+  }
+
+  public static Timestamp toTimestamp(Object v) {
+    return toTimestamp(v, DEFAULT_ZONE);
+  }
+
+  public static Timestamp toTimestamp(Object v, ZoneId zoneId) {
+    if (v == null) return null;
+    ZoneId targetZone = zoneId == null ? DEFAULT_ZONE : zoneId;
+    if (v instanceof Timestamp timestamp) return timestamp;
+    if (v instanceof java.sql.Date date) return Timestamp.valueOf(date.toLocalDate().atStartOfDay());
+    if (v instanceof java.util.Date date) return new Timestamp(date.getTime());
+    if (v instanceof LocalDate localDate) return Timestamp.valueOf(localDate.atStartOfDay());
+    if (v instanceof LocalDateTime localDateTime) return Timestamp.valueOf(localDateTime);
+    if (v instanceof OffsetDateTime offsetDateTime) {
+      return Timestamp.valueOf(offsetDateTime.atZoneSameInstant(targetZone).toLocalDateTime());
+    }
+    if (v instanceof java.time.ZonedDateTime zonedDateTime) {
+      return Timestamp.valueOf(zonedDateTime.withZoneSameInstant(targetZone).toLocalDateTime());
+    }
+
+    String text = v.toString().trim();
+    if (text.isEmpty()) return null;
+
+    try {
+      return Timestamp.valueOf(OffsetDateTime.parse(text).atZoneSameInstant(targetZone).toLocalDateTime());
+    } catch (DateTimeParseException ignored) {
+    }
+
+    try {
+      return Timestamp.valueOf(LocalDateTime.parse(text, DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+    } catch (DateTimeParseException ignored) {
+    }
+
+    try {
+      return Timestamp.valueOf(LocalDate.parse(text, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay());
+    } catch (DateTimeParseException ignored) {
+    }
+
+    try {
+      return Timestamp.valueOf(LocalDateTime.parse(text, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+    } catch (DateTimeParseException ignored) {
+    }
+
+    try {
+      return Timestamp.valueOf(LocalDate.parse(text, DateTimeFormatter.ofPattern("dd/MM/yyyy")).atStartOfDay());
+    } catch (DateTimeParseException ignored) {
+    }
+
+    try {
+      return Timestamp.valueOf(LocalDate.parse(text, DateTimeFormatter.ofPattern("yyyyMMdd")).atStartOfDay());
+    } catch (DateTimeParseException ignored) {
+    }
+
+    throw new IllegalArgumentException(
+        "No puedo convertir a Timestamp: " + v + " (" + v.getClass().getName() + ")");
+  }
+
   public static String emptyIfNull(String s) {
     return (s == null || s.trim().isEmpty()) ? "" : s.trim();
   }
 
   public static String defaultIfBlank(String s, String def) {
-    return (s == null || s.trim().isEmpty()) ? def : s.trim();
+    return (s == null || s.trim().isEmpty()) ? emptyIfNull(def) : s.trim();
   }
 }

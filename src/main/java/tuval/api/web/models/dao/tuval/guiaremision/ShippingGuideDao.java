@@ -33,18 +33,18 @@ public interface ShippingGuideDao {
     public HeaderGuideTransferVtaResponse executeSpGenerateMovimentTransferVta(
             HeaderGuideTransferVtaRequest req, int idmov, int modo);
 
-    public HeaderGuideTransferVtaResponse executeSpStoreHeaderGuideDispatchVta(
-            HeaderGuideDispatchShipmentRequest req, int modo);
+//     public HeaderGuideTransferVtaResponse executeSpStoreHeaderGuideDispatchVta(
+//             HeaderGuideDispatchShipmentRequest req, int modo);
 
-    public DetailGuideTransferVtaResponse executeSpStoreDetailGuideDispatchVta(
-            DetailGuideTransferVtaRequest det,
-            HeaderGuideDispatchShipmentRequest cab,
-            int idmov,
-            int secitem,
-            int modo);
+//     public DetailGuideTransferVtaResponse executeSpStoreDetailGuideDispatchVta(
+//             DetailGuideTransferVtaRequest det,
+//             HeaderGuideDispatchShipmentRequest cab,
+//             int idmov,
+//             int secitem,
+//             int modo);
 
-    public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
-            HeaderGuideDispatchShipmentRequest req, int idmov, int modo);
+//     public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
+//             HeaderGuideDispatchShipmentRequest req, int idmov, int modo);
 
     public HeaderGuideTransferVtaResponse executeFixSpGenerateMovementDispatchDeliveryNote(
             DispatchDeliveryNoteMovementRequest req, int modo);

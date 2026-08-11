@@ -382,179 +382,179 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
   }
 
   /** despacho de venta */
-  @Override
-  public HeaderGuideTransferVtaResponse executeSpStoreHeaderGuideDispatchVta(
-      HeaderGuideDispatchShipmentRequest req, int modo) {
+  // @Override
+  // public HeaderGuideTransferVtaResponse executeSpStoreHeaderGuideDispatchVta(
+  //     HeaderGuideDispatchShipmentRequest req, int modo) {
 
-    // saneo mínimo (evita overflow al SP)
-    String obs = req.getObservacion();
-    if (obs != null && obs.length() > 200) {
-      obs = obs.substring(0, 200);
-    }
-    MapSqlParameterSource in = new MapSqlParameterSource()
-        .addValue("tipotrx", "")
-        .addValue("numdoc", req.getPedido())
-        .addValue("numdocori", req.getPedidoNuevo())
-        .addValue("bodorigen", req.getBodegaOrigen())
-        .addValue("boddestino", "")
-        .addValue("binitem", "")
-        .addValue("binori", "")
-        .addValue("bindes", "")
-        .addValue("observacion", obs)
-        .addValue("item", "")
-        .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
-        .addValue("secitem", 0)
-        .addValue("compartimento", null, Types.VARCHAR)
-        .addValue("idmov", 0) // INOUT inicia en 0 como en .NET
-        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-        .addValue("idfila", 0)
-        .addValue("fecpro", null, Types.TIMESTAMP)
-        .addValue("userid", req.getUsuario()) // SQL Server CHAR(15) rellena espacios
-        .addValue("modo", modo) // 1
-        .addValue("submodo", 0)
-        .addValue("equipo", "wserver")
-        .addValue("codret", 0) // INOUT
-        .addValue("msj", "")
-        .addValue("idguia", req.getIdGuiaRemision())
-        .addValue("guia", req.getGuiaRemision())
-        .addValue("hash_intento", req.getHashInterno());
-    try {
-      Map<String, Object> out = spMovimientosIv.execute(in);
-      int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
-      int idmov = CoerceHelperUtils.getInt(out.get("idmov"), 0);
-      String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
-      String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
+  //   // saneo mínimo (evita overflow al SP)
+  //   String obs = req.getObservacion();
+  //   if (obs != null && obs.length() > 200) {
+  //     obs = obs.substring(0, 200);
+  //   }
+  //   MapSqlParameterSource in = new MapSqlParameterSource()
+  //       .addValue("tipotrx", "")
+  //       .addValue("numdoc", req.getPedido())
+  //       .addValue("numdocori", req.getPedidoNuevo())
+  //       .addValue("bodorigen", req.getBodegaOrigen())
+  //       .addValue("boddestino", "")
+  //       .addValue("binitem", "")
+  //       .addValue("binori", "")
+  //       .addValue("bindes", "")
+  //       .addValue("observacion", obs)
+  //       .addValue("item", "")
+  //       .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+  //       .addValue("secitem", 0)
+  //       .addValue("compartimento", null, Types.VARCHAR)
+  //       .addValue("idmov", 0) // INOUT inicia en 0 como en .NET
+  //       .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+  //       .addValue("idfila", 0)
+  //       .addValue("fecpro", null, Types.TIMESTAMP)
+  //       .addValue("userid", req.getUsuario()) // SQL Server CHAR(15) rellena espacios
+  //       .addValue("modo", modo) // 1
+  //       .addValue("submodo", 0)
+  //       .addValue("equipo", "wserver")
+  //       .addValue("codret", 0) // INOUT
+  //       .addValue("msj", "")
+  //       .addValue("idguia", req.getIdGuiaRemision())
+  //       .addValue("guia", req.getGuiaRemision())
+  //       .addValue("hash_intento", req.getHashInterno());
+  //   try {
+  //     Map<String, Object> out = spMovimientosIv.execute(in);
+  //     int codret = CoerceHelperUtils.getInt(out.get("codret"), 0);
+  //     int idmov = CoerceHelperUtils.getInt(out.get("idmov"), 0);
+  //     String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
+  //     String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
 
-      if (codret != 0) {
-        throw new IllegalStateException("""
-            Error al guardar la cabecera de despacho.
-              Pedido: %s
-              ID Movimiento: %d
-              Código de retorno: %d
-              Mensaje del sistema: %s""".formatted(req.getPedido(), idmov, codret, msj));
-      }
-      return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(e.getMessage(), e);
-    }
-  }
+  //     if (codret != 0) {
+  //       throw new IllegalStateException("""
+  //           Error al guardar la cabecera de despacho.
+  //             Pedido: %s
+  //             ID Movimiento: %d
+  //             Código de retorno: %d
+  //             Mensaje del sistema: %s""".formatted(req.getPedido(), idmov, codret, msj));
+  //     }
+  //     return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
+  //   } catch (Exception e) {
+  //     e.printStackTrace();
+  //     throw new RuntimeException(e.getMessage(), e);
+  //   }
+  // }
 
-  @Override
-  public DetailGuideTransferVtaResponse executeSpStoreDetailGuideDispatchVta(
-      DetailGuideTransferVtaRequest det,
-      HeaderGuideDispatchShipmentRequest cab,
-      int idmov,
-      int secitem,
-      int modo) {
-    MapSqlParameterSource in = new MapSqlParameterSource()
-        .addValue("tipotrx", "")
-        .addValue("numdoc", cab.getPedido())
-        .addValue("numdocori", "")
-        .addValue("bodorigen", cab.getBodegaOrigen())
-        .addValue("boddestino", "")
-        .addValue("binitem", det.getItem())
-        .addValue("binori", det.getCompartimento())
-        .addValue("bindes", "")
-        .addValue("observacion", null, Types.VARCHAR)
-        .addValue("item", det.getItem())
-        .addValue("cantidad", det.getCantidad())
-        .addValue("secitem", secitem) // secuencia siempre es 1 al parecer
-        .addValue("compartimento", null, Types.VARCHAR)
-        .addValue("idmov", idmov)
-        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-        .addValue("idfila", 0)
-        .addValue("fecpro", null, Types.TIMESTAMP)
-        .addValue("userid", cab.getUsuario())
-        .addValue("modo", modo) // 2
-        .addValue("submodo", 0)
-        .addValue("equipo", "wserver")
-        .addValue("codret", 0)
-        .addValue("msj", "")
-        .addValue("idguia", cab.getIdGuiaRemision())
-        .addValue("guia", cab.getGuiaRemision())
-        .addValue("hash_intento", "");
+  // @Override
+  // public DetailGuideTransferVtaResponse executeSpStoreDetailGuideDispatchVta(
+  //     DetailGuideTransferVtaRequest det,
+  //     HeaderGuideDispatchShipmentRequest cab,
+  //     int idmov,
+  //     int secitem,
+  //     int modo) {
+  //   MapSqlParameterSource in = new MapSqlParameterSource()
+  //       .addValue("tipotrx", "")
+  //       .addValue("numdoc", cab.getPedido())
+  //       .addValue("numdocori", "")
+  //       .addValue("bodorigen", cab.getBodegaOrigen())
+  //       .addValue("boddestino", "")
+  //       .addValue("binitem", det.getItem())
+  //       .addValue("binori", det.getCompartimento())
+  //       .addValue("bindes", "")
+  //       .addValue("observacion", null, Types.VARCHAR)
+  //       .addValue("item", det.getItem())
+  //       .addValue("cantidad", det.getCantidad())
+  //       .addValue("secitem", secitem) // secuencia siempre es 1 al parecer
+  //       .addValue("compartimento", null, Types.VARCHAR)
+  //       .addValue("idmov", idmov)
+  //       .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+  //       .addValue("idfila", 0)
+  //       .addValue("fecpro", null, Types.TIMESTAMP)
+  //       .addValue("userid", cab.getUsuario())
+  //       .addValue("modo", modo) // 2
+  //       .addValue("submodo", 0)
+  //       .addValue("equipo", "wserver")
+  //       .addValue("codret", 0)
+  //       .addValue("msj", "")
+  //       .addValue("idguia", cab.getIdGuiaRemision())
+  //       .addValue("guia", cab.getGuiaRemision())
+  //       .addValue("hash_intento", "");
 
-    try {
-      Map<String, Object> out = spMovimientosIv.execute(in);
-      int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
-      String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
-      if (codret != 0) {
-        throw new IllegalStateException("""
-            Error al guardar el detalle de despacho.
-              Pedido: %s
-              ID Movimiento: %d
-              Código de retorno: %d
-              Item: %s
-              Mensaje del sistema: %s""".formatted(cab.getPedido(), idmov, codret, det.getItem(), msj));
+  //   try {
+  //     Map<String, Object> out = spMovimientosIv.execute(in);
+  //     int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
+  //     String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
+  //     if (codret != 0) {
+  //       throw new IllegalStateException("""
+  //           Error al guardar el detalle de despacho.
+  //             Pedido: %s
+  //             ID Movimiento: %d
+  //             Código de retorno: %d
+  //             Item: %s
+  //             Mensaje del sistema: %s""".formatted(cab.getPedido(), idmov, codret, det.getItem(), msj));
 
-      }
-      return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(
-          "Fallo en guardar detalle de despacho, pedido="
-              + cab.getPedido()
-              + ", idmov="
-              + idmov
-              + ": "
-              + e.getMessage()
-              + ", item="
-              + det.getItem(),
-          e);
-    }
-  }
+  //     }
+  //     return new DetailGuideTransferVtaResponse(codret, msj, idmov, det.getItem(), secitem);
+  //   } catch (Exception e) {
+  //     e.printStackTrace();
+  //     throw new RuntimeException(
+  //         "Fallo en guardar detalle de despacho, pedido="
+  //             + cab.getPedido()
+  //             + ", idmov="
+  //             + idmov
+  //             + ": "
+  //             + e.getMessage()
+  //             + ", item="
+  //             + det.getItem(),
+  //         e);
+  //   }
+  // }
 
-  @Override
-  public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
-      HeaderGuideDispatchShipmentRequest req, int idmov, int modo) {
-    MapSqlParameterSource in = new MapSqlParameterSource()
-        .addValue("tipotrx", "")
-        .addValue("numdoc", req.getPedido())
-        .addValue("numdocori", "")
-        .addValue("bodorigen", req.getBodegaOrigen())
-        .addValue("boddestino", "")
-        .addValue("binitem", "")
-        .addValue("binori", "")
-        .addValue("bindes", "")
-        .addValue("observacion", null, Types.VARCHAR)
-        .addValue("item", "")
-        .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
-        .addValue("secitem", 0)
-        .addValue("compartimento", null, Types.VARCHAR)
-        .addValue("idmov", idmov)
-        .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
-        .addValue("idfila", 0)
-        .addValue("fecpro", null, Types.TIMESTAMP)
-        .addValue("userid", req.getUsuario())
-        .addValue("modo", modo) // 3
-        .addValue("submodo", 0)
-        .addValue("equipo", "wserver")
-        .addValue("docgp", "") // INOUT
-        .addValue("codret", 0) // INOUT
-        .addValue("msj", "")
-        .addValue("idguia", "")
-        .addValue("guia", "")
-        .addValue("hash_intento", "");
-    try {
-      Map<String, Object> out = spMovimientosIv.execute(in);
-      int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
-      String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
-      String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
-      if (codret != 0) {
-        throw new IllegalStateException("""
-            Error al generar el movimiento de despacho.
-              Pedido: %s
-              ID Movimiento: %d
-              Código de retorno: %d
-              Mensaje del sistema: %s""".formatted(req.getPedido(), idmov, codret, msj));
-      }
-      return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(e.getMessage(), e);
-    }
-  }
+  // @Override
+  // public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
+  //     HeaderGuideDispatchShipmentRequest req, int idmov, int modo) {
+  //   MapSqlParameterSource in = new MapSqlParameterSource()
+  //       .addValue("tipotrx", "")
+  //       .addValue("numdoc", req.getPedido())
+  //       .addValue("numdocori", "")
+  //       .addValue("bodorigen", req.getBodegaOrigen())
+  //       .addValue("boddestino", "")
+  //       .addValue("binitem", "")
+  //       .addValue("binori", "")
+  //       .addValue("bindes", "")
+  //       .addValue("observacion", null, Types.VARCHAR)
+  //       .addValue("item", "")
+  //       .addValue("cantidad", java.math.BigDecimal.ZERO, Types.DECIMAL)
+  //       .addValue("secitem", 0)
+  //       .addValue("compartimento", null, Types.VARCHAR)
+  //       .addValue("idmov", idmov)
+  //       .addValue("numtran", java.math.BigDecimal.ZERO, Types.DECIMAL)
+  //       .addValue("idfila", 0)
+  //       .addValue("fecpro", null, Types.TIMESTAMP)
+  //       .addValue("userid", req.getUsuario())
+  //       .addValue("modo", modo) // 3
+  //       .addValue("submodo", 0)
+  //       .addValue("equipo", "wserver")
+  //       .addValue("docgp", "") // INOUT
+  //       .addValue("codret", 0) // INOUT
+  //       .addValue("msj", "")
+  //       .addValue("idguia", "")
+  //       .addValue("guia", "")
+  //       .addValue("hash_intento", "");
+  //   try {
+  //     Map<String, Object> out = spMovimientosIv.execute(in);
+  //     int codret = CoerceHelperUtils.toInt(out.get("codret"), 0);
+  //     String docgp = CoerceHelperUtils.stringOrEmpty(out.get("docgp"));
+  //     String msj = CoerceHelperUtils.stringOrEmpty(out.get("msj"));
+  //     if (codret != 0) {
+  //       throw new IllegalStateException("""
+  //           Error al generar el movimiento de despacho.
+  //             Pedido: %s
+  //             ID Movimiento: %d
+  //             Código de retorno: %d
+  //             Mensaje del sistema: %s""".formatted(req.getPedido(), idmov, codret, msj));
+  //     }
+  //     return new HeaderGuideTransferVtaResponse(codret, msj, idmov, docgp);
+  //   } catch (Exception e) {
+  //     e.printStackTrace();
+  //     throw new RuntimeException(e.getMessage(), e);
+  //   }
+  // }
 
   @Override
   public HeaderGuideTransferVtaResponse executeFixSpGenerateMovementDispatchDeliveryNote(
