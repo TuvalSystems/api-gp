@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tuval.api.web.models.dao.tuval.cobros.CollectionRegisterDao;
+import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionCheckInvoiceRequest;
 import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionDefaultInvoiceRequest;
 import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionDetailInvoicesRequest;
 import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionRetentionInvoiceRequest;
@@ -13,6 +14,11 @@ import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionRetentionInv
 public class CollectionRegisterService {
 
   private final CollectionRegisterDao collectionRegisterDao;
+
+  // aqui se registra el cheque
+  public String registerCheckCollection(CollectionCheckInvoiceRequest request) {
+    return collectionRegisterDao.registerCheckCollection(request, 1);
+  }
 
   // aqui registra efectivo , tarjeta, deposito
   public String registerCashCollection(CollectionDefaultInvoiceRequest request) {

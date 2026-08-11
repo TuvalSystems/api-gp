@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
+import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionCheckInvoiceRequest;
 import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionDefaultInvoiceRequest;
 import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionDetailInvoicesRequest;
 import tuval.api.web.models.request.cobros.cobrosFacturas.CollectionRetentionInvoiceRequest;
@@ -46,10 +47,20 @@ public class CollectionRegisterController {
 
   @PostMapping("registrar-retencion")
   public ResponseEntity<Map<String, Object>> registerRetentionCollection(
-     @Valid @RequestBody CollectionRetentionInvoiceRequest payload) {
-
+      @Valid @RequestBody CollectionRetentionInvoiceRequest payload) {
     try {
       String message = collectionRegisterService.registerRetentionCollection(payload);
+      return ResponseJsonUtils.buildSuccess(message);
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @PostMapping("registrar-cheque")
+  public ResponseEntity<Map<String, Object>> registerCheckCollection(
+      @Valid @RequestBody CollectionCheckInvoiceRequest payload) {
+    try {
+      String message = collectionRegisterService.registerCheckCollection(payload);
       return ResponseJsonUtils.buildSuccess(message);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
