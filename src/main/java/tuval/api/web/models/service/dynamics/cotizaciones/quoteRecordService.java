@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tuval.api.web.models.dao.dynamics.cotizaciones.QuoteRecordDao;
 import tuval.api.web.models.dto.cotizaciones.ItemDescripcionAlternativaDto;
-import tuval.api.web.models.dto.cotizaciones.MotivoProyectoVentaDto;
+import tuval.api.web.models.dto.cotizaciones.SalesProjectReasonDto;
 import tuval.api.web.models.entity.dynamics.cotizaciones.QuoteRecordEntity;
 
 @Service
@@ -28,8 +28,13 @@ public class quoteRecordService {
     return quoteRecordDao.findByItem(item);
   }
 
-  /** motivos / proyectos de venta */
-  public List<MotivoProyectoVentaDto> listProyectosVenta() {
-    return quoteRecordDao.findAllMotivosProyectosVenta();
+  /** sales project reasons */
+  public List<SalesProjectReasonDto> listSalesProjectReasons() {
+    return quoteRecordDao.findAllSalesProjectReasons();
+  }
+
+  /** sales project reason by code */
+  public SalesProjectReasonDto getSalesProjectReasonByCoMotproven(Integer coMotproven) {
+    return quoteRecordDao.findSalesProjectReasonByCoMotproven(coMotproven);
   }
 }

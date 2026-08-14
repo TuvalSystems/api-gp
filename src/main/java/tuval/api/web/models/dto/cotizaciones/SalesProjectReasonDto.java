@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class MotivoProyectoVentaDto {
+public class SalesProjectReasonDto {
 
   private Integer coMotproven;
   private String txDescor;

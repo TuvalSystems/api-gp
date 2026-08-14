@@ -14,8 +14,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.cotizaciones.ItemDescripcionAlternativaDto;
-import tuval.api.web.models.dto.cotizaciones.MotivoProyectoVentaDto;
+import tuval.api.web.models.dto.cotizaciones.SalesProjectReasonDto;
 import tuval.api.web.models.entity.dynamics.cotizaciones.QuoteRecordEntity;
+import tuval.api.web.models.request.cotizaciones.SalesProjectReasonRequest;
 import tuval.api.web.models.service.dynamics.cotizaciones.quoteRecordService;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,9 +48,28 @@ public class QuoteController {
     }
 
     @GetMapping("lista-proyectos-venta")
-    public ResponseEntity<Map<String, Object>> getListProyectSellers() {
+    public ResponseEntity<Map<String, Object>> getSalesProjectReasons() {
          try {
-            List<MotivoProyectoVentaDto> resp = quoteRecordService.listProyectosVenta();
+            List<SalesProjectReasonDto> resp = quoteRecordService.listSalesProjectReasons();
+            return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resp);
+        } catch (Exception e) {
+           return ResponseJsonUtils.buildError(e.getMessage());
+        }
+    }
+
+    @PostMapping("proyecto-venta")
+    public ResponseEntity<Map<String, Object>> getSalesProjectReason(
+            @RequestBody SalesProjectReasonRequest request) {
+         try {
+            if (request == null || request.getCoMotproven() == null) {
+                return ResponseJsonUtils.buildNoFound("El parametro coMotproven es requerido");
+            }
+            Integer coMotproven = request.getCoMotproven();
+            SalesProjectReasonDto resp = quoteRecordService.getSalesProjectReasonByCoMotproven(coMotproven);
+            if (resp == null) {
+                return ResponseJsonUtils.buildNoFound(
+                        "No se encontro proyecto de venta para coMotproven=" + coMotproven);
+            }
             return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resp);
         } catch (Exception e) {
            return ResponseJsonUtils.buildError(e.getMessage());

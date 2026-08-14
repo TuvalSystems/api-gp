@@ -10,7 +10,7 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.models.dto.cotizaciones.ItemDescripcionAlternativaDto;
-import tuval.api.web.models.dto.cotizaciones.MotivoProyectoVentaDto;
+import tuval.api.web.models.dto.cotizaciones.SalesProjectReasonDto;
 import tuval.api.web.models.entity.dynamics.cotizaciones.QuoteRecordEntity;
 
 @Repository
@@ -79,7 +79,7 @@ public class QuoteRecordDao {
   }
 
   /** RETORNA LISTA DE MOTIVOS / PROYECTOS DE VENTA */
-  public List<MotivoProyectoVentaDto> findAllMotivosProyectosVenta() {
+  public List<SalesProjectReasonDto> findAllSalesProjectReasons() {
     String sql =
         """
         SELECT
@@ -91,6 +91,25 @@ public class QuoteRecordDao {
         ORDER BY co_motproven ASC
         """;
 
-    return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(MotivoProyectoVentaDto.class));
+    return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(SalesProjectReasonDto.class));
+  }
+
+  /** RETORNA UN MOTIVO / PROYECTO DE VENTA POR CODIGO */
+  public SalesProjectReasonDto findSalesProjectReasonByCoMotproven(Integer coMotproven) {
+    String sql =
+        """
+        SELECT
+          co_motproven AS coMotproven,
+          RTRIM(tx_descor) AS txDescor,
+          RTRIM(tx_deslar) AS txDeslar,
+          RTRIM(tx_obs) AS txObs
+        FROM dbo.vw_listadoMotivosProyectosVenta
+        WHERE co_motproven = ?
+        """;
+
+    List<SalesProjectReasonDto> result =
+        jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(SalesProjectReasonDto.class), coMotproven);
+
+    return result.isEmpty() ? null : result.get(0);
   }
 }
