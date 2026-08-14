@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.models.dto.cotizaciones.ItemDescripcionAlternativaDto;
+import tuval.api.web.models.dto.cotizaciones.MotivoProyectoVentaDto;
 import tuval.api.web.models.entity.dynamics.cotizaciones.QuoteRecordEntity;
 
 @Repository
@@ -75,5 +76,21 @@ public class QuoteRecordDao {
 
     return jdbcTemplate.query(
         sql, new BeanPropertyRowMapper<>(ItemDescripcionAlternativaDto.class), item);
+  }
+
+  /** RETORNA LISTA DE MOTIVOS / PROYECTOS DE VENTA */
+  public List<MotivoProyectoVentaDto> findAllMotivosProyectosVenta() {
+    String sql =
+        """
+        SELECT
+          co_motproven AS coMotproven,
+          RTRIM(tx_descor) AS txDescor,
+          RTRIM(tx_deslar) AS txDeslar,
+          RTRIM(tx_obs) AS txObs
+        FROM dbo.vw_listadoMotivosProyectosVenta
+        ORDER BY co_motproven ASC
+        """;
+
+    return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(MotivoProyectoVentaDto.class));
   }
 }

@@ -289,7 +289,9 @@ public class transactionDao {
           .addValue("nota_cliente", InvoiceHelperUtils.str(req.getFacVtaNotaCliente(), 300))
           .addValue("userid", InvoiceHelperUtils.str(req.getUserIdCreator(), 100))
           .addValue("cond_pago_org", InvoiceHelperUtils.str(req.getCondIdOriginal(), 100))
-          .addValue("apro_comer_userid", InvoiceHelperUtils.str(req.getUserApprovalId(), 20));
+          .addValue("apro_comer_userid", InvoiceHelperUtils.str(req.getUserApprovalId(), 20))
+          .addValue("proyecto", CoerceHelperUtils.getInt(req.getProyecto(), 30))
+          ;
 
       call.execute(p);
     } catch (jakarta.validation.ValidationException ve) {

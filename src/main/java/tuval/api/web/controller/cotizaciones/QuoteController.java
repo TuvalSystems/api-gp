@@ -3,17 +3,18 @@ package tuval.api.web.controller.cotizaciones;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import lombok.RequiredArgsConstructor;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.cotizaciones.ItemDescripcionAlternativaDto;
+import tuval.api.web.models.dto.cotizaciones.MotivoProyectoVentaDto;
 import tuval.api.web.models.entity.dynamics.cotizaciones.QuoteRecordEntity;
 import tuval.api.web.models.service.dynamics.cotizaciones.quoteRecordService;
 
@@ -22,20 +23,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping(value = "/api/cotizaciones", produces = "application/json")
 public class QuoteController {
 
-    @Autowired
-    private quoteRecordService quoteRecordService;
+    private final quoteRecordService quoteRecordService;
 
-    @CrossOrigin
+
     @PostMapping("/guardar-cotizacion-recordatorio")
     public ResponseEntity<String> saveCotizacionRecordatorio(@RequestBody QuoteRecordEntity entity) {
         quoteRecordService.save(entity);
         return ResponseEntity.ok("Registro guardado correctamente");
     }
 
-    @CrossOrigin
     @GetMapping("/lista-items-alternativos")
     public ResponseEntity<Map<String, Object>> getListAlternativeItems(@RequestParam String item) {
         try {
@@ -46,4 +46,13 @@ public class QuoteController {
         }
     }
 
+    @GetMapping("lista-proyectos-venta")
+    public ResponseEntity<Map<String, Object>> getListProyectSellers() {
+         try {
+            List<MotivoProyectoVentaDto> resp = quoteRecordService.listProyectosVenta();
+            return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resp);
+        } catch (Exception e) {
+           return ResponseJsonUtils.buildError(e.getMessage());
+        }
+    }
 }

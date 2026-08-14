@@ -81,6 +81,7 @@ public class HeaderInvoiceRequest {
     private String condIdOriginal;
     private String userApprovalId;
     private Long pedidoId;
+    private Integer proyecto;
 
     
 
