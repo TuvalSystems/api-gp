@@ -85,7 +85,7 @@ public class CreditCheckServiceImp implements CreditCheckService {
     return creditCheckDao.executeSpGetCustomerStatusAccount(ruc, 11);
   }
 
- 
+ @Override
   public CustomerResumenAccountDto getCustomerResumenAccount(String ruc){
     return creditCheckDao.executeSpGetCustomerResumenAccount(ruc, 12);
   }
