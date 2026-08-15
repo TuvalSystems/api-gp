@@ -290,7 +290,7 @@ public class transactionDao {
           .addValue("userid", InvoiceHelperUtils.str(req.getUserIdCreator(), 100))
           .addValue("cond_pago_org", InvoiceHelperUtils.str(req.getCondIdOriginal(), 100))
           .addValue("apro_comer_userid", InvoiceHelperUtils.str(req.getUserApprovalId(), 20))
-          .addValue("proyecto", CoerceHelperUtils.getInt(req.getProyecto(), 30))
+          .addValue("co_motproven", CoerceHelperUtils.getInt(req.getProyecto(), 30))
           ;
 
       call.execute(p);
