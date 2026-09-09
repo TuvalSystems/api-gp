@@ -17,7 +17,6 @@ public class quoteRecordService {
 
   @Transactional("dynamicsTransactionManager")
   public void save(QuoteRecordEntity entity) {
-
     quoteRecordDao.save(entity);
   }
 

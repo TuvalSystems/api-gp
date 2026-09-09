@@ -1,10 +1,7 @@
 package tuval.api.web.models.dao.dynamics.cotizaciones;
 
-import jakarta.annotation.PostConstruct;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,27 +12,68 @@ import tuval.api.web.models.entity.dynamics.cotizaciones.QuoteRecordEntity;
 
 @Repository
 public class QuoteRecordDao {
+  private final JdbcTemplate jdbcTemplate;
 
-  private static final Logger log = LoggerFactory.getLogger(QuoteRecordDao.class);
-
-  @PostConstruct
-  public void init() {
-    validateConfiguration();
+  public QuoteRecordDao(@Qualifier("dynamicsJdbcTemplate") JdbcTemplate jdbcTemplate) {
+    this.jdbcTemplate = jdbcTemplate;
+    JdbcTemplate dynamicsJdbcTemplate =
+        Objects.requireNonNull(jdbcTemplate, "El bean dynamicsJdbcTemplate no puede ser null");
   }
 
-  @Autowired
-  @Qualifier("dynamicsJdbcTemplate")
-  private JdbcTemplate jdbcTemplate;
-
-  public void validateConfiguration() {
-    if (jdbcTemplate == null) {
-      throw new IllegalStateException("JdbcTemplate no ha sido inyectado correctamente");
+  public void save(QuoteRecordEntity entity) {
+    int updatedRows = update(entity);
+    if (updatedRows == 0) {
+      insert(entity);
     }
   }
 
-  // @Autowired
-  // private JdbcTemplate dynamicsJdbcTemplate;
-  public void save(QuoteRecordEntity entity) {
+  private int update(QuoteRecordEntity entity) {
+    String sql =
+        """
+            UPDATE dbo.tbm_cabcotrec
+            SET tx_usr = ?,
+                tx_cliRuc = ?,
+                tx_cliRazSoc = ?,
+                tx_cotCliSri = ?,
+                tx_est = ?,
+                tx_bod = ?,
+                tx_ptoVta = ?,
+                tx_ptoVtaDesc = ?,
+                tx_cotReqapr = ?,
+                tx_cotAprCom = ?,
+                tx_cotMot = ?,
+                co_cotRec = ?,
+                fe_cotRec = ?,
+                tx_obsMot = ?,
+                fe_ultmod = ?,
+                tx_usrMod = ?,
+                nd_cotTot = ?
+            WHERE tx_cot = ?
+        """;
+
+    return jdbcTemplate.update(
+        sql,
+        entity.getTxUsr(),
+        entity.getTxCliRuc(),
+        entity.getTxCliRazSoc(),
+        entity.getTxCotCliSri(),
+        entity.getTxEst(),
+        entity.getTxBod(),
+        entity.getTxPtoVta(),
+        entity.getTxPtoVtaDesc(),
+        entity.getTxCotReqapr(),
+        entity.getTxCotAprCom(),
+        entity.getTxCotMot(),
+        entity.getCoCotRec(),
+        entity.getFeCotRec(),
+        entity.getTxObsMot(),
+        entity.getFeUltmod(),
+        entity.getTxUsrMod(),
+        entity.getNdCotTot(),
+        entity.getTxCot());
+  }
+
+  private void insert(QuoteRecordEntity entity) {
     String sql =
         """
             INSERT INTO dbo.tbm_cabcotrec (
@@ -108,7 +146,8 @@ public class QuoteRecordDao {
         """;
 
     List<SalesProjectReasonDto> result =
-        jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(SalesProjectReasonDto.class), coMotproven);
+        jdbcTemplate.query(
+            sql, new BeanPropertyRowMapper<>(SalesProjectReasonDto.class), coMotproven);
 
     return result.isEmpty() ? null : result.get(0);
   }
