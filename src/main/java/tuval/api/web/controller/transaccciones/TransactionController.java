@@ -2,15 +2,14 @@ package tuval.api.web.controller.transaccciones;
 
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import tuval.api.web.models.Utils.ResponseJsonUtils;
 import tuval.api.web.models.dto.transacciones.facturacionVenta.responseInvoiceVtaDto;
 import tuval.api.web.models.dto.transacciones.facturacionVenta.validateGenerateInvoiceDto;
@@ -25,10 +24,11 @@ import tuval.api.web.models.service.tuval.transacciones.transactionService;
 
 @RestController
 @RequestMapping("/api/transacciones")
+@RequiredArgsConstructor
+
 public class TransactionController {
 
-    @Autowired
-    private transactionService transactionService;
+    private final  transactionService transactionService;
 
     @CrossOrigin
     @PostMapping("/validar-generacion-documento-recibo-compra-l")
@@ -38,7 +38,6 @@ public class TransactionController {
             validateDto resultado = transactionService.validateReceivedL(request);
             return ResponseJsonUtils.buildSuccessWithData("Validacion exitosa", resultado);
         } catch (Exception e) {
-            e.printStackTrace(); // para ver la traza completa
             return ResponseJsonUtils.buildException(e);
         }
 
@@ -51,7 +50,6 @@ public class TransactionController {
             validateDto resultado = transactionService.deleteReceivedL(request);
             return ResponseJsonUtils.buildSuccessWithData("Eliminacion exitosa", resultado);
         } catch (Exception e) {
-            e.printStackTrace(); // para ver la traza completa
             return ResponseJsonUtils.buildException(e);
         }
 
@@ -64,7 +62,6 @@ public class TransactionController {
             validateReceivedLDto resultado = transactionService.storeReceivedL(request);
             return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resultado);
         } catch (Exception e) {
-            e.printStackTrace(); // para ver la traza completa
             return ResponseJsonUtils.buildException(e);
         }
     }
@@ -77,7 +74,6 @@ public class TransactionController {
             validateReceivedLDto resultado = transactionService.processReceivedL(request);
             return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resultado);
         } catch (Exception e) {
-            e.printStackTrace(); // para ver la traza completa
             return ResponseJsonUtils.buildException(e);
         }
     }
@@ -90,7 +86,6 @@ public class TransactionController {
           validateDto resultado = transactionService.responseReceivedL(request);
             return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resultado);
         } catch (Exception e) {
-            e.printStackTrace(); // para ver la traza completa
             return ResponseJsonUtils.buildException(e);
         }
     }
@@ -103,7 +98,6 @@ public class TransactionController {
             StatusReceptionOrderItemLDto resultado = transactionService.stateReceivedLService(request);
             return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", resultado);
         } catch (Exception e) {
-            e.printStackTrace(); // para ver la traza completa
             return ResponseJsonUtils.buildException(e);
         }
     }
@@ -118,7 +112,6 @@ public class TransactionController {
         return ResponseJsonUtils.buildSuccess(resultado.getMensaje());
 
        } catch (Exception e) {
-         e.printStackTrace(); // para ver la traza completa
             return ResponseJsonUtils.buildException(e);
        }
     }
@@ -131,7 +124,6 @@ public class TransactionController {
             responseInvoiceVtaDto resultado = transactionService.consultInvoiceVta(request);
             return ResponseJsonUtils.buildSuccessWithData("Validacion exitosa", resultado);
         } catch (Exception e) {
-            e.printStackTrace(); // para ver la traza completa
             return ResponseJsonUtils.buildException(e);
         }
 
@@ -145,7 +137,6 @@ public class TransactionController {
             validateGenerateInvoiceDto resultado = transactionService.deleteInvoiceVta(request);
             return ResponseJsonUtils.buildSuccessWithData("Validacion exitosa", resultado);
         } catch (Exception e) {
-            e.printStackTrace(); // para ver la traza completa
             return ResponseJsonUtils.buildException(e);
         }
 
