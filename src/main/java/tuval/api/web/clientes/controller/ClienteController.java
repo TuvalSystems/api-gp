@@ -3,7 +3,6 @@ package tuval.api.web.clientes.controller;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
-import tuval.api.web.common.response.ResponseJsonUtils;
+import lombok.RequiredArgsConstructor;
 import tuval.api.web.clientes.dto.ListAllSegmentsDto;
 import tuval.api.web.clientes.dto.ListAllSubsegmentsDto;
 import tuval.api.web.clientes.dto.ListSegmentClientDto;
@@ -27,12 +26,14 @@ import tuval.api.web.clientes.request.ClientSubsegmentRucRequest;
 import tuval.api.web.clientes.request.NewAddressRequest;
 import tuval.api.web.clientes.request.SellerRequest;
 import tuval.api.web.clientes.service.dynamics.ClientService;
+import tuval.api.web.common.response.ResponseJsonUtils;
 
 @RestController
 @RequestMapping(value = "/api/cliente", produces = "application/json")
+@RequiredArgsConstructor 
 public class ClienteController {
 
-  @Autowired private ClientService clienteService;
+   private final ClientService clienteService;
 
   @CrossOrigin
   @PostMapping("/obtener-tipo-vendedor")

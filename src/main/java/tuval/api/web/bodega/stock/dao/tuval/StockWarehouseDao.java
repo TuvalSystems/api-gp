@@ -1,12 +1,11 @@
 package tuval.api.web.bodega.stock.dao.tuval;
 
-import jakarta.annotation.PostConstruct;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,40 +14,30 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 
-import tuval.api.web.common.util.CoerceHelperUtils;
 import tuval.api.web.bodega.stock.entity.tuval.ListPriceItemResponseEntity;
 import tuval.api.web.bodega.stock.entity.tuval.PriceItemEntity;
 import tuval.api.web.bodega.stock.entity.tuval.StockWarehouseEntity;
 import tuval.api.web.bodega.stock.request.StockWarehouseParamsRequest;
+import tuval.api.web.common.util.CoerceHelperUtils;
 
 @Repository
 public class StockWarehouseDao {
 
-  @Autowired
-  @Qualifier("tuvalJdbcTemplate")
-  private JdbcTemplate jdbcTemplate;
+ 
+  private final JdbcTemplate jdbcTemplate;
+  private final  SimpleJdbcCall spObtenerListaPrecio;
 
-  private SimpleJdbcCall spObtenerListaPrecio;
-
-  @PostConstruct
-  public void init() {
-    validateConfiguration();
-
-    /** sp de obtener lista de precios */
-    this.spObtenerListaPrecio =
+   public StockWarehouseDao(@Qualifier("tuvalJdbcTemplate") JdbcTemplate jdbcTemplate) {
+      this.jdbcTemplate = jdbcTemplate;
+       this.spObtenerListaPrecio =
         new SimpleJdbcCall(jdbcTemplate)
             .withProcedureName("MSW_SP_OBTENER_LISTA_PRECIO")
             .withSchemaName("dbo")
             .withoutProcedureColumnMetaDataAccess()
             .declareParameters(new SqlParameter("articulo", Types.VARCHAR));
-  }
+   }
 
-  public void validateConfiguration() {
-    if (jdbcTemplate == null) {
-      throw new IllegalStateException("JdbcTemplate no ha sido inyectado correctamente");
-    }
-  }
-
+  
   public StockWarehouseEntity executeSpConsultStockWarehouse(
       StockWarehouseParamsRequest request, String type) {
     try {
