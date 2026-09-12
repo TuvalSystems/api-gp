@@ -1,0 +1,10 @@
+tuval.api.web.bodega.despachos.dao.tuval
+tuval.api.web.bodega.stock.dao.tuval
+tuval.api.web.bodega.transferencias.dao.tuval
+tuval.api.web.clientes.dao.tuval
+tuval.api.web.clientes.sincronizacion.dao.tuval
+tuval.api.web.cobranzas.cobros.dao.tuval
+tuval.api.web.transacciones.dao.tuval
+tuval.api.web.ventas.devoluciones.dao.tuval
+tuval.api.web.ventas.devoluciones.dao.tuval.imp
+tuval.api.web.ventas.sincronizacion.dao.tuval

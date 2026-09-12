@@ -1,0 +1,130 @@
+package tuval.api.web.bodega.despachos.dao.tuval;
+
+import tuval.api.web.bodega.despachos.entity.tuval.CheckCodeAccessDeliveryNoteResponse;
+import tuval.api.web.bodega.despachos.entity.tuval.DetailCheckGuideAnyResponse;
+import tuval.api.web.bodega.despachos.entity.tuval.DetailGuideTransferVtaResponse;
+import tuval.api.web.bodega.despachos.entity.tuval.HeaderCheckGuideDispatchResponse;
+import tuval.api.web.bodega.despachos.entity.tuval.HeaderGuideTransferVtaResponse;
+import tuval.api.web.bodega.despachos.entity.tuval.ValidateExistsDeliveryNoteResponse;
+import tuval.api.web.bodega.despachos.request.DetailGuideTransferVtaRequest;
+import tuval.api.web.bodega.despachos.request.DispatchDeliveryNoteMovementRequest;
+import tuval.api.web.bodega.despachos.request.HeaderGuideDispatchShipmentRequest;
+import tuval.api.web.bodega.despachos.request.HeaderGuideTransferVtaRequest;
+import tuval.api.web.bodega.despachos.request.ValidateGuideDispatchRequest;
+import tuval.api.web.bodega.despachos.request.ValidateGuideSalesTransferedRequest;
+import tuval.api.web.bodega.despachos.request.crearguia.DestinationDeliveryNoteRequest;
+import tuval.api.web.bodega.despachos.request.crearguia.DetailDeliveryNoteRequest;
+import tuval.api.web.bodega.despachos.request.crearguia.HeaderDeliveryNoteRequest;
+
+public interface ShippingGuideDao {
+
+    public CheckCodeAccessDeliveryNoteResponse checkGuiaRemision(String numDoc);
+
+    public HeaderGuideTransferVtaResponse executeSpStoreHeaderTransferVta(
+            HeaderGuideTransferVtaRequest req, int modo);
+
+    public DetailGuideTransferVtaResponse executeSpStoreDetailGuideTransferVta(
+            DetailGuideTransferVtaRequest det,
+            HeaderGuideTransferVtaRequest cab,
+            int idmov,
+            int sec,
+            int modo);
+
+    public HeaderGuideTransferVtaResponse executeSpGenerateMovimentTransferVta(
+            HeaderGuideTransferVtaRequest req, int idmov, int modo);
+
+//     public HeaderGuideTransferVtaResponse executeSpStoreHeaderGuideDispatchVta(
+//             HeaderGuideDispatchShipmentRequest req, int modo);
+
+//     public DetailGuideTransferVtaResponse executeSpStoreDetailGuideDispatchVta(
+//             DetailGuideTransferVtaRequest det,
+//             HeaderGuideDispatchShipmentRequest cab,
+//             int idmov,
+//             int secitem,
+//             int modo);
+
+//     public HeaderGuideTransferVtaResponse executeSpGenerateMovimentDispatchVta(
+//             HeaderGuideDispatchShipmentRequest req, int idmov, int modo);
+
+    public HeaderGuideTransferVtaResponse executeFixSpGenerateMovementDispatchDeliveryNote(
+            DispatchDeliveryNoteMovementRequest req, int modo);
+
+    public HeaderCheckGuideDispatchResponse getAjusteGuideDispatchVtaDao(
+          ValidateGuideDispatchRequest req);
+
+    public HeaderCheckGuideDispatchResponse getAjusteGuideTransferVtaDao(
+            String orderNumber,
+            String newOrderNumber,
+            String origen,
+            Integer idGuiaRemision,
+            String guiaRemision);
+
+    public HeaderCheckGuideDispatchResponse getAjusteGuideRepositionVtaDao(
+            String orderNumber,
+            String origen,
+            Integer idMovimiento,
+            Integer idGuiaRemision,
+            String guiaRemision);
+
+    public DetailCheckGuideAnyResponse getAjustmentDetailGuide(
+            String orderNumber,
+            String newOrderNumber,
+            String item,
+            Integer idMovimiento,
+            Integer cantidad);
+
+    /** proceso de guia de remision */
+    public void executeSpStoreHeaderDeliveryNote(HeaderDeliveryNoteRequest h);
+
+    public void executeSpStoreDestinationDeliveryNote(DestinationDeliveryNoteRequest dh);
+
+    public void executeSpStoreDetailDeliveryNote(DetailDeliveryNoteRequest d);
+
+    public void executeSpCreateAccesoCodeDeliveryNote(HeaderDeliveryNoteRequest h);
+
+    public void executeSpUpdateAccesoCodeDeliveryNote(HeaderDeliveryNoteRequest h);
+
+    public ValidateExistsDeliveryNoteResponse executeSpValidateExistsDeliveryNoteResponse(
+            String docu);
+
+
+
+  
+
+    public HeaderGuideTransferVtaResponse executeSpStoreHeaderReceivedGuideTransfered(
+            HeaderGuideTransferVtaRequest req, int modo);
+
+    public DetailGuideTransferVtaResponse executeSpStoreDetailReceivedGuideTransfered(
+            DetailGuideTransferVtaRequest det,
+            HeaderGuideTransferVtaRequest cab,
+            int idmov,
+            int secitem,
+            int modo);
+
+    public HeaderGuideTransferVtaResponse executeSpGenerateMovimentReceivedGuideTransfered(
+            HeaderGuideTransferVtaRequest req, int idmov, int modo);
+
+    public HeaderGuideTransferVtaResponse executeSpStoreHeaderReceivedSalesTransferedDao(
+            HeaderGuideTransferVtaRequest req,
+            int modo);
+
+    public DetailGuideTransferVtaResponse executeSpStoreDetailReceivedGuideSalesTransferedDao(
+            DetailGuideTransferVtaRequest det,
+            HeaderGuideTransferVtaRequest cab,
+            int idmov,
+            int secitem,
+            int modo);
+
+    public HeaderGuideTransferVtaResponse executeSpGenerateMovimentReceivedGuideTransferedDao(
+            HeaderGuideTransferVtaRequest req, int idmov, int modo);
+
+    public HeaderCheckGuideDispatchResponse getAdjustmentGuideSalesTransferedDao(
+            ValidateGuideSalesTransferedRequest req);
+
+    public DetailGuideTransferVtaResponse executeSpStoreDetailReceivedGuideReplenishmentTransferDao(
+      DetailGuideTransferVtaRequest det,
+      HeaderGuideTransferVtaRequest cab,
+      int idmov,
+      int secitem,
+      int modo);
+}

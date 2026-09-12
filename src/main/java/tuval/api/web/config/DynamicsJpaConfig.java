@@ -27,7 +27,19 @@ import jakarta.persistence.EntityManagerFactory;
 
 @Configuration
 @EnableTransactionManagement
-@EnableJpaRepositories(basePackages = "tuval.api.web.models.dao.dynamics", entityManagerFactoryRef = "dynamicsEntityManagerFactory", transactionManagerRef = "dynamicsTransactionManager")
+@EnableJpaRepositories(basePackages = {
+        "tuval.api.web.bodega.articulos.dao.dynamics",
+        "tuval.api.web.bodega.despachos.dao.dynamics",
+        "tuval.api.web.bodega.reservas.dao.dynamics",
+        "tuval.api.web.bodega.stock.dao.dynamics",
+        "tuval.api.web.bodega.transferencias.dao.dynamics",
+        "tuval.api.web.bodega.transferencias.dao.dynamics.imp",
+        "tuval.api.web.clientes.dao.dynamics",
+        "tuval.api.web.cobranzas.cobros.dao.dynamics",
+        "tuval.api.web.usuarios.dao.dynamics",
+        "tuval.api.web.ventas.cotizaciones.dao.dynamics",
+        "tuval.api.web.ventas.sincronizacion.dao.dynamics"
+    }, entityManagerFactoryRef = "dynamicsEntityManagerFactory", transactionManagerRef = "dynamicsTransactionManager")
 public class DynamicsJpaConfig {
 
     @Primary
@@ -66,7 +78,9 @@ public class DynamicsJpaConfig {
         // "org.hibernate.dialect.SQLServerDialect");
         properties.put("hibernate.show_sql", "true");
         return builder.dataSource(dataSource).properties(properties)
-                .packages("tuval.api.web.models.entity.dynamics")
+                .packages("tuval.api.web.bodega.reservas.entity.dynamics",
+                    "tuval.api.web.usuarios.entity.dynamics",
+                    "tuval.api.web.ventas.cotizaciones.entity.dynamics")
                 .persistenceUnit("dynamicsPU").build();
     }
 
