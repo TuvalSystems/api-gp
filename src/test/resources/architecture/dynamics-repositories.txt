@@ -1,0 +1,11 @@
+tuval.api.web.bodega.articulos.dao.dynamics
+tuval.api.web.bodega.despachos.dao.dynamics
+tuval.api.web.bodega.reservas.dao.dynamics
+tuval.api.web.bodega.stock.dao.dynamics
+tuval.api.web.bodega.transferencias.dao.dynamics
+tuval.api.web.bodega.transferencias.dao.dynamics.imp
+tuval.api.web.clientes.dao.dynamics
+tuval.api.web.cobranzas.cobros.dao.dynamics
+tuval.api.web.usuarios.dao.dynamics
+tuval.api.web.ventas.cotizaciones.dao.dynamics
+tuval.api.web.ventas.sincronizacion.dao.dynamics

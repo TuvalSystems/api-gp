@@ -23,7 +23,18 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
-    basePackages = "tuval.api.web.models.dao.tuval",
+    basePackages = {
+        "tuval.api.web.bodega.despachos.dao.tuval",
+        "tuval.api.web.bodega.stock.dao.tuval",
+        "tuval.api.web.bodega.transferencias.dao.tuval",
+        "tuval.api.web.clientes.dao.tuval",
+        "tuval.api.web.clientes.sincronizacion.dao.tuval",
+        "tuval.api.web.cobranzas.cobros.dao.tuval",
+        "tuval.api.web.transacciones.dao.tuval",
+        "tuval.api.web.ventas.devoluciones.dao.tuval",
+        "tuval.api.web.ventas.devoluciones.dao.tuval.imp",
+        "tuval.api.web.ventas.sincronizacion.dao.tuval"
+    },
     entityManagerFactoryRef = "tuvalEntityManagerFactory",
     transactionManagerRef = "tuvalTransactionManager")
 public class TuvalJpaConfig {
@@ -60,7 +71,11 @@ public HikariDataSource tuvalDataSource() {
     return builder
         .dataSource(dataSource)
         .properties(properties)
-        .packages("tuval.api.web.models.entity.tuval")
+        .packages("tuval.api.web.bodega.despachos.entity.tuval",
+                    "tuval.api.web.bodega.stock.entity.tuval",
+                    "tuval.api.web.clientes.sucursales.entity.tuval",
+                    "tuval.api.web.cobranzas.cobros.entity.tuval",
+                    "tuval.api.web.ventas.devoluciones.entity.tuval")
         .persistenceUnit("tuvalPU")
         .build();
   }

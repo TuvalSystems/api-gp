@@ -1,0 +1,5 @@
+tuval.api.web.bodega.despachos.entity.tuval
+tuval.api.web.bodega.stock.entity.tuval
+tuval.api.web.clientes.sucursales.entity.tuval
+tuval.api.web.cobranzas.cobros.entity.tuval
+tuval.api.web.ventas.devoluciones.entity.tuval
