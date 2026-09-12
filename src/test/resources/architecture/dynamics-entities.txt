@@ -1,0 +1,3 @@
+tuval.api.web.bodega.reservas.entity.dynamics
+tuval.api.web.usuarios.entity.dynamics
+tuval.api.web.ventas.cotizaciones.entity.dynamics
