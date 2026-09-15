@@ -1,6 +1,7 @@
 package tuval.api.web.cobranzas.cobros.service.dynamics;
 
 import java.util.List;
+
 import tuval.api.web.cobranzas.cobros.dto.CustomerCollectionDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerInvoiceCheckReceiptDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerPendingApplicationDocumentDto;
@@ -14,4 +15,7 @@ public interface ReceivablesService {
 
   CustomerPendingApplicationDocumentDto getPendingApplicationDocuments(
       String documento, String ruc);
+
+  public List<CustomerInvoiceCheckReceiptDto> getCheckInvoicePendingPayments(
+      CustomerCollectionRequest payload);
 }

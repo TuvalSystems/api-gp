@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -13,16 +14,18 @@ import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
-import tuval.api.web.common.util.CoerceHelperUtils;
+
 import tuval.api.web.cobranzas.cobros.dto.CustomerCollectionDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerInvoiceCheckReceiptDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerPendingApplicationDocumentDto;
+import tuval.api.web.common.util.CoerceHelperUtils;
 
 @Repository
 public class CollectionDao {
   private final SimpleJdbcCall spCxC32;
   private final SimpleJdbcCall spCxC33;
   private final SimpleJdbcCall spCxC34;
+  private final SimpleJdbcCall spCxC35;
 
   public CollectionDao(@Qualifier("dynamicsJdbcTemplate") JdbcTemplate jdbcTemplate) {
     JdbcTemplate dynamicsJdbcTemplate =
@@ -51,6 +54,14 @@ public class CollectionDao {
             .declareParameters(
                 new SqlParameter("DOCNUMBR", Types.VARCHAR), new SqlParameter("RUC", Types.VARCHAR))
             .returningResultSet("data", customerPendingApplicationDocumentDto());
+
+    this.spCxC35 =
+        new SimpleJdbcCall(dynamicsJdbcTemplate)
+            .withProcedureName("spCxC35")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("SOPNUMBE", Types.VARCHAR), new SqlParameter("RUC", Types.VARCHAR))
+            .returningResultSet("data", customerInvoiceCheckReceiptMapper());
   }
 
   @SuppressWarnings("unchecked")
@@ -105,6 +116,24 @@ public class CollectionDao {
     return rows.get(0);
   }
 
+  @SuppressWarnings("unchecked")
+  public List<CustomerInvoiceCheckReceiptDto> executeSpCxC35(String documento, String ruc) {
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("SOPNUMBE", documento).addValue("RUC", ruc);
+    Map<String, Object> result = spCxC35.execute(params);
+
+    Object data = result.get("data");
+
+    if (data == null) {
+      return Collections.emptyList();
+    }
+
+    List<CustomerInvoiceCheckReceiptDto> rows = (List<CustomerInvoiceCheckReceiptDto>) data;
+
+    return rows.stream().sorted(customerInvoiceCheckReceipComparator()).toList();
+  }
+
   private RowMapper<CustomerCollectionDto> customerCollectionMapper() {
     return (rs, rowNum) ->
         new CustomerCollectionDto(
@@ -155,8 +184,7 @@ public class CollectionDao {
 
   private Comparator<CustomerCollectionDto> customerCollectionComparator() {
     return Comparator.comparing(
-            CustomerCollectionDto::getFactura,
-            Comparator.nullsLast(Comparator.naturalOrder()))
+            CustomerCollectionDto::getFactura, Comparator.nullsLast(Comparator.naturalOrder()))
         .thenComparing(
             CustomerCollectionDto::getFechaAplicacion,
             Comparator.nullsLast(Comparator.naturalOrder()))
