@@ -1,11 +1,8 @@
 package tuval.api.web.cobranzas.cobros.service.dynamics;
 
 import java.util.List;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Service;
-
 import tuval.api.web.cobranzas.cobros.dao.dynamics.CollectionDao;
 import tuval.api.web.cobranzas.cobros.dto.CustomerCollectionDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerInvoiceCheckReceiptDto;
@@ -32,7 +29,15 @@ public class ReceivablesServiceImp implements ReceivablesService {
   }
 
   @Override
-  public CustomerPendingApplicationDocumentDto getPendingApplicationDocuments(String documento, String ruc){
+  public CustomerPendingApplicationDocumentDto getPendingApplicationDocuments(
+      String documento, String ruc) {
     return collectionDao.executeSpCxC34(documento, ruc);
+  }
+
+  @Override
+  public List<CustomerInvoiceCheckReceiptDto> getCheckInvoicePendingPayments(
+      CustomerCollectionRequest payload) {
+
+    return collectionDao.executeSpCxC35(payload.getDocumento(), payload.getRuc());
   }
 }

@@ -2,9 +2,7 @@ package tuval.api.web.cobranzas.cobros.controller;
 
 import java.util.List;
 import java.util.Map;
-
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,8 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import tuval.api.web.common.response.ResponseJsonUtils;
 import tuval.api.web.cobranzas.cobros.dto.BusinessDaysDto;
 import tuval.api.web.cobranzas.cobros.dto.CheckValidatorDto;
 import tuval.api.web.cobranzas.cobros.dto.ClientOverdueDocumentDto;
@@ -30,6 +26,7 @@ import tuval.api.web.cobranzas.cobros.request.CustomerApplicationPendingRequest;
 import tuval.api.web.cobranzas.cobros.request.CustomerCollectionRequest;
 import tuval.api.web.cobranzas.cobros.service.dynamics.ReceivablesService;
 import tuval.api.web.cobranzas.cobros.service.tuval.CreditCheckService;
+import tuval.api.web.common.response.ResponseJsonUtils;
 
 @RestController
 @RequestMapping(value = "/api/cobros", produces = "application/json")
@@ -211,11 +208,23 @@ public class CollectorController {
   }
 
   @PostMapping("consulta-recibos-cheques")
-  public ResponseEntity<Map<String, Object>> obetenerRecibosCheques(
+  public ResponseEntity<Map<String, Object>> obtenerRecibosCheques(
       @RequestBody CustomerCollectionRequest payload) {
     try {
       List<CustomerInvoiceCheckReceiptDto> result =
           receivablesService.getCheckInvoicePayments(payload);
+      return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @PostMapping("consulta-cheques-no-cobrados")
+  public ResponseEntity<Map<String, Object>> obtenerChequesNoCobrados(
+      @RequestBody CustomerCollectionRequest payload) {
+    try {
+      List<CustomerInvoiceCheckReceiptDto> result =
+          receivablesService.getCheckInvoicePendingPayments(payload);
       return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
     } catch (Exception e) {
       return ResponseJsonUtils.buildException(e);
@@ -244,7 +253,7 @@ public class CollectorController {
     }
   }
 
-   @GetMapping("consultar-estado-cuenta-cliente-resumen")
+  @GetMapping("consultar-estado-cuenta-cliente-resumen")
   public ResponseEntity<Map<String, Object>> obtenerEstadoCuentaResument(@RequestParam String ruc) {
     try {
       CustomerResumenAccountDto result = creditCheckService.getCustomerResumenAccount(ruc);
