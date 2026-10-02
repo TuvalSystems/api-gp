@@ -15,8 +15,10 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 
+import jakarta.validation.constraints.NotNull;
 import tuval.api.web.cobranzas.cobros.dto.CustomerCollectionDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerInvoiceCheckReceiptDto;
+import tuval.api.web.cobranzas.cobros.dto.CustomerInvoicePendingToPostDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerPendingApplicationDocumentDto;
 import tuval.api.web.common.util.CoerceHelperUtils;
 
@@ -26,6 +28,7 @@ public class CollectionDao {
   private final SimpleJdbcCall spCxC33;
   private final SimpleJdbcCall spCxC34;
   private final SimpleJdbcCall spCxC35;
+  private final SimpleJdbcCall spCxC36;
 
   public CollectionDao(@Qualifier("dynamicsJdbcTemplate") JdbcTemplate jdbcTemplate) {
     JdbcTemplate dynamicsJdbcTemplate =
@@ -62,6 +65,14 @@ public class CollectionDao {
             .declareParameters(
                 new SqlParameter("SOPNUMBE", Types.VARCHAR), new SqlParameter("RUC", Types.VARCHAR))
             .returningResultSet("data", customerInvoiceCheckReceiptMapper());
+
+    this.spCxC36 =
+        new SimpleJdbcCall(dynamicsJdbcTemplate)
+            .withProcedureName("spCxC36")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlParameter("SOPNUMBE", Types.VARCHAR), new SqlParameter("RUC", Types.VARCHAR))
+            .returningResultSet("data", customerInvoicePendingToPostMapper());
   }
 
   @SuppressWarnings("unchecked")
@@ -134,6 +145,24 @@ public class CollectionDao {
     return rows.stream().sorted(customerInvoiceCheckReceipComparator()).toList();
   }
 
+  @SuppressWarnings("unchecked")
+  public List<CustomerInvoicePendingToPostDto> executeSpCxC36(String documento, String ruc) {
+
+    MapSqlParameterSource params =
+        new MapSqlParameterSource().addValue("SOPNUMBE", documento).addValue("RUC", ruc);
+    Map<String, Object> result = spCxC36.execute(params);
+
+    Object data = result.get("data");
+
+    if (data == null) {
+      return Collections.emptyList();
+    }
+
+    List<CustomerInvoicePendingToPostDto> rows = (List<CustomerInvoicePendingToPostDto>) data;
+
+    return rows.stream().sorted(customerInvoicePendingToPostComparator()).toList();
+  }
+
   private RowMapper<CustomerCollectionDto> customerCollectionMapper() {
     return (rs, rowNum) ->
         new CustomerCollectionDto(
@@ -197,5 +226,25 @@ public class CollectionDao {
     return Comparator.comparing(
         CustomerInvoiceCheckReceiptDto::getFactura,
         Comparator.nullsLast(Comparator.naturalOrder()));
+  }
+
+
+  
+  private Comparator<CustomerInvoicePendingToPostDto> customerInvoicePendingToPostComparator() {
+    return Comparator.comparing(
+        CustomerInvoicePendingToPostDto::getFactura,
+        Comparator.nullsLast(Comparator.naturalOrder()));
+  }
+
+  private RowMapper<CustomerInvoicePendingToPostDto> customerInvoicePendingToPostMapper() {
+    return (rs, rowNum) ->
+        new CustomerInvoicePendingToPostDto(
+            CoerceHelperUtils.stringOrEmpty(rs.getString("cq_numrecibo")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("cq_idcliente")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("cf_cobrogp")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("cf_numfac")),
+            CoerceHelperUtils.toBigDecimal(rs.getBigDecimal("cf_montoapl")),
+            CoerceHelperUtils.stringOrEmpty(rs.getString("cq_estado")),
+            CoerceHelperUtils.toLocalDate(rs.getDate("cf_fecmod")));
   }
 }
