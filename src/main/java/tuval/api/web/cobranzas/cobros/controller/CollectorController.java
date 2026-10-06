@@ -2,7 +2,7 @@ package tuval.api.web.cobranzas.cobros.controller;
 
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,11 +10,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import lombok.RequiredArgsConstructor;
 import tuval.api.web.cobranzas.cobros.dto.BusinessDaysDto;
 import tuval.api.web.cobranzas.cobros.dto.CheckValidatorDto;
 import tuval.api.web.cobranzas.cobros.dto.ClientOverdueDocumentDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerCollectionDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerInvoiceCheckReceiptDto;
+import tuval.api.web.cobranzas.cobros.dto.CustomerInvoicePendingToPostDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerPendingApplicationDocumentDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerResumenAccountDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerStatusAccountDto;
@@ -262,4 +265,20 @@ public class CollectorController {
       return ResponseJsonUtils.buildException(e);
     }
   }
+
+
+
+    @PostMapping("consultar-documentos-pendientes-contabilizar")
+  public ResponseEntity<Map<String, Object>> obtenerDocumentosPendienteContabilizar(
+      @RequestBody CustomerCollectionRequest payload) {
+    try {
+      List<CustomerInvoicePendingToPostDto> result =
+          receivablesService.getPendingPostingDocuments(payload);
+      return ResponseJsonUtils.buildSuccessWithData("Datos Obtendidos Correctamente", result);
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  
 }

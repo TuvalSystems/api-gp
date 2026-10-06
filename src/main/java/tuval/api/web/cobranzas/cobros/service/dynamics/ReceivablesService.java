@@ -4,6 +4,7 @@ import java.util.List;
 
 import tuval.api.web.cobranzas.cobros.dto.CustomerCollectionDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerInvoiceCheckReceiptDto;
+import tuval.api.web.cobranzas.cobros.dto.CustomerInvoicePendingToPostDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerPendingApplicationDocumentDto;
 import tuval.api.web.cobranzas.cobros.request.CustomerCollectionRequest;
 
@@ -17,5 +18,8 @@ public interface ReceivablesService {
       String documento, String ruc);
 
   public List<CustomerInvoiceCheckReceiptDto> getCheckInvoicePendingPayments(
+      CustomerCollectionRequest payload);
+
+  public List<CustomerInvoicePendingToPostDto> getPendingPostingDocuments(
       CustomerCollectionRequest payload);
 }

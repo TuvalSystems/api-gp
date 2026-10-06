@@ -58,6 +58,10 @@ public class DetailInvoiceRequest {
     private BigDecimal descuento;
     private Long pedidoId;                     
     private Long detalleId;                     
+    private String categoria;
+    private String linea;
+    private String clase;
+    private String configuracionItemL;
 
 
     

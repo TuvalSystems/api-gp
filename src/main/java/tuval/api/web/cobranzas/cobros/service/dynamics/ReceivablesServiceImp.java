@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import tuval.api.web.cobranzas.cobros.dao.dynamics.CollectionDao;
 import tuval.api.web.cobranzas.cobros.dto.CustomerCollectionDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerInvoiceCheckReceiptDto;
+import tuval.api.web.cobranzas.cobros.dto.CustomerInvoicePendingToPostDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerPendingApplicationDocumentDto;
 import tuval.api.web.cobranzas.cobros.request.CustomerCollectionRequest;
 
@@ -40,4 +41,13 @@ public class ReceivablesServiceImp implements ReceivablesService {
 
     return collectionDao.executeSpCxC35(payload.getDocumento(), payload.getRuc());
   }
+
+   @Override
+  public List<CustomerInvoicePendingToPostDto> getPendingPostingDocuments(
+      CustomerCollectionRequest payload) {
+
+    return collectionDao.executeSpCxC36(payload.getDocumento(), payload.getRuc());
+  }
+
+  
 }
