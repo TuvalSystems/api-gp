@@ -127,7 +127,7 @@ public class ClientTuvalDao {
         throw new RuntimeException("Error en base de datos: " + mensajeRespuesta);
       }
     } catch (Exception e) {
-      throw new RuntimeException("SP executeSpStoreHeaderDeliveryNote falló: " + e.getMessage(), e);
+      throw new RuntimeException("SP executeSpCreateOrModifyClient falló: " + e.getMessage(), e);
     }
   }
 
