@@ -19,6 +19,7 @@ import tuval.api.web.clientes.dto.ListSegmentClientDto;
 import tuval.api.web.clientes.dto.ListSellerDto;
 import tuval.api.web.clientes.dto.TypeSellerDto;
 import tuval.api.web.clientes.request.ClientBranchRequets;
+import tuval.api.web.clientes.request.BranchConfigSyncKeyRequest;
 import tuval.api.web.clientes.request.ClientSubsegmentRucRequest;
 import tuval.api.web.clientes.request.SellerRequest;
 
@@ -50,6 +51,109 @@ public class ClientDynamicDao {
    }
 
 
+
+  public List<tuval.api.web.clientes.dto.PendingBranchConfigSyncDto> findPendingBranchConfigurations(int limit, BranchConfigSyncKeyRequest cursor) {
+    if (limit < 1 || limit > 1000) {
+      throw new IllegalArgumentException("El limite debe estar entre 1 y 1000");
+    }
+    String sql = """
+        SELECT TOP (?) co_emp, co_loc, LTRIM(RTRIM(tx_cli)) AS tx_cli,
+            co_ven, fe_ultmod, co_usrmod,
+            LTRIM(RTRIM(st_cligencom)) AS st_cligencom,
+            LTRIM(RTRIM(st_solresantfec)) AS st_solresantfec,
+            LTRIM(RTRIM(st_solressinfec)) AS st_solressinfec,
+            LTRIM(RTRIM(st_tipVen)) AS st_tipVen, st_sinMySql
+        FROM [Dynamics2021].[dbo].[tbr_cliloc]
+        WHERE st_sinMySql = 1
+        """;
+    if (cursor != null) {
+      if (cursor.getCoEmp() == null || cursor.getCoLoc() == null
+          || cursor.getTxCli() == null || cursor.getTxCli().isBlank()) {
+        throw new IllegalArgumentException("El cursor requiere coEmp, coLoc y txCli");
+      }
+      sql += """
+          AND (co_emp > ?
+              OR (co_emp = ? AND co_loc > ?)
+              OR (co_emp = ? AND co_loc = ? AND LTRIM(RTRIM(tx_cli)) > ?))
+          """;
+    }
+    sql += " ORDER BY co_emp, co_loc, LTRIM(RTRIM(tx_cli))";
+    try {
+      var mapper = new org.springframework.jdbc.core.BeanPropertyRowMapper<>(
+          tuval.api.web.clientes.dto.PendingBranchConfigSyncDto.class);
+      if (cursor == null) {
+        return jdbcTemplate.query(sql, mapper, limit);
+      }
+      return jdbcTemplate.query(sql, mapper, limit,
+          cursor.getCoEmp(), cursor.getCoEmp(), cursor.getCoLoc(),
+          cursor.getCoEmp(), cursor.getCoLoc(), cursor.getTxCli().trim());
+    } catch (DataAccessException e) {
+      throw new IllegalStateException("Error al consultar configuraciones pendientes de tbr_cliloc", e);
+    }
+  }
+
+  public int markBranchConfigurationSynced(BranchConfigSyncKeyRequest request) {
+    String sql = """
+        UPDATE [Dynamics2021].[dbo].[tbr_cliloc]
+        SET st_sinMySql = 0
+        WHERE co_emp = ? AND co_loc = ? AND tx_cli = ?
+        """;
+    try {
+      int affectedRows = jdbcTemplate.update(sql, request.getCoEmp(), request.getCoLoc(),
+          request.getTxCli().trim());
+      if (affectedRows == 0) {
+        throw new IllegalStateException("No existe configuracion de sucursal para los filtros enviados");
+      }
+      return affectedRows;
+    } catch (DataAccessException e) {
+      throw new IllegalStateException("Error al actualizar st_sinMySql de tbr_cliloc", e);
+    }
+  }
+
+  public int insertBranchConfigurationHistory(BranchConfigSyncKeyRequest request) {
+    String sql = """
+        INSERT INTO [Dynamics2021].[dbo].[tbh_cliLoc]
+            (co_his, co_emp, co_loc, tx_cli, co_ven, fe_ultmod, co_usrmod,
+             st_cligencom, st_solresantfec, st_solressinfec, st_tipVen, st_sinMySql)
+        SELECT (SELECT COALESCE(MAX(CONVERT(int, history.co_his)), 0) + 1
+                    FROM [Dynamics2021].[dbo].[tbh_cliLoc] AS history WITH (TABLOCKX, HOLDLOCK)
+                    WHERE history.co_emp = config.co_emp
+                      AND history.co_loc = config.co_loc
+                      AND history.tx_cli = config.tx_cli
+                      AND (history.co_ven = config.co_ven
+                           OR (history.co_ven IS NULL AND config.co_ven IS NULL))),
+            config.co_emp, config.co_loc, config.tx_cli, config.co_ven,
+            config.fe_ultmod, config.co_usrmod, config.st_cligencom,
+            config.st_solresantfec, config.st_solressinfec,
+            config.st_tipVen, config.st_sinMySql
+        FROM [Dynamics2021].[dbo].[tbr_cliloc] AS config
+        WHERE config.co_emp = ? AND config.co_loc = ? AND config.tx_cli = ?
+        """;
+    try {
+      int affectedRows = jdbcTemplate.update(sql, request.getCoEmp(), request.getCoLoc(),
+          request.getTxCli().trim());
+      if (affectedRows == 0) {
+        throw new IllegalStateException("No existe configuracion de sucursal para guardar en el historico");
+      }
+      return affectedRows;
+    } catch (DataAccessException e) {
+      throw new IllegalStateException("Error al insertar configuracion en tbh_cliLoc: "
+          + e.getMostSpecificCause().getMessage(), e);
+    }
+  }
+
+  public long countClientBranchesPendingMySqlSync() {
+    String sql = """
+        SELECT COUNT_BIG(*)
+        FROM [Dynamics2021].[dbo].[tbr_cliloc]
+        WHERE st_sinMySql = 1
+        """;
+    try {
+      return jdbcTemplate.queryForObject(sql, Long.class);
+    } catch (DataAccessException e) {
+      throw new IllegalStateException("Ocurrio un error al consultar el contador de tbr_cliloc", e);
+    }
+  }
 
   public ListSellerDto findByTxUsr(SellerRequest req) {
     String SQL =
@@ -211,6 +315,8 @@ public class ClientDynamicDao {
       throw new RuntimeException("Fallo técnico en la base de datos: " + e.getMessage());
     }
   }
+
+
 
  
 }

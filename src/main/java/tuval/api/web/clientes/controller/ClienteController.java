@@ -21,6 +21,7 @@ import tuval.api.web.clientes.dto.ListSellerDto;
 import tuval.api.web.clientes.dto.NewAddressStatusDto;
 import tuval.api.web.clientes.dto.TypeSellerDto;
 import tuval.api.web.clientes.request.ClientBranchRequets;
+import tuval.api.web.clientes.request.BranchConfigSyncKeyRequest;
 import tuval.api.web.clientes.request.ClientRequest;
 import tuval.api.web.clientes.request.ClientSubsegmentRucRequest;
 import tuval.api.web.clientes.request.NewAddressRequest;
@@ -34,6 +35,65 @@ import tuval.api.web.common.response.ResponseJsonUtils;
 public class ClienteController {
 
    private final ClientService clienteService;
+
+  @CrossOrigin
+  @PostMapping("/configuraciones-sucursales-pendientes-sincronizar-mysql")
+  public ResponseEntity<Map<String, Object>> getPendingBranchConfigurations(
+      @Valid @RequestBody tuval.api.web.clientes.request.PendingBranchConfigSyncRequest request) {
+    try {
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa",
+          clienteService.getPendingBranchConfigurations(request));
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @CrossOrigin
+  @PostMapping("/marcar-configuracion-sucursal-sincronizada-mysql")
+  public ResponseEntity<Map<String, Object>> markBranchConfigurationSynced(
+      @Valid @RequestBody BranchConfigSyncKeyRequest request) {
+    try {
+      return ResponseJsonUtils.buildSuccessWithData("Configuracion marcada como sincronizada",
+          clienteService.markBranchConfigurationSynced(request));
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @CrossOrigin
+  @PostMapping("/confirmar-sincronizacion-configuracion-sucursal")
+  public ResponseEntity<Map<String, Object>> confirmBranchConfigurationSync(
+      @Valid @RequestBody BranchConfigSyncKeyRequest request) {
+    try {
+      return ResponseJsonUtils.buildSuccessWithData("Configuracion sincronizada e historico guardado",
+          clienteService.confirmBranchConfigurationSync(request));
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @CrossOrigin
+  @PostMapping("/guardar-historico-configuracion-sucursal")
+  public ResponseEntity<Map<String, Object>> saveBranchConfigurationHistory(
+      @Valid @RequestBody BranchConfigSyncKeyRequest request) {
+    try {
+      return ResponseJsonUtils.buildSuccessWithData("Configuracion guardada en el historico",
+          clienteService.saveBranchConfigurationHistory(request));
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
+  @CrossOrigin
+  @GetMapping("/contador-sucursales-pendientes-sincronizar-mysql")
+  public ResponseEntity<Map<String, Object>> obtenerContadorSucursalesPendientesSincronizarMySql() {
+    try {
+      long contador = clienteService.getClientBranchesPendingMySqlSyncCount();
+      return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", contador);
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
 
   @CrossOrigin
   @PostMapping("/obtener-tipo-vendedor")
