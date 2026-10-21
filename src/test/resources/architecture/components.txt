@@ -50,3 +50,4 @@ tuval.api.web.ventas.sincronizacion.controller.GeneralController
 tuval.api.web.ventas.sincronizacion.dao.dynamics.GeneralDynamicsDao
 tuval.api.web.ventas.sincronizacion.dao.tuval.GeneralDao
 tuval.api.web.ventas.sincronizacion.service.tuval.GeneralService
+tuval.api.web.ventas.ordenCompra.dao.dynamics.PurchaseOrderDao
