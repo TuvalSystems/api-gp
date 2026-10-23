@@ -35,6 +35,8 @@ public class PurchaseOrderDao {
                 new SqlParameter("@usuario", Types.VARCHAR),
                 new SqlParameter("@tipo_ordDes", Types.INTEGER),
                 new SqlParameter("@valorOrdenCompra", Types.DECIMAL),
+                new SqlParameter("@bodega", Types.VARCHAR),
+                new SqlParameter("@tx_numgui", Types.NVARCHAR),
                 new SqlOutParameter("@ordenCompra", Types.VARCHAR));
   }
 
@@ -44,7 +46,9 @@ public class PurchaseOrderDao {
             .addValue("@proveedor", request.proveedor())
             .addValue("@usuario", request.usuario())
             .addValue("@tipo_ordDes", request.tipoDespachoId())
-            .addValue("@valorOrdenCompra", request.valorOrdenCompra());
+            .addValue("@valorOrdenCompra", request.valorOrdenCompra())
+            .addValue("@bodega", request.bodega())
+            .addValue("@tx_numgui", request.numGuia());
     Map<String, Object> result = spInsertarOrdenCompraDirectaGP.execute(params);
 
     Number returnCode = (Number) result.get("RETURN_VALUE");

@@ -32,7 +32,7 @@ class PurchaseOrderDaoCallTest {
     assertThat(call.getCallString()).isEqualTo(
         "{? = call Dynamics2021.dbo.sp_InsertarOrdenCompraDirectaGP("
             + "@proveedor = ?, @usuario = ?, @tipo_ordDes = ?, "
-            + "@valorOrdenCompra = ?, @ordenCompra = ?)}");
+            + "@valorOrdenCompra = ?, @bodega = ?, @tx_numgui = ?, @ordenCompra = ?)}");
     verify(connection, never()).prepareCall(anyString());
   }
 }
