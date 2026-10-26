@@ -62,6 +62,7 @@ public class DetailInvoiceRequest {
     private String linea;
     private String clase;
     private String configuracionItemL;
+    private BigDecimal fleValor;
 
 
     

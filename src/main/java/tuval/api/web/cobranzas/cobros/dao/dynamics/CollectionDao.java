@@ -15,7 +15,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 
-import jakarta.validation.constraints.NotNull;
+
 import tuval.api.web.cobranzas.cobros.dto.CustomerCollectionDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerInvoiceCheckReceiptDto;
 import tuval.api.web.cobranzas.cobros.dto.CustomerInvoicePendingToPostDto;

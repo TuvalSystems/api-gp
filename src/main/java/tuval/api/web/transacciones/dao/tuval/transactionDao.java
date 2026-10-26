@@ -23,7 +23,6 @@ import tuval.api.web.ventas.facturacion.dto.responseInvoiceVtaDto;
 import tuval.api.web.ventas.facturacion.request.DetailInvoiceRequest;
 import tuval.api.web.ventas.facturacion.request.HeaderInvoiceRequest;
 import tuval.api.web.ventas.facturacion.request.ResponseConsultInvoiceRequest;
-import tuval.api.web.ventas.facturacion.util.InvoiceHelperUtils;
 
 @Repository
 public class transactionDao {
@@ -272,48 +271,42 @@ public class transactionDao {
   /** proceso de facturacion */
   public void executeSpStoreHeaderInvoice(HeaderInvoiceRequest req) {
     try {
-      InvoiceHelperUtils.validateHeaderInvoiceRequired(req);
+      CoerceHelperUtils.validateHeaderInvoiceRequired(req);
       var call =
           new SimpleJdbcCall(jdbcTemplate).withProcedureName("MSW_SP_GUARDAR_FACTURA_VTA_CAB");
       MapSqlParameterSource p =
           new MapSqlParameterSource()
-              .addValue("pedido_id", req.getPedidoId())
-              .addValue("docu", InvoiceHelperUtils.str(req.getFactVtaDocuOrigen(), 30))
-              .addValue("id_tipo", InvoiceHelperUtils.str(req.getFactVtaIdTipo(), 15))
-              .addValue("punto_venta", InvoiceHelperUtils.str(req.getFacVtaPuntoVenta(), 15))
-              .addValue("doc_id", InvoiceHelperUtils.str(req.getFacVtaDocId(), 20))
-              .addValue("cliente", InvoiceHelperUtils.str(req.getFactVtaIdCliente(), 15))
-              .addValue("vendedor", InvoiceHelperUtils.str(req.getFactVtaIdVendedor(), 15))
-              .addValue("direccion", InvoiceHelperUtils.str(req.getFacVtaIdDireccion(), 30))
-              .addValue(
-                  "direccion_envio", InvoiceHelperUtils.str(req.getFacVtaIdDireccionEnvio(), 30))
-              .addValue("cond_pago", InvoiceHelperUtils.str(req.getFacVtaCondPago(), 20))
-              .addValue("forma_pago", InvoiceHelperUtils.str(req.getFacVtaFormaPago(), 30))
-              .addValue("documento_compra", InvoiceHelperUtils.str(req.getFactVtaDocuCompra(), 30))
-              .addValue("tipo_despacho", InvoiceHelperUtils.str(req.getFacVtaTipoDespacho(), 30))
-              .addValue("nota_docu", InvoiceHelperUtils.str(req.getFacVtaNotaDocu(), 8000))
-              .addValue(
-                  "fecha", InvoiceHelperUtils.ts(req.getFacVtaDateDocu()), java.sql.Types.TIMESTAMP)
-              .addValue("bodega", InvoiceHelperUtils.str(req.getFacVtaBodega(), 10))
-              .addValue(
-                  "subtotal",
-                  InvoiceHelperUtils.dec(req.getFacVtaSubtotal()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "desc_comercial",
-                  InvoiceHelperUtils.dec(req.getFacVtaDescuentoComercial()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "impuesto",
-                  InvoiceHelperUtils.dec(req.getFacVtaImpuesto()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "total", InvoiceHelperUtils.dec(req.getFacVtaTotal()), java.sql.Types.DECIMAL)
-              .addValue("nota_cliente", InvoiceHelperUtils.str(req.getFacVtaNotaCliente(), 300))
-              .addValue("userid", InvoiceHelperUtils.str(req.getUserIdCreator(), 100))
-              .addValue("cond_pago_org", InvoiceHelperUtils.str(req.getCondIdOriginal(), 100))
-              .addValue("apro_comer_userid", InvoiceHelperUtils.str(req.getUserApprovalId(), 20))
-              .addValue("co_motproven", CoerceHelperUtils.getInt(req.getProyecto(), 30));
+              .addValue("pedido_id", req.getPedidoId(), Types.BIGINT)
+              .addValue("docu", CoerceHelperUtils.str(req.getFactVtaDocuOrigen(), 30))
+              .addValue("id_tipo", CoerceHelperUtils.str(req.getFactVtaIdTipo(), 15))
+              .addValue("punto_venta", CoerceHelperUtils.str(req.getFacVtaPuntoVenta(), 15))
+              .addValue("doc_id", CoerceHelperUtils.str(req.getFacVtaDocId(), 20))
+              .addValue("cliente", CoerceHelperUtils.str(req.getFactVtaIdCliente(), 15))
+              .addValue("vendedor", CoerceHelperUtils.str(req.getFactVtaIdVendedor(), 15))
+              .addValue("direccion", CoerceHelperUtils.str(req.getFacVtaIdDireccion(), 30))
+              .addValue("direccion_envio", CoerceHelperUtils.str(req.getFacVtaIdDireccionEnvio(), 30))
+              .addValue("cond_pago", CoerceHelperUtils.str(req.getFacVtaCondPago(), 20))
+              .addValue("forma_pago", CoerceHelperUtils.str(req.getFacVtaFormaPago(), 30))
+              .addValue("documento_compra", CoerceHelperUtils.str(req.getFactVtaDocuCompra(), 30))
+              .addValue("tipo_despacho", CoerceHelperUtils.str(req.getFacVtaTipoDespacho(), 30))
+              .addValue("nota_docu", CoerceHelperUtils.str(req.getFacVtaNotaDocu(), 8000))
+              .addValue("fecha", CoerceHelperUtils.ts(req.getFacVtaDateDocu()), java.sql.Types.TIMESTAMP)
+              .addValue("bodega", CoerceHelperUtils.str(req.getFacVtaBodega(), 10))
+              .addValue("subtotal", CoerceHelperUtils.dec(req.getFacVtaSubtotal(), 5), java.sql.Types.DECIMAL)
+              .addValue("desc_comercial", CoerceHelperUtils.dec(req.getFacVtaDescuentoComercial(), 5),java.sql.Types.DECIMAL)
+              .addValue("impuesto", CoerceHelperUtils.dec(req.getFacVtaImpuesto(), 5), java.sql.Types.DECIMAL)
+              .addValue("total", CoerceHelperUtils.dec(req.getFacVtaTotal(), 5), java.sql.Types.DECIMAL)
+              .addValue("nota_cliente", CoerceHelperUtils.str(req.getFacVtaNotaCliente(), 300))
+              .addValue("userid", CoerceHelperUtils.str(req.getUserIdCreator(), 20))
+              .addValue("cond_pago_org", CoerceHelperUtils.str(req.getCondIdOriginal(), 21))
+              .addValue("apro_comer_userid", CoerceHelperUtils.str(req.getUserApprovalId(), 20))
+              .addValue("co_motproven", CoerceHelperUtils.toSmallInt(req.getProyecto(), 30), Types.SMALLINT)
+              .addValue("peso", CoerceHelperUtils.dec(req.getPeso(), 5), Types.DECIMAL)
+              .addValue("fle_valor", CoerceHelperUtils.dec(req.getFleValor(), 5), Types.DECIMAL)
+              .addValue("fle_peso", CoerceHelperUtils.dec(req.getFlePeso(), 5), Types.DECIMAL)
+              .addValue("fle_proveedor_id", CoerceHelperUtils.toSmallInt(req.getFleProveedorId(), 0), Types.SMALLINT)
+              .addValue("fle_usuario_id", CoerceHelperUtils.toSmallInt(req.getFleUsuarioId(), 0), Types.SMALLINT)
+              .addValue("fle_fecha", CoerceHelperUtils.toTimestamp(req.getFleFecha()), Types.TIMESTAMP);
 
       call.execute(p);
     } catch (jakarta.validation.ValidationException ve) {
@@ -328,7 +321,7 @@ public class transactionDao {
   public void executeSpStoreDetailInvoice(DetailInvoiceRequest req) {
     try {
 
-      InvoiceHelperUtils.validateDetailInvoiceRequired(req);
+      CoerceHelperUtils.validateDetailInvoiceRequired(req);
 
       var call =
           new SimpleJdbcCall(jdbcTemplate).withProcedureName("MSW_SP_GUARDAR_FACTURA_VTA_DET");
@@ -337,60 +330,29 @@ public class transactionDao {
           new MapSqlParameterSource()
               .addValue("detalle_id", req.getDetalleId())
               .addValue("pedido_id", req.getPedidoId())
-              .addValue("docu", InvoiceHelperUtils.str(req.getFacVtaDetDocuOrigen(), 30))
-              .addValue(
-                  "tipo",
-                  InvoiceHelperUtils.str(req.getFacVtaDetIdTipo(), 15)) // usa el mismo nombre
-              .addValue(
-                  "linea",
-                  InvoiceHelperUtils.str(req.getFacVtaDetLinea(), 5)) // o Types.INTEGER si el SP
-              .addValue("articulo", InvoiceHelperUtils.str(req.getFacVtaDetArticulo(), 30))
-              .addValue(
-                  "descripcion_articulo",
-                  InvoiceHelperUtils.str(req.getFacVtaDetDescArticulo(), 255))
-              .addValue(
-                  "unidad",
-                  InvoiceHelperUtils.str(req.getFacVtaDetUnidadMedida(), 10)) // verifica tipo
-              .addValue("bodega", InvoiceHelperUtils.str(req.getFacVtadetBodega(), 10))
-              .addValue(
-                  "cantidad",
-                  InvoiceHelperUtils.dec(req.getFacVtaDetCantidad()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "costo",
-                  InvoiceHelperUtils.dec(req.getFacVtaCostoUnitario()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "precio",
-                  InvoiceHelperUtils.dec(req.getFacVtaDetPrecioUnitario()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "descuento",
-                  InvoiceHelperUtils.dec(req.getFacVtaDetDescuento()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "impuesto",
-                  InvoiceHelperUtils.dec(req.getFacVtaDetImpuestoIva()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "total", InvoiceHelperUtils.dec(req.getFacVtaDetTotal()), java.sql.Types.DECIMAL)
-              .addValue("descripcion_org", InvoiceHelperUtils.str(req.getDescripcionOrginal(), 300))
-              .addValue(
-                  "valor_org",
-                  InvoiceHelperUtils.dec(req.getValorOrginal()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "descuento_org",
-                  InvoiceHelperUtils.dec(req.getDescuentoOrginal()),
-                  java.sql.Types.DECIMAL)
-              .addValue(
-                  "descuento_final",
-                  InvoiceHelperUtils.dec(req.getDescuento()),
-                  java.sql.Types.DECIMAL)
-              .addValue("txCat", InvoiceHelperUtils.str(req.getCategoria(), 300))
-              .addValue("txLin", InvoiceHelperUtils.str(req.getLinea(), 300))
-              .addValue("txCla", InvoiceHelperUtils.str(req.getClase(), 300))
-              .addValue("txCfgItmL", InvoiceHelperUtils.str(req.getConfiguracionItemL(), 300));
+              .addValue("docu", CoerceHelperUtils.str(req.getFacVtaDetDocuOrigen(), 30))
+              .addValue("tipo", CoerceHelperUtils.str(req.getFacVtaDetIdTipo(), 15)) // usa el mismo nombre
+              .addValue("linea", CoerceHelperUtils.str(req.getFacVtaDetLinea(), 5)) // o Types.INTEGER si el SP
+              .addValue("articulo", CoerceHelperUtils.str(req.getFacVtaDetArticulo(), 30))
+              .addValue("descripcion_articulo", CoerceHelperUtils.str(req.getFacVtaDetDescArticulo(), 255))
+              .addValue("unidad", CoerceHelperUtils.str(req.getFacVtaDetUnidadMedida(), 10)) // verifica tipo
+              .addValue("bodega", CoerceHelperUtils.str(req.getFacVtadetBodega(), 10))
+              .addValue("cantidad", CoerceHelperUtils.dec(req.getFacVtaDetCantidad()),java.sql.Types.DECIMAL)
+              .addValue("costo",CoerceHelperUtils.dec(req.getFacVtaCostoUnitario()), java.sql.Types.DECIMAL)
+              .addValue("precio", CoerceHelperUtils.dec(req.getFacVtaDetPrecioUnitario()), java.sql.Types.DECIMAL)
+              .addValue("descuento", CoerceHelperUtils.dec(req.getFacVtaDetDescuento()),java.sql.Types.DECIMAL)
+              .addValue("impuesto", CoerceHelperUtils.dec(req.getFacVtaDetImpuestoIva()), java.sql.Types.DECIMAL)
+              .addValue("total", CoerceHelperUtils.dec(req.getFacVtaDetTotal()), java.sql.Types.DECIMAL)
+              .addValue("descripcion_org", CoerceHelperUtils.str(req.getDescripcionOrginal(), 300))
+              .addValue("valor_org", CoerceHelperUtils.dec(req.getValorOrginal()),java.sql.Types.DECIMAL)
+              .addValue("descuento_org", CoerceHelperUtils.dec(req.getDescuentoOrginal()), java.sql.Types.DECIMAL)
+              .addValue( "descuento_final",   CoerceHelperUtils.dec(req.getDescuento()), java.sql.Types.DECIMAL)
+              .addValue("txCat", CoerceHelperUtils.str(req.getCategoria(), 300))
+              .addValue("txLin", CoerceHelperUtils.str(req.getLinea(), 300))
+              .addValue("txCla", CoerceHelperUtils.str(req.getClase(), 300))
+              .addValue("txCfgItmL", CoerceHelperUtils.str(req.getConfiguracionItemL(), 300))
+              .addValue("fle_valor", CoerceHelperUtils.dec(req.getFleValor()), java.sql.Types.DECIMAL)
+              ;
 
       call.execute(p);
     } catch (jakarta.validation.ValidationException ve) {
@@ -412,8 +374,8 @@ public class transactionDao {
                   new SqlParameter("TIPO_DOCU", Types.VARCHAR));
       MapSqlParameterSource p =
           new MapSqlParameterSource()
-              .addValue("DOCU", InvoiceHelperUtils.str(request.getFactVtaDocuOrigen(), 30))
-              .addValue("TIPO_DOCU", InvoiceHelperUtils.str(request.getFactVtaIdTipo(), 15));
+              .addValue("DOCU", CoerceHelperUtils.str(request.getFactVtaDocuOrigen(), 30))
+              .addValue("TIPO_DOCU", CoerceHelperUtils.str(request.getFactVtaIdTipo(), 15));
       jdbcCall.execute(p);
     } catch (Exception e) {
       throw new RuntimeException(
@@ -459,8 +421,8 @@ public class transactionDao {
                   });
       MapSqlParameterSource p =
           new MapSqlParameterSource()
-              .addValue("docu", InvoiceHelperUtils.str(request.getDocumento(), 300))
-              .addValue("tipo", InvoiceHelperUtils.str(request.getTipoDocumento(), 15));
+              .addValue("docu", CoerceHelperUtils.str(request.getDocumento(), 300))
+              .addValue("tipo", CoerceHelperUtils.str(request.getTipoDocumento(), 15));
       Map<String, Object> out = jdbcCall.execute(p);
 
       @SuppressWarnings("unchecked")
@@ -485,8 +447,8 @@ public class transactionDao {
                   new SqlParameter("docu", Types.VARCHAR), new SqlParameter("tipo", Types.VARCHAR));
       MapSqlParameterSource p =
           new MapSqlParameterSource()
-              .addValue("docu", InvoiceHelperUtils.str(request.getDocumento(), 300))
-              .addValue("tipo", InvoiceHelperUtils.str(request.getTipoDocumento(), 15));
+              .addValue("docu", CoerceHelperUtils.str(request.getDocumento(), 300))
+              .addValue("tipo", CoerceHelperUtils.str(request.getTipoDocumento(), 15));
       jdbcCall.execute(p);
     } catch (Exception e) {
       throw new RuntimeException(
