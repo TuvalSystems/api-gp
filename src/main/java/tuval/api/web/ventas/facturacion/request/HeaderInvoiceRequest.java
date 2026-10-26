@@ -86,6 +86,7 @@ public class HeaderInvoiceRequest {
   private BigDecimal flePeso;
   private Integer  fleProveedorId;
   private Integer fleUsuarioId;
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime fleFecha;
 
 }
