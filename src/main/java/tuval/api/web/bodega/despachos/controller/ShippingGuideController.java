@@ -3,6 +3,7 @@ package tuval.api.web.bodega.despachos.controller;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +21,7 @@ import tuval.api.web.bodega.despachos.entity.tuval.HeaderGuideTransferVtaRespons
 import tuval.api.web.bodega.despachos.entity.tuval.ValidateExistsDeliveryNoteResponse;
 import tuval.api.web.bodega.despachos.request.DispatchDeliveryNoteMovementRequest;
 import tuval.api.web.bodega.despachos.request.DispatchVtaRequest;
+import tuval.api.web.bodega.despachos.request.GuidePurchaseOrderRequest;
 import tuval.api.web.bodega.despachos.request.TransferVtaRequest;
 import tuval.api.web.bodega.despachos.request.ValidateGuideDispatchRequest;
 import tuval.api.web.bodega.despachos.request.ValidateGuideSalesTransferedRequest;
@@ -32,6 +34,21 @@ import tuval.api.web.bodega.despachos.service.tuval.ShippingGuideService;
 public class ShippingGuideController {
 
   private final ShippingGuideService shippingGuideService;
+
+  @PostMapping("/inventario/despachos/guia-remision-orden-compra")
+  public ResponseEntity<Map<String, Object>> guardarGuiaRemisionOrdenCompra(
+      @Valid @RequestBody GuidePurchaseOrderRequest request) {
+    try {
+      shippingGuideService.insertGuidePurchaseOrder(request);
+      return ResponseJsonUtils.buildSuccessWithData(
+          "Relación de guía y orden de compra registrada con éxito",
+          Map.of("id", request.getId()));
+    } catch (DuplicateKeyException e) {
+      return ResponseJsonUtils.buildError("Ya existe un registro con el id " + request.getId());
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
 
   /***
    * PROCESO DE CREACION DE GUIAS DE REMISION GENERAL

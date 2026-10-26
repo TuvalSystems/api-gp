@@ -7,12 +7,14 @@ import tuval.api.web.bodega.despachos.entity.tuval.HeaderGuideTransferVtaRespons
 import tuval.api.web.bodega.despachos.entity.tuval.ValidateExistsDeliveryNoteResponse;
 import tuval.api.web.bodega.despachos.request.DispatchDeliveryNoteMovementRequest;
 import tuval.api.web.bodega.despachos.request.DispatchVtaRequest;
+import tuval.api.web.bodega.despachos.request.GuidePurchaseOrderRequest;
 import tuval.api.web.bodega.despachos.request.TransferVtaRequest;
 import tuval.api.web.bodega.despachos.request.ValidateGuideDispatchRequest;
 import tuval.api.web.bodega.despachos.request.ValidateGuideSalesTransferedRequest;
 import tuval.api.web.bodega.despachos.request.crearguia.DeliveryNoteRequest;
 
 public interface ShippingGuideService {
+    void insertGuidePurchaseOrder(GuidePurchaseOrderRequest request);
 
     public CheckCodeAccessDeliveryNoteResponse checkGuiaRemisionService(String numDoc);
 

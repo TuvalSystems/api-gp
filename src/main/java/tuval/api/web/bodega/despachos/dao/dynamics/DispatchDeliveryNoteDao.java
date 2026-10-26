@@ -14,9 +14,11 @@ import org.springframework.stereotype.Repository;
 import tuval.api.web.common.util.CoerceHelperUtils;
 import tuval.api.web.bodega.despachos.entity.tuval.HeaderGuideTransferVtaResponse;
 import tuval.api.web.bodega.despachos.request.DispatchVtaRequest;
+import tuval.api.web.bodega.despachos.request.GuidePurchaseOrderRequest;
 
 @Repository
 public class DispatchDeliveryNoteDao {
+  private final JdbcTemplate jdbcTemplate;
   private final SimpleJdbcCall spDispatchDeliveryNote;
   private final ObjectMapper objectMapper;
 
@@ -24,6 +26,7 @@ public class DispatchDeliveryNoteDao {
       @Qualifier("dynamicsJdbcTemplate") JdbcTemplate jdbcTemplate, ObjectMapper objectMapper) {
 
     this.objectMapper = objectMapper;
+    this.jdbcTemplate = jdbcTemplate;
     jdbcTemplate.setResultsMapCaseInsensitive(true);
 
     this.spDispatchDeliveryNote =
@@ -40,6 +43,25 @@ public class DispatchDeliveryNoteDao {
                         CoerceHelperUtils.stringOrEmpty(resultSet.getString("mensaje")),
                         CoerceHelperUtils.getInt(resultSet.getObject("idmov", Integer.class), 0),
                         CoerceHelperUtils.stringOrEmpty(resultSet.getString("docgp"))));
+  }
+
+  public void insertGuidePurchaseOrder(GuidePurchaseOrderRequest request) {
+    jdbcTemplate.update(
+        """
+        INSERT INTO [Dynamics2021].[dbo].[guia_remision_orden_compra]
+            ([id], [id_guia_remision], [id_guia_reserva], [id_pedido_id],
+             [tipo_guia], [id_oc], [fecha_ingreso])
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        new Object[] {
+          request.getId(), request.getIdGuiaRemision(), request.getIdGuiaReserva(),
+          request.getIdPedidoId(), request.getTipoGuia(), request.getIdOc(),
+          CoerceHelperUtils.toTimestamp(request.getFechaIngreso())
+        },
+        new int[] {
+          Types.INTEGER, Types.INTEGER, Types.INTEGER, Types.INTEGER,
+          Types.VARCHAR, Types.VARCHAR, Types.TIMESTAMP
+        });
   }
 
   public HeaderGuideTransferVtaResponse processDispatch(DispatchVtaRequest request) {

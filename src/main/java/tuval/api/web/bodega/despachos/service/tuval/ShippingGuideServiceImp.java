@@ -12,6 +12,7 @@ import tuval.api.web.bodega.despachos.entity.tuval.ValidateExistsDeliveryNoteRes
 import tuval.api.web.bodega.despachos.request.DetailGuideTransferVtaRequest;
 import tuval.api.web.bodega.despachos.request.DispatchDeliveryNoteMovementRequest;
 import tuval.api.web.bodega.despachos.request.DispatchVtaRequest;
+import tuval.api.web.bodega.despachos.request.GuidePurchaseOrderRequest;
 import tuval.api.web.bodega.despachos.request.TransferVtaRequest;
 import tuval.api.web.bodega.despachos.request.ValidateGuideDispatchRequest;
 import tuval.api.web.bodega.despachos.request.ValidateGuideSalesTransferedRequest;
@@ -23,6 +24,11 @@ import tuval.api.web.bodega.despachos.request.crearguia.DetailDeliveryNoteReques
 public class ShippingGuideServiceImp implements ShippingGuideService {
   private final ShippingGuideDao shippingGuideDao;
   private final DispatchDeliveryNoteDao dispatchDeliveryNoteDao;
+
+  @Override
+  public void insertGuidePurchaseOrder(GuidePurchaseOrderRequest request) {
+    dispatchDeliveryNoteDao.insertGuidePurchaseOrder(request);
+  }
 
   @Override
   public CheckCodeAccessDeliveryNoteResponse checkGuiaRemisionService(String numDoc) {
