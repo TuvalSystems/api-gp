@@ -69,6 +69,10 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
             new SqlParameter("correo_electronico", Types.VARCHAR),
             new SqlParameter("observacion", Types.VARCHAR),
             new SqlParameter("OrdenCompra", Types.VARCHAR),
+            new SqlParameter("tipo_despacho_id", Types.INTEGER),
+            new SqlParameter("fle_proveedor_id", Types.INTEGER),
+            new SqlParameter("fle_externo_id", Types.INTEGER),
+            new SqlParameter("valor_orden_compra", Types.DECIMAL),
             new SqlOutParameter("codret", Types.INTEGER));
     // guardar destinatario guia remision
 
@@ -825,7 +829,11 @@ public class ShippingGuideDaoImp implements ShippingGuideDao {
         .addValue("placa", h.getPlaca())
         .addValue("correo_electronico", h.getCorreoElectronico())
         .addValue("observacion", h.getObservacion())
-        .addValue("OrdenCompra", h.getOrdenCompra());
+        .addValue("OrdenCompra", h.getOrdenCompra())
+        .addValue("tipo_despacho_id", h.getTipoDespachoId())
+        .addValue("fle_proveedor_id", h.getFleProveedorId())
+        .addValue("fle_externo_id", h.getFleExternoId())
+        .addValue("valor_orden_compra", h.getValorOrdenCompra());
 
     try {
       Map<String, Object> out = spCabeceraGuiaRemision.execute(in);

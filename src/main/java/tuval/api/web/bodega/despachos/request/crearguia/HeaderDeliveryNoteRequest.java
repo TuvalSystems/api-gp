@@ -1,5 +1,6 @@
 package tuval.api.web.bodega.despachos.request.crearguia;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -32,4 +33,8 @@ public class HeaderDeliveryNoteRequest {
   private LocalDateTime fechaEmisionSustento;
   private String ordenCompra;
 
+  private Integer tipoDespachoId;
+  private Integer fleProveedorId;
+  private Integer fleExternoId;
+  private BigDecimal valorOrdenCompra;
 }
