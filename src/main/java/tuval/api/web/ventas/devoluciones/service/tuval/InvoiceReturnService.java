@@ -21,7 +21,7 @@ public interface InvoiceReturnService {
 
   ItemBinResponseDto getResponseItemBin(String item, String bodega);
 
-  ResponseEntity<Map<String, Object>> getClientGroupEconomicService(String ruc);
+  List<String> getClientGroupEconomicService(String ruc);
 
   /** pruebas generacion de nota de credito */
   DocumentNcDto getExistenceNoteCreditService(String document, String tipo);

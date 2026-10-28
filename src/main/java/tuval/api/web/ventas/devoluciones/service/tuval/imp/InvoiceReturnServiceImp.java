@@ -285,8 +285,11 @@ public class InvoiceReturnServiceImp implements InvoiceReturnService {
   }
 
   @Override
-  public ResponseEntity<Map<String, Object>> getClientGroupEconomicService(String ruc) {
-    return invoiceReturnDao.getGroupEconomicCLiente(ruc);
+  public List<String> getClientGroupEconomicService(String ruc) {
+    if (ruc == null || ruc.isBlank()) {
+      throw new IllegalArgumentException("Falta el campo 'ruc' o está vacío.");
+    }
+    return invoiceReturnDao.getClientGroupEconomic(ruc.trim());
   }
 
   @Override

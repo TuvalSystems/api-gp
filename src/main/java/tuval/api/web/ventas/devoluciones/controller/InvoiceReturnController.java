@@ -130,19 +130,14 @@ public class InvoiceReturnController {
 
   @GetMapping("/devoluciones/consultar-grupo-economico-cliente")
   public ResponseEntity<Map<String, Object>> getClientGroupEconomic(@RequestParam String ruc) {
-    Map<String, Object> response = new HashMap<>();
     try {
-      if (ruc == null || ruc.isEmpty()) {
-        response.put("success", false);
-        response.put("message", "Falta el campo 'ruc' o está vacío.");
-        return ResponseEntity.badRequest().body(response);
-      }
-      return invoiceReturnService.getClientGroupEconomicService(ruc);
+      List<String> rucs = invoiceReturnService.getClientGroupEconomicService(ruc);
+      return ResponseJsonUtils.buildSuccessWithData(
+          "Grupo económico obtenido correctamente.", rucs);
+    } catch (IllegalArgumentException e) {
+      return ResponseJsonUtils.buildNoFound(e.getMessage());
     } catch (Exception e) {
-      response.put("success", false);
-      response.put("message", "Error interno al procesar la solicitud.");
-      response.put("error", e.getMessage());
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+      return ResponseJsonUtils.buildException(e);
     }
   }
 }

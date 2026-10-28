@@ -1,6 +1,7 @@
 package tuval.api.web.ventas.devoluciones.dao.tuval;
 
 import java.util.Map;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import tuval.api.web.ventas.devoluciones.dto.ItemBinResponseDto;
 import tuval.api.web.ventas.devoluciones.dto.notacredito.DocumentNcDto;
@@ -69,7 +70,7 @@ public interface InvoiceReturnDao {
 
   public ItemBinResponseDto consultItemBin(String item, String bodega, int modo);
 
-  ResponseEntity<Map<String, Object>> getGroupEconomicCLiente(String ruc);
+  List<String> getClientGroupEconomic(String ruc);
 
   /** pruebas para generacion de nota de credito */
   DocumentNcDto executeSpExistenceNoteCreditDao(String document, String tipo);

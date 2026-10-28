@@ -34,9 +34,22 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
   private final SimpleJdbcCall spDevolucionIv;
   private final SimpleJdbcCall spValidadGeneracionNc;
   private final SimpleJdbcCall spDeleteNc;
+  private final SimpleJdbcCall spClientGroupEconomic;
 
   public InvoiceReturnDaoImp(@Qualifier("tuvalJdbcTemplate") JdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = Objects.requireNonNull(jdbcTemplate, "El JdbcTemplate no puede ser null");
+    this.spClientGroupEconomic =
+        new SimpleJdbcCall(jdbcTemplate)
+            .withSchemaName("dbo")
+            .withProcedureName("MSW_SP_OBTENER_CLIENTE_GRUPO_ECONOMICO")
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(new SqlParameter("cliente", Types.VARCHAR))
+            .returningResultSet(
+                "response",
+                (rs, rowNum) -> {
+                  String value = rs.getString("RUC");
+                  return value == null ? "" : value.trim();
+                });
     this.spDevolucionIv =
         new SimpleJdbcCall(jdbcTemplate)
             .withProcedureName("sp_msw_movimientos_iv")
@@ -715,31 +728,13 @@ public class InvoiceReturnDaoImp implements InvoiceReturnDao {
   }
 
   @Override
-  public ResponseEntity<Map<String, Object>> getGroupEconomicCLiente(String ruc) {
-    try {
-      Map<String, Object> response = new HashMap<>();
-      SimpleJdbcCall jdbcCall =
-          new SimpleJdbcCall(jdbcTemplate)
-              .withProcedureName("MSW_SP_OBTENER_CLIENTE_GRUPO_ECONOMICO")
-              .declareParameters(new SqlParameter("@cliente", Types.VARCHAR))
-              .returningResultSet("response", (rs, rowNum) -> rs.getString("RUC").trim());
-
-      Map<String, Object> params = new HashMap<>();
-      params.put("cliente", ruc != null ? ruc.trim() : "");
-      Map<String, Object> result = jdbcCall.execute(params);
-      @SuppressWarnings("unchecked")
-      List<String> resultSet = (List<String>) result.get("response");
-      if (!resultSet.isEmpty()) {
-        response.put("success", true);
-        response.put("message", "Grupo económico obtenido correctamente.");
-        response.put("CGE_RUC", resultSet);
-        return ResponseEntity.ok(response);
-      } else {
-        return buildError("No se encontró el grupo económico para el cliente proporcionado.");
-      }
-    } catch (Exception e) {
-      return buildException(e);
-    }
+  public List<String> getClientGroupEconomic(String ruc) {
+    MapSqlParameterSource in =
+        new MapSqlParameterSource().addValue("cliente", ruc, Types.VARCHAR);
+    Map<String, Object> result = spClientGroupEconomic.execute(in);
+    @SuppressWarnings("unchecked")
+    List<String> resultSet = (List<String>) result.get("response");
+    return resultSet == null ? List.of() : resultSet;
   }
 
   private ResponseEntity<Map<String, Object>> buildError(String message) {
