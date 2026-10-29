@@ -2,6 +2,8 @@ package tuval.api.web.cobranzas.cobros.controller;
 
 import java.util.List;
 import java.util.Map;
+import jakarta.validation.Valid;
+import tuval.api.web.cobranzas.cobros.request.InvoicePaymentConditionRequest;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +37,19 @@ import tuval.api.web.common.response.ResponseJsonUtils;
 @RequestMapping(value = "/api/cobros", produces = "application/json")
 @RequiredArgsConstructor
 public class CollectorController {
+  @PostMapping("validar-liberacion-despacho")
+  public ResponseEntity<Map<String, Object>> validarLiberacionDespacho(
+      @Valid @RequestBody InvoicePaymentConditionRequest payload) {
+    try {
+      Integer codigo = receivablesService.checkMaterialRelease(
+          payload.getFactura(), payload.getCondicionPago());
+      return ResponseJsonUtils.buildSuccessWithData(
+          "Consulta de liberacion de material realizada correctamente", Map.of("codigo", codigo));
+    } catch (Exception e) {
+      return ResponseJsonUtils.buildException(e);
+    }
+  }
+
 
   private final CreditCheckService creditCheckService;
   private final ReceivablesService receivablesService;
