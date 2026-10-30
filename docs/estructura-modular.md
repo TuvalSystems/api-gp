@@ -27,6 +27,8 @@ tuval.api.web
 ├── usuarios
 ├── transacciones
 ├── diagnostico
+├── reportes
+│   └── <funcionalidad> (nuevas APIs de reportes)
 ├── common
 │   ├── response
 │   └── util
@@ -54,6 +56,13 @@ bodega/stock/
 ├── entity/tuval/
 └── request/
 ```
+
+## APIs nuevas de reportes
+
+Toda API generada con el [prompt de reportes](prompt-apis-reportes.md) debe vivir en
+`reportes/<funcionalidad>`, con sus capas internas y separación `tuval`/`dynamics`.
+Sus rutas comienzan con `/api/reportes`. Las reglas locales están en
+`src/main/java/tuval/api/web/reportes/AGENTS.md`. No se trasladan APIs existentes.
 
 ## Acceso a las dos bases de datos
 
