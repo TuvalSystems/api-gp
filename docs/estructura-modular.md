@@ -70,6 +70,12 @@ documento del prompt. No se trasladan APIs existentes.
 detalla las 37 columnas, límites, ausencia de autenticación propia y controles
 externos de acceso pendientes antes de habilitarlo.
 
+`reportes/ven11` implementa [Reporte spVen11](reporte-ven11.md):
+`GET /api/reportes/ven11`, llamada JDBC parametrizada a `dbo.spVen11` mediante
+`dynamicsJdbcTemplate`. Usa el predeterminado de `isRelacionada`, devuelve los
+15 campos solicitados sin `co_docGP`, ordena por `tx_nom` y rechaza resultados
+de más de 500 filas sin entregar datos parciales.
+
 ## Acceso a las dos bases de datos
 
 La configuración permanece en `config/DynamicsJpaConfig.java` y
