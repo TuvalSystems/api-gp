@@ -61,8 +61,8 @@ bodega/stock/
 
 Toda API generada con el [prompt de reportes](prompt-apis-reportes.md) debe vivir en
 `reportes/<funcionalidad>`, con sus capas internas y separación `tuval`/`dynamics`.
-Sus rutas comienzan con `/api/reportes`. Las reglas locales están en
-`src/main/java/tuval/api/web/reportes/AGENTS.md`. No se trasladan APIs existentes.
+Sus rutas comienzan con `/api/reportes`. Las reglas de generación están en el
+documento del prompt. No se trasladan APIs existentes.
 
 ## Acceso a las dos bases de datos
 
