@@ -33,6 +33,9 @@ tuval.api.web.cobranzas.cobros.service.dynamics.ReceivablesServiceImp
 tuval.api.web.cobranzas.cobros.service.tuval.CollectionRegisterService
 tuval.api.web.cobranzas.cobros.service.tuval.imp.CreditCheckServiceImp
 tuval.api.web.diagnostico.controller.ProfileCheckController
+tuval.api.web.reportes.articulos.controller.ArticulosReporteController
+tuval.api.web.reportes.articulos.dao.dynamics.ArticulosReporteDao
+tuval.api.web.reportes.articulos.service.dynamics.ArticulosReporteService
 tuval.api.web.transacciones.controller.TransactionController
 tuval.api.web.transacciones.dao.tuval.transactionDao
 tuval.api.web.transacciones.service.tuval.transactionService

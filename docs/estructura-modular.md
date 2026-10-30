@@ -64,6 +64,12 @@ Toda API generada con el [prompt de reportes](prompt-apis-reportes.md) debe vivi
 Sus rutas comienzan con `/api/reportes`. Las reglas de generación están en el
 documento del prompt. No se trasladan APIs existentes.
 
+`reportes/articulos` implementa [ReporteArticulos](reporte-articulos.md):
+`GET /api/reportes/articulos`, consulta JDBC de `dbo.vw_MaestroArticulo` mediante
+`dynamicsNamedParameterJdbcTemplate`, con filtros y paginación SQL. Su documentación
+detalla las 37 columnas, límites, ausencia de autenticación propia y controles
+externos de acceso pendientes antes de habilitarlo.
+
 ## Acceso a las dos bases de datos
 
 La configuración permanece en `config/DynamicsJpaConfig.java` y
