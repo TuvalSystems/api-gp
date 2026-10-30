@@ -32,34 +32,41 @@ verifican conexiones e inventarios exactos de componentes y paquetes JPA.
 
 ## Prompt reutilizable
 
-Copiar el bloque siguiente y completar la ficha. Para implementar y publicar un PR,
+Copiar el bloque siguiente y completar conexión, definición, entradas y salidas.
+Usar `ninguna` cuando no haya entradas y `según definición` para salidas que se
+puedan deducir del SQL. Para implementar y publicar un PR,
 ChatGPT/Codex debe disponer de acceso al repositorio y herramientas de escritura en
 GitHub. Sin ese acceso debe entregar la propuesta y sus pasos pendientes.
 
 ```text
-Actúa como desarrollador de api-gp, repositorio git@github.com:TuvalSystems/api-gp.git.
-Crea una API de reporte sobre SQL Server cumpliendo estrictamente la arquitectura
-actual del repositorio y las reglas siguientes.
+Crea una API de reporte en git@github.com:TuvalSystems/api-gp.git siguiendo
+docs/prompt-apis-reportes.md y las instrucciones aplicables del repositorio.
+Implementa, prueba y abre un PR hacia develop; solicita revisión a los
+responsables definidos en .github/CODEOWNERS. No hagas merge.
 
-FICHA DEL REPORTE (completar)
-- Nombre y objetivo:
-- Funcionalidad (paquete Java en minúsculas, sin guiones):
-- Slug de la ruta (minúsculas y guiones):
-- Conexión obligatoria, exactamente una: tuval | dynamics
-- Catálogo físico esperado por ambiente; indicar si se usa el catálogo del DataSource:
-- Tipo de origen: TABLA | VISTA | SP
-- Objeto completo: esquema.nombre
-- DDL/definición del objeto o metadatos verificados equivalentes:
-- Salida: columnas SQL, alias JSON, tipos SQL, nulabilidad, longitud y precisión/escala:
-- Parámetros/filtros: nombres, tipos SQL y Java, requerido/opcional, límites,
-  valores por defecto y reglas de negocio:
-- Para SP: firma IN/OUT/INOUT, retorno y conjuntos de resultados con sus columnas;
-  evidencia de que no modifica datos persistentes:
-- Orden estable y desempate, paginación o límite máximo de filas, timeout:
-- Ejemplo de petición y respuesta sin datos sensibles:
-- Restricciones de acceso y mecanismo existente que se debe respetar:
-- Rama base del PR: develop (verificar que existe y corresponde al trabajo;
-  usar otra si el solicitante la especifica).
+Conexión: [tuval | dynamics]
+Entradas: [filtros/parámetros, o ninguna]
+Salidas: [campos esperados, o según definición]
+Definición SQL de la tabla, vista o SP:
+[pegar aquí]
+```
+
+## Reglas que el agente debe tomar del repositorio
+
+Deduce del SQL el tipo de objeto, esquema, nombre y tipos de los datos cuando
+sean inequívocos. Deriva nombres de clases, funcionalidad y ruta a partir del
+objeto, respetando las convenciones existentes y evitando colisiones. No pidas al
+usuario que repita estos detalles. Las entradas son parámetros de consulta,
+no operaciones de escritura; las salidas son el contrato del reporte.
+
+Para tablas/vistas sin filtros pedidos, usa solo los controles de paginación.
+Por defecto, página 0 y tamaño 100, con máximo 1000 y orden por una clave única
+verificada. Usa timeout local de 30 segundos. Para SP respeta los límites y
+parámetros reales. Si no existe orden determinista o límite aplicable, o el SQL
+no permite conocer entradas/salidas, pide únicamente el dato faltante.
+Documenta las decisiones derivadas en el PR.
+
+Estas reglas se aplican junto con la estructura actual del proyecto:
 
 1. REVISIÓN
 Lee los AGENTS.md aplicables, pom.xml, docs/estructura-modular.md,
@@ -100,7 +107,7 @@ dao/entity de la base elegida en su configuración y actualiza sus inventarios y
 pruebas. Nunca registres el padre reportes en ambas conexiones.
 Si usas @Transactional, especifica transactionManager de la base seleccionada
 y readOnly = true; readOnly no impide escrituras ni prueba que un SP sea de lectura.
-Esta ficha usa una sola conexión. Si hacen falta ambas, solicita definir fuentes y
+Cada reporte usa una sola conexión. Si hacen falta ambas, solicita definir fuentes y
 combinación y usa DAO separados por base. No supongas joins entre catálogos ni
 transacciones distribuidas.
 
@@ -152,13 +159,28 @@ No declares pruebas exitosas si no se ejecutaron o fallaron. Los mocks no valida
 SQL ni permisos reales; informa la comprobación pendiente en QA.
 Documenta ruta, base, origen, filtros, JSON, límites y pendientes de validación.
 
-Crea rama codex/reporte-<slug> desde la base verificada. Incluye únicamente cambios
+Crea rama codex/reporte-<slug> desde origin/develop actualizado. Incluye únicamente cambios
 de esta tarea, haz commit y push al repositorio indicado y abre un pull request
-hacia esa base. Describe comportamiento, conexión, objeto SQL, pruebas y QA.
+hacia develop. Solicita revisión a los responsables de .github/CODEOWNERS con
+acceso de escritura, excluyendo al autor del PR (no puede aprobar su propio PR).
+Si un usuario no existe o no tiene permiso, informa el bloqueo sin sustituirlo
+por otra cuenta. Describe comportamiento, conexión, objeto SQL, pruebas y QA.
 No hagas merge ni despliegues. Si faltan herramientas o permisos, entrega los
 archivos preparados y explica el bloqueo; no afirmes crear un PR sin URL verificable.
 Entrega resumen, archivos, endpoint, petición/respuesta, pruebas y enlace del PR.
-```
+
+## Aprobación de pull requests
+
+Los responsables designados son `@josemg23`, `@devtuval` y `@tuvalSystem`.
+Mantenerlos juntos en la misma regla de `.github/CODEOWNERS`: las reglas repetidas
+para el mismo patrón se reemplazan, no se acumulan.
+
+La aprobación de al menos un responsable distinto del autor es la política para
+estos reportes. CODEOWNERS no concede permisos ni impide por sí solo hacer merge:
+para exigir esa aprobación en GitHub, `develop` debe tener una regla de protección
+o ruleset con revisión obligatoria de code owners y sin bypass aplicable.
+Esto no exige que los tres aprueben ni garantiza que solo ellos puedan hacer merge.
+Ver la [documentación de GitHub sobre code owners](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners).
 
 ## Ejemplos de selección (fichas parciales)
 
