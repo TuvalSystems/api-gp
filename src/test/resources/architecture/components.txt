@@ -36,6 +36,9 @@ tuval.api.web.diagnostico.controller.ProfileCheckController
 tuval.api.web.reportes.articulos.controller.ArticulosReporteController
 tuval.api.web.reportes.articulos.dao.dynamics.ArticulosReporteDao
 tuval.api.web.reportes.articulos.service.dynamics.ArticulosReporteService
+tuval.api.web.reportes.ven11.controller.Ven11ReporteController
+tuval.api.web.reportes.ven11.dao.dynamics.Ven11ReporteDao
+tuval.api.web.reportes.ven11.service.dynamics.Ven11ReporteService
 tuval.api.web.transacciones.controller.TransactionController
 tuval.api.web.transacciones.dao.tuval.transactionDao
 tuval.api.web.transacciones.service.tuval.transactionService
