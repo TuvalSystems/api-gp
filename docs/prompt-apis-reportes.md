@@ -41,7 +41,8 @@ GitHub. Sin ese acceso debe entregar la propuesta y sus pasos pendientes.
 ```text
 Crea una API de reporte en git@github.com:TuvalSystems/api-gp.git siguiendo
 docs/prompt-apis-reportes.md y las instrucciones aplicables del repositorio.
-Implementa, prueba y abre un PR hacia develop; solicita revisión a los
+Implementa y prueba; elimina solo los tests temporales que generes antes del
+commit, conservando los existentes. Abre un PR hacia develop; solicita revisión a los
 responsables definidos en .github/CODEOWNERS. No hagas merge.
 
 Conexión: [tuval | dynamics]
@@ -89,7 +90,9 @@ src/main/java/tuval/api/web/reportes/<funcionalidad>/
   entity/<base>/... (solo si se justifica JPA)
 <base> debe ser tuval o dynamics. No crees capas vacías ni ubiques el reporte
 en ventas, bodega, clientes, cobranzas, transacciones o paquetes globales de DAO.
-Las pruebas van en src/test/java/tuval/api/web/reportes/<funcionalidad>/.
+Las pruebas temporales generadas van en
+src/test/java/tuval/api/web/reportes/<funcionalidad>/ durante la validación y se
+retiran antes del commit según la sección 6. No reemplaces pruebas existentes.
 Usa nombres de componentes únicos para evitar colisiones de beans.
 Fuera del módulo solo se permiten documentación, inventarios de arquitectura y
 los cambios mínimos de escaneo JPA necesarios. No refactorices módulos ajenos.
@@ -146,18 +149,36 @@ APIs existentes. No envíes e.getMessage() al cliente: puede revelar SQL o servi
 Respeta el mecanismo de acceso existente; no inventes autenticación ni amplíes permisos.
 
 6. VERIFICACIÓN Y ENTREGA
-Agrega pruebas sin conexiones reales para verificar selección de conexión entre
+Antes de generar pruebas, registra las rutas de los tests y recursos de prueba
+existentes, incluidos archivos sin seguimiento y cambios ajenos. Lleva una lista
+explícita de los archivos temporales que crees durante esta tarea.
+Genera pruebas temporales sin conexiones reales para verificar selección de conexión entre
 ambos beans, parámetros y tipos SQL, mapeo con NULL, éxito, lista vacía, validación
 400 sin llamada al DAO y errores 500 sin detalles SQL. Para SP prueba firma,
-OUT/retorno y conjuntos de resultados pertinentes.
+OUT/retorno y conjuntos de resultados pertinentes. Ejecútalas junto con la suite
+existente y conserva un resumen de comandos, resultados y casos verificados para
+el PR. No elimines una prueba fallida para presentar la validación como exitosa:
+corrige el fallo y vuelve a verificar antes de retirar los temporales.
 Actualiza src/test/resources/architecture/components.txt al agregar componentes:
 ModuleDatabaseWiringTest compara el inventario exacto de toda la aplicación.
 Si cambias escaneo JPA, actualiza <base>-repositories.txt y <base>-entities.txt
 y PersistenceConfigurationTest según corresponda.
-Ejecuta mvn clean test (o mvnw.cmd clean test en Windows) y git diff --check.
+Ejecuta mvn clean test (o mvnw.cmd clean test en Windows) con los tests temporales.
+Después de validar y antes de git add/commit, elimina únicamente los tests y
+recursos temporales que figuren en tu lista y que hayas creado tú en esta tarea.
+No borres tests preexistentes, aunque estén sin seguimiento, ni elimines carpetas
+de pruebas completas mediante patrones o limpieza general.
+Conserva las actualizaciones necesarias de inventarios de arquitectura y de
+pruebas existentes para que la suite siga verificando el código nuevo.
+Ejecuta nuevamente mvn clean test tras retirar los temporales para comprobar el
+estado que se enviará al PR, sin clases de prueba antiguas en target.
+Revisa git diff --check y el diff preparado para el commit: no deben incluirse
+tests temporales, sus recursos ni eliminaciones de pruebas preexistentes.
 No declares pruebas exitosas si no se ejecutaron o fallaron. Los mocks no validan
 SQL ni permisos reales; informa la comprobación pendiente en QA.
 Documenta ruta, base, origen, filtros, JSON, límites y pendientes de validación.
+Indica en el PR qué comprobaciones temporales ejecutaste y retiraste, y distingue
+sus resultados de los de la suite final conservada en el repositorio.
 
 Crea rama codex/reporte-<slug> desde origin/develop actualizado. Incluye únicamente cambios
 de esta tarea, haz commit y push al repositorio indicado y abre un pull request
