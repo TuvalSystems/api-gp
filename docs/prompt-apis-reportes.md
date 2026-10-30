@@ -171,7 +171,7 @@ Entrega resumen, archivos, endpoint, petición/respuesta, pruebas y enlace del P
 
 ## Aprobación de pull requests
 
-Los responsables designados son `@josemg23`, `@devtuval` y `@tuvalSystem`.
+Los responsables designados son `@josemg23`, `@devtuval` y `@TuvalSystems`.
 Mantenerlos juntos en la misma regla de `.github/CODEOWNERS`: las reglas repetidas
 para el mismo patrón se reemplazan, no se acumulan.
 
