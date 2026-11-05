@@ -76,6 +76,12 @@ externos de acceso pendientes antes de habilitarlo.
 15 campos solicitados sin `co_docGP`, ordena por `tx_nom` y rechaza resultados
 de más de 500 filas sin entregar datos parciales.
 
+`reportes/inv60` implementa [Consulta de varianzas spInv60](reporte-inv60.md):
+`GET /api/reportes/listado-varianzas-trabajo`, llamada JDBC parametrizada a `dbo.spInv60` mediante
+`dynamicsJdbcTemplate`, con `NumeroDocumento` opcional. Conserva los 17 campos,
+los valores nulos y todas las filas; el documento vacio u omitido consulta todo.
+Su documentacion detalla timeout, alcance y validacion pendiente en QA.
+
 ## Acceso a las dos bases de datos
 
 La configuración permanece en `config/DynamicsJpaConfig.java` y
