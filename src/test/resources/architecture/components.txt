@@ -63,3 +63,6 @@ tuval.api.web.ventas.sincronizacion.dao.dynamics.GeneralDynamicsDao
 tuval.api.web.ventas.sincronizacion.dao.tuval.GeneralDao
 tuval.api.web.ventas.sincronizacion.service.tuval.GeneralService
 tuval.api.web.ventas.ordenCompra.dao.dynamics.PurchaseOrderDao
+tuval.api.web.reportes.cotizacionborrador.client.CotizacionBorradorClient
+tuval.api.web.reportes.cotizacionborrador.controller.CotizacionBorradorReporteController
+tuval.api.web.reportes.cotizacionborrador.service.tuvalbackend.CotizacionBorradorReporteService

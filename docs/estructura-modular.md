@@ -158,3 +158,12 @@ Las pruebas nuevas no abren conexiones reales:
 La prueba original `WebApplicationTests` continúa deshabilitada porque requiere
 las bases de datos. Antes de desplegar, validar en QA la ejecución de consultas,
 procedimientos y rollback real en SQL Server.
+
+## Excepción temporal: puente de borrador solo para pruebas
+
+`reportes/cotizacionborrador` contiene el [puente de cotización borrador](reporte-cotizacion-borrador.md),
+`POST /api/reportes/cotizacion-borrador`. Por solicitud explícita se aloja
+provisionalmente en reportes, aunque delega una escritura a tuvalBackend.
+No utiliza JDBC/JPA; su service se ubica en `service/tuvalbackend` y el cliente
+HTTP en `client`. Está deshabilitado por defecto y bloqueado fuera de perfiles
+de pruebas. Esto no cambia la regla de solo lectura de los demás reportes.
