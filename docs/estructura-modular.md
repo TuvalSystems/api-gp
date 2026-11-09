@@ -82,6 +82,12 @@ de más de 500 filas sin entregar datos parciales.
 los valores nulos y todas las filas; el documento vacio u omitido consulta todo.
 Su documentacion detalla timeout, alcance y validacion pendiente en QA.
 
+`reportes/resolucionarticulos` implementa la [resolución conservadora de artículos](resolucion-articulos.md):
+`POST /api/reportes/resolucion-articulos/consultar` recibe un lote acotado de texto y
+cantidad opcional. Consulta campos descriptivos de `dbo.vw_MaestroArticulo` mediante
+Dynamics; devuelve identificaciones, ambigüedades, candidatos y límites explícitos,
+sin valores comerciales. No utiliza IA externa ni cambia infraestructura.
+
 ## Acceso a las dos bases de datos
 
 La configuración permanece en `config/DynamicsJpaConfig.java` y

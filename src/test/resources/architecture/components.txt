@@ -39,6 +39,9 @@ tuval.api.web.reportes.articulos.service.dynamics.ArticulosReporteService
 tuval.api.web.reportes.inv60.controller.Inv60ReporteController
 tuval.api.web.reportes.inv60.dao.dynamics.Inv60ReporteDao
 tuval.api.web.reportes.inv60.service.dynamics.Inv60ReporteService
+tuval.api.web.reportes.resolucionarticulos.controller.ResolucionArticulosReporteController
+tuval.api.web.reportes.resolucionarticulos.dao.dynamics.ResolucionArticulosReporteDao
+tuval.api.web.reportes.resolucionarticulos.service.dynamics.ResolucionArticulosReporteService
 tuval.api.web.reportes.ven11.controller.Ven11ReporteController
 tuval.api.web.reportes.ven11.dao.dynamics.Ven11ReporteDao
 tuval.api.web.reportes.ven11.service.dynamics.Ven11ReporteService
