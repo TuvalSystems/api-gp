@@ -219,3 +219,14 @@ Este cambio entrega el prompt y las instrucciones del módulo. No agrega endpoin
 concretos porque aún no se proporcionó una tabla, vista o SP con su contrato.
 El cumplimiento debe comprobarse con pruebas y revisión del PR; un prompt no
 constituye por sí solo un control automático ni un generador en tiempo de ejecución.
+
+## Excepción específica autorizada: cotización borrador
+
+Por solicitud expresa del usuario, el módulo temporal
+`reportes/cotizacionborrador` y `POST /api/reportes/cotizacion-borrador` delegan
+creación de borrador a la API existente de tuvalBackend. Este caso es solo para
+pruebas, deshabilitado por defecto, sin SQL directo ni credenciales compartidas.
+Se exceptúan exclusivamente lectura/GET/conexión JDBC para ese puente HTTP;
+se conservan validación, contrato público seguro, inventarios y revisión.
+Ver [contrato y controles](reporte-cotizacion-borrador.md). No autoriza convertir
+otros reportes en APIs de escritura ni habilitar el puente en producción.
