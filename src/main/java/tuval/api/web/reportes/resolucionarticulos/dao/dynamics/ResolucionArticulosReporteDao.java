@@ -37,7 +37,7 @@ public class ResolucionArticulosReporteDao {
     var parameters = new MapSqlParameterSource().addValue("limite", LIMITE + 1, Types.INTEGER);
     var sql = new StringBuilder("""
         SELECT TOP (:limite) tx_itm, codZafiro, cod3L, Descripcion, unidadMedida,
-               Marca, Material, categoriaCompra, lineaCompra, claseCompra
+               Marca, Material
         FROM dbo.vw_MaestroArticulo WHERE (
         """);
     if (codigo != null) {
@@ -52,7 +52,7 @@ public class ResolucionArticulosReporteDao {
     }
     // No offsets, COUNT, hints, shared-template changes, or database objects.
     sql.append(") ORDER BY tx_itm, codZafiro, cod3L, Descripcion, unidadMedida, "
-        + "Marca, Material, categoriaCompra, lineaCompra, claseCompra");
+        + "Marca, Material");
     return jdbcTemplate.execute(sql.toString(), parameters, statement -> {
       statement.setQueryTimeout(2);
       statement.setFetchSize(LIMITE + 1);
@@ -62,8 +62,7 @@ public class ResolucionArticulosReporteDao {
         while (rows.next()) {
           result.add(new CatalogoArticuloDto(rows.getString("tx_itm"), rows.getString("codZafiro"),
               rows.getString("cod3L"), rows.getString("Descripcion"), rows.getString("unidadMedida"),
-              rows.getString("Marca"), rows.getString("Material"), rows.getString("categoriaCompra"),
-              rows.getString("lineaCompra"), rows.getString("claseCompra")));
+              rows.getString("Marca"), rows.getString("Material")));
         }
         return result;
       }

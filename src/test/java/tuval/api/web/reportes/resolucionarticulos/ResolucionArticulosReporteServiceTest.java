@@ -225,6 +225,6 @@ class ResolucionArticulosReporteServiceTest {
     return service.consultar(new ResolucionArticulosReporteRequest(List.of(new Renglon(text, qty)), null)).getFirst();
   }
   static CatalogoArticuloDto row(String gp, String description) {
-    return new CatalogoArticuloDto(gp, null, null, description, "PZAS", "MECH", "NO_TIENE", null, null, null);
+    return new CatalogoArticuloDto(gp, null, null, description, "PZAS", "MECH", "NO_TIENE");
   }
 }

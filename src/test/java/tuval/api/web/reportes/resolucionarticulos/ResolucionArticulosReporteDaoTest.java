@@ -29,14 +29,15 @@ class ResolucionArticulosReporteDaoTest {
   }
 
   @Test
-  void soloSeleccionaDiezCamposSegurosConLimiteTimeoutLocalYSinonimos() throws Exception {
+  void soloSeleccionaSieteCamposSegurosConLimiteTimeoutLocalYSinonimos() throws Exception {
     assertThat(dao.buscar(Familia.NIPLE, null)).isEmpty();
     var sql = ArgumentCaptor.forClass(String.class);
     verify(connection).prepareStatement(sql.capture());
     assertThat(sql.getValue()).startsWith("SELECT TOP (?) tx_itm, codZafiro, cod3L, Descripcion, unidadMedida,")
-        .contains("Marca, Material, categoriaCompra, lineaCompra, claseCompra", "FROM dbo.vw_MaestroArticulo",
+        .contains("Marca, Material", "FROM dbo.vw_MaestroArticulo",
             "UPPER(Descripcion) LIKE ? OR UPPER(Descripcion) LIKE ?", "ORDER BY tx_itm, codZafiro")
-        .doesNotContain("*", "precio", "costo", "marUti", "NOLOCK", "INSERT", "UPDATE", "DELETE");
+        .doesNotContain("*", "precio", "costo", "marUti", "NOLOCK", "INSERT", "UPDATE", "DELETE",
+            "categoriaCompra", "lineaCompra", "claseCompra");
     verify(statement).setObject(1, 501, Types.INTEGER);
     verify(statement).setString(2, "%NIPLE%");
     verify(statement).setString(3, "%NEPLO%");

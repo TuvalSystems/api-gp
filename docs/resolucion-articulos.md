@@ -162,9 +162,9 @@ regla todavía no está demostrada en la fuente.
 Código en `tuval.api.web.reportes.resolucionarticulos`, con Controller →
 Service/dynamics → DAO/dynamics, DTO y Request. Conexión exclusiva mediante
 `@Qualifier("dynamicsNamedParameterJdbcTemplate")`; origen `dbo.vw_MaestroArticulo`.
-Se seleccionan explícitamente diez campos descriptivos conocidos: tx_itm, codZafiro,
-cod3L, Descripcion, unidadMedida, Marca, Material, categoriaCompra, lineaCompra y
-claseCompra. El DTO público solo expone identificadores, descripción, unidad y
+Se seleccionan explícitamente los siete campos descriptivos necesarios: tx_itm,
+codZafiro, cod3L, Descripcion, unidadMedida, Marca y Material. El DTO público solo
+expone identificadores, descripción, unidad y
 atributos interpretados. No reutiliza el DTO financiero de ReporteArticulos.
 
 Por lote hay como máximo seis exploraciones distintas y un presupuesto de diez
@@ -178,7 +178,7 @@ Al agotar el presupuesto, las líneas no consultadas reciben `ambiguo`, búsqued
 incompleta y `presupuesto_de_busqueda_agotado`. El límite temporal es una protección
 de admisión, **no un SLA total de diez segundos**: una consulta ya iniciada puede
 terminar después y los tiempos de obtención de conexión/cancelación dependen del
-DataSource/driver. Como máximo se inician seis statements. El orden SQL usa los diez
+DataSource/driver. Como máximo se inician seis statements. El orden SQL usa los siete
 campos proyectados; empates idénticos o cambios concurrentes no prueban unicidad.
 
 La recuperación por familia usa anclas cerradas de descripción (incluidos los
@@ -226,11 +226,10 @@ Ejecutar con Java 21: `mvn clean test` y `mvn -DskipTests package`; revisar
 Se comprobaron por HTTP DEV las descripciones de 020-000006-I, 022-000084-I,
 037-000014-S, 037-000014-I, 020-000068-I, 020-000069-I y 022-000115-I mediante el
 reporte existente, con consultas por código y sin mostrar campos comerciales.
-Esto valida muestras de formato, **no** la nueva consulta SQL ni su rendimiento.
-Pendientes en DEV/QA: ejecutar esta API y contrastar cobertura por familia,
-timeout/cancelación, collation/acentos, permisos SELECT, NULL/duplicados reales,
-presupuesto bajo carga y controles de acceso externos. No hay prueba de despliegue
-ni de reglas de habilitación comercial.
+Esto valida muestras de formato; la comprobación del DAO real en QA se detalla a
+continuación. Siguen pendientes DEV directo, cancelación, cobertura completa,
+NULL/duplicados adicionales, presupuesto bajo carga y controles externos de acceso.
+No hay prueba de despliegue ni de reglas de habilitación comercial.
 
 ### Comprobación real de QA, 2026-11-09
 
@@ -241,27 +240,52 @@ destino configurado, distinto de producción. SQL Server devolvió la identidad
 `SRV-SQL2-ENTORN\PRUEBAS`, catálogo `Dynamics2021`, y permiso SELECT sobre la vista.
 Solo se ejecutaron SELECT; no se cambiaron bases, objetos, permisos ni aislamiento.
 
-El SQL nuevo **no pudo ejecutarse satisfactoriamente en QA**: devolvió
-`UncategorizedSQLException`, SQLState `S0001`, código SQL Server `207`. Una consulta
-posterior a `sys.columns` confirmó que esa versión de `dbo.vw_MaestroArticulo`
-contiene tx_itm, codZafiro, cod3L, Descripcion, unidadMedida, Marca y Material, pero
-no contiene **categoriaCompra, lineaCompra ni claseCompra**, requeridas por la
-proyección actual. No se sustituyeron campos ni se modificó la vista.
+El primer intento devolvió SQLState `S0001`, error `207`: `sys.columns` confirmó
+que QA no tiene categoriaCompra, lineaCompra ni claseCompra. Esos campos no se
+usaban en la resolución ni en el contrato público; se retiraron del DTO interno,
+SELECT y orden. No se sustituyeron columnas ni se modificó la vista. Se repitieron
+las pruebas locales y el harness con el SQL final de siete campos.
 
-Se intentaron las seis familias y un lote mixto; todos fallaron antes de devolver
-filas. Las latencias por intento fueron: bushing 7.6–103.1 ms (dos intentos), codo
-8.5 ms, niple 7.9 ms, nudo 9.4 ms, válvula/llave 11.0 ms y teflón 6.7 ms. También
-fallaron con el mismo código las 22 consultas de referencia por código, en
-5.0–10.2 ms. **Son latencias de error de compilación, no de búsquedas exitosas**.
-Ocho comprobaciones `SELECT 1` posteriores respondieron correctamente.
+La repetición ejecutó satisfactoriamente dos consultas por familia (una aislada y
+otra dentro del lote mixto), con los límites reales del DAO:
 
-No se observaron timeouts; por tanto, no se comprobaron cancelación del statement,
-filas reales, ambigüedades, fracciones ni truncamiento contra el SQL nuevo. Esos
-casos sí están cubiertos por las pruebas locales sin base, pero no sustituyen la
-integración. La comprobación directa de DEV queda pendiente; las muestras HTTP
-del reporte existente descritas arriba no ejecutan este DAO y no demuestran su
-rendimiento. El PR se entrega en borrador para revisar este bloqueo, sin afirmar
-que esté listo para producción.
+| Familia | Filas por exploración | Latencia observada del DAO |
+|---|---:|---:|
+| Bushing | 212 | 72.6–998.2 ms |
+| Codo | 501, incluye centinela de truncamiento | 102.5–139.9 ms |
+| Niple/neplo | 501, incluye centinela de truncamiento | 128.8–416.1 ms |
+| Nudo | 155 | 107.2–489.4 ms |
+| Válvula/llave | 501, incluye centinela de truncamiento | 174.3–222.7 ms |
+| Teflón | 104 | 116.6–147.7 ms |
+
+Las 22 consultas por código devolvieron exactamente una fila cada una en
+36.2–290.2 ms. No hubo errores ni timeouts en esta repetición. Los seis lotes
+aislados tardaron 130.0–1299.6 ms, incluida interpretación y primer uso de clases;
+el lote mixto de seis renglones tardó 948.7 ms. Es una muestra local contra QA,
+sin calentamiento controlado ni carga concurrente; no es un SLA ni un percentil.
+
+Se verificaron 24 resultados del servicio real: todos ambiguos, hasta tres
+candidatos, cantidades predeterminadas correctas y ninguna identificación única
+con búsqueda incompleta. Los bushings solicitados incluyeron los pares esperados
+150/300; los nudos incluyeron los tres códigos esperados. `½` produjo los mismos
+pares que `1/2`, y `1½` produjo `3/2`, sin confundirse con media pulgada. Los códigos
+de codos y neplos con sus variantes 150/300/reforzado se confirmaron en las lecturas
+exactas de referencia. Se observó truncamiento real en codos, neplos y válvulas;
+el servicio mantuvo `busquedaCompleta=false`, `busquedaTruncada=true` y `ambiguo`.
+
+**Límite de utilidad confirmado:** filas con atributos no interpretados permanecen
+como alternativas inciertas y pueden ocupar la lista compacta antes que variantes
+conocidas. En esta muestra, los primeros tres candidatos de codos, neplos y llaves
+no mostraron todos los códigos de referencia. También teflón recuperó familias con
+PTFE en la descripción, además de cinta. Los indicadores de truncamiento evitan
+afirmar certeza, pero se requiere mejorar cobertura y presentación de candidatos
+antes de usar esta v1 para completar automáticamente una cotización.
+
+Ocho `SELECT 1` posteriores respondieron correctamente. Al no haber timeouts, no
+se comprobó cancelación del statement; no se forzaron esperas, trazas ni cambios
+de servidor para provocarla. DEV directo queda pendiente. Las muestras HTTP del
+reporte existente no ejecutan este DAO. El PR queda en borrador, sin afirmar que
+esté listo para producción.
 
 La comprobación de compatibilidad puede reproducirse sin leer datos comerciales:
 
