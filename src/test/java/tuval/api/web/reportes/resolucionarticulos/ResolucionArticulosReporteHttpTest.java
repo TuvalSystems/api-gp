@@ -83,6 +83,10 @@ class ResolucionArticulosReporteHttpTest {
     var names = new java.util.ArrayList<String>();
     candidate.fieldNames().forEachRemaining(names::add);
     assertThat(names).containsExactlyInAnyOrder("codigoGP", "codigoZafiro", "codigo3L", "descripcion", "unidad", "atributos");
+    assertThat(candidate.path("unidad").isNull()).isTrue();
+    assertThat(candidate.path("atributos").path("esquemaUnidad").asText()).isEqualTo("PZAS");
+    assertThat(candidate.path("atributos").has("marca")).isFalse();
+    assertThat(response).contains("unidad_comercial_no_disponible");
     assertThat(response).doesNotContain("precio", "costo", "marUti", "existencia");
   }
 

@@ -13,7 +13,8 @@ El perfil `qa` corresponde a otro ambiente y no se usa para esta entrega.
 No se consulta ni despliega produccion. No se publican direcciones ni nombres de
 servidor; no se codifican destinos en el DAO ni se pueden elegir desde HTTP.
 
-La API nueva no reemplaza el endpoint de resolucion de articulos ni cambia sus reglas.
+La API no reemplaza el endpoint de resolucion de articulos. El resolvedor consulta
+directamente esta misma vista, sin llamar por HTTP a este listado.
 Se preservan los campos reales de la vista; no se afirma equivalencia con el maestro.
 En particular, `unidadMedida` proviene de `IV00101.UOMSCHDL` (esquema de unidades)
 y no de la unidad de compra. `tx_atrMar` y `tx_atrMat` son atributos de `tbm_inv`,
@@ -152,8 +153,10 @@ funcional: las vistas difieren en unidad y atributos. La nueva consulta incluye
 el mismo ORDER BY binario y paginacion usados por el DAO. No se usa el plazo
 de 2 segundos del resolvedor anterior para estas mediciones.
 
-Validar por negocio el significado de unidad y atributos antes de conectar este
-endpoint al resolvedor o al creador de cotizaciones. No se modifica ese flujo.
+El resolvedor conserva por separado esquemaUnidad, tx_atrMar y tx_atrMat y deja
+unidad=null; no los usa como unidad comercial ni como etiquetas equivalentes
+al maestro. Validar su significado antes de usarlos para crear cotizaciones.
+Ver [contrato de resolucion](resolucion-articulos.md).
 
 Comprobacion HTTP local del build final contra pruebas: busquedas bushing/codo
 200; codigo exacto 200 con una fila; codigo inexistente y texto literal con %/[
