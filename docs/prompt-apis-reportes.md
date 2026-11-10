@@ -230,3 +230,10 @@ Se exceptúan exclusivamente lectura/GET/conexión JDBC para ese puente HTTP;
 se conservan validación, contrato público seguro, inventarios y revisión.
 Ver [contrato y controles](reporte-cotizacion-borrador.md). No autoriza convertir
 otros reportes en APIs de escritura ni habilitar el puente en producción.
+
+La excepcion especifica de pruebas tambien cubre POST /api/reportes/resolucion-articulos/crear-borrador,
+su orquestacion HTTP/lectura y cliente dedicado al contrato GET actual de Laravel.
+/consultar sigue siendo solo lectura. Se permite exclusivamente la dependencia
+HTTP necesaria para deshabilitar reintentos internos del GET mutante; no se
+cambian DAO, JPA, credenciales, ambientes ni precios. Ver
+[contrato y controles](resolucion-articulos-borrador.md).

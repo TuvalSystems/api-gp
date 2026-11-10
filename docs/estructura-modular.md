@@ -172,3 +172,10 @@ de pruebas. Esto no cambia la regla de solo lectura de los demás reportes.
 
 El modulo reportes/listadoitems implementa GET /api/reportes/listado-items sobre
 dbo.vw_listadoItems mediante Dynamics. Ver [contrato y validacion en pruebas](reporte-listado-items.md).
+
+## Integracion del resolver con borradores de pruebas
+
+reportes/resolucionarticulos agrega POST /api/reportes/resolucion-articulos/crear-borrador,
+controller separado, service/tuvalbackend y cliente HTTP dedicado. Reutiliza el
+service/dao Dynamics de consulta sin cambiarlo ni abrir transacciones distribuidas.
+Ver [contrato y limites](resolucion-articulos-borrador.md).

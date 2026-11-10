@@ -170,3 +170,10 @@ Resultados locales (2026-11-09), Maven 3.9.9 y JDK 21:
   `-DargLine=-javaagent:/ruta/mockito-core-5.14.2.jar` para inicializar el Mockito
   existente sin depender de su auto-adjunción. No se cambiaron dependencias ni
   configuración de pruebas del repositorio para resolverlo.
+
+## Contrato posterior de pruebas (2026-11-10)
+
+El contrato real actual de tuvalBackend/develop es GET /cotizaciones/borrador-items
+con usuario 6 fijo y sin idempotencia. Este puente antiguo se conserva sin cambios
+y NO es un fallback para el contrato nuevo. La integracion del resolver usa un
+cliente separado: [resolver y crear borrador](resolucion-articulos-borrador.md).
