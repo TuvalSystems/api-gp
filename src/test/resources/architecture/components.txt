@@ -69,3 +69,6 @@ tuval.api.web.reportes.cotizacionborrador.service.tuvalbackend.CotizacionBorrado
 tuval.api.web.reportes.listadoitems.controller.ListadoItemsReporteController
 tuval.api.web.reportes.listadoitems.dao.dynamics.ListadoItemsReporteDao
 tuval.api.web.reportes.listadoitems.service.dynamics.ListadoItemsReporteService
+tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient
+tuval.api.web.reportes.resolucionarticulos.controller.ResolucionBorradorController
+tuval.api.web.reportes.resolucionarticulos.service.tuvalbackend.ResolucionBorradorService

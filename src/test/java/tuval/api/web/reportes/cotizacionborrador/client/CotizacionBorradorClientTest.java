@@ -168,4 +168,145 @@ class CotizacionBorradorClientTest {
     assertThatThrownBy(operation).isInstanceOfSatisfying(CotizacionBorradorException.class,
         error -> { assertThat(error.status()).isEqualTo(status); assertThat(error.getMessage()).isNull(); });
   }
+
+  @org.junit.jupiter.api.Nested
+  class TransporteBorradorPruebas {
+    private final tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Peticion payload =
+        new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Peticion("CLIENTE-PRUEBA", 7L,
+            List.of(new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Item("ITEM", new java.math.BigDecimal("2.50"))));
+    private String valid() {
+      return "{\"success\":true,\"debug\":\"secret\",\"data\":{\"id\":42,\"numero\":\"COT42\",\"estado\":\"borrador_app\","
+          + "\"usuario\":{\"id\":6,\"codigo\":\"TEST\",\"password\":\"secret\"},\"punto_venta\":{\"id\":7},"
+          + "\"cliente\":{\"id\":8,\"ruc\":\"CLIENTE-PRUEBA\"},\"incluidos\":[{\"indice\":0,\"codigo\":\"ITEM\",\"cantidad\":2.50,\"unidad\":\"UND\",\"precio\":99}]}}";
+    }
+    private tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient client(String origin, long millis) throws Exception {
+      var ctor = tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.class.getDeclaredConstructor(
+          ObjectMapper.class, boolean.class, String.class, boolean.class, java.time.Duration.class);
+      ctor.setAccessible(true);
+      return ctor.newInstance(mapper, true, origin, true, java.time.Duration.ofMillis(millis));
+    }
+    private class Local implements AutoCloseable {
+      final com.sun.net.httpserver.HttpServer server;
+      final java.util.concurrent.atomic.AtomicInteger count = new java.util.concurrent.atomic.AtomicInteger();
+      final java.util.concurrent.atomic.AtomicReference<String> method = new java.util.concurrent.atomic.AtomicReference<>();
+      final java.util.concurrent.atomic.AtomicReference<String> path = new java.util.concurrent.atomic.AtomicReference<>();
+      final java.util.concurrent.atomic.AtomicReference<byte[]> body = new java.util.concurrent.atomic.AtomicReference<>();
+      final java.util.concurrent.atomic.AtomicReference<com.sun.net.httpserver.Headers> headers = new java.util.concurrent.atomic.AtomicReference<>();
+      final java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newCachedThreadPool();
+      Local(com.sun.net.httpserver.HttpHandler handler) throws IOException {
+        server = com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+        server.setExecutor(executor);
+        server.createContext("/", exchange -> {
+          count.incrementAndGet(); method.set(exchange.getRequestMethod()); path.set(exchange.getRequestURI().toString());
+          headers.set(exchange.getRequestHeaders()); body.set(exchange.getRequestBody().readAllBytes());
+          try { handler.handle(exchange); } finally { exchange.close(); }
+        });
+        server.start();
+      }
+      String origin() { return "http://127.0.0.1:" + server.getAddress().getPort(); }
+      public void close() { server.stop(0); executor.shutdownNow(); }
+    }
+    private void reply(com.sun.net.httpserver.HttpExchange exchange, int status, String body, String type) throws IOException {
+      byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+      exchange.getResponseHeaders().set("Content-Type", type);
+      exchange.sendResponseHeaders(status, bytes.length);
+      exchange.getResponseBody().write(bytes);
+    }
+    @Test void getConJsonExactoSinCredencialesYRespuestaAllowlist() throws Exception {
+      try (var server = new Local(e -> reply(e, 201, valid(), "application/json; charset=utf-8"))) {
+        var env = new MockEnvironment(); env.setActiveProfiles("qa");
+        var client = new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, true, server.origin(), true);
+        var result = client.crear(payload);
+        assertThat(server.count.get()).isEqualTo(1);
+        assertThat(server.method.get()).isEqualTo("GET");
+        assertThat(server.path.get()).isEqualTo("/cotizaciones/borrador-items");
+        assertThat(mapper.readTree(server.body.get())).isEqualTo(mapper.readTree("{\"cliente_ruc\":\"CLIENTE-PRUEBA\",\"pv_id\":7,\"items\":[{\"codigo\":\"ITEM\",\"cantidad\":2.50}]}"));
+        assertThat(server.headers.get().getFirst("Authorization")).isNull();
+        assertThat(server.headers.get().getFirst("Cookie")).isNull();
+        assertThat(server.headers.get().getFirst("Content-Type")).startsWith("application/json");
+        assertThat(mapper.writeValueAsString(result)).doesNotContain("secret", "debug", "precio", "password");
+        assertThat(result.id()).isEqualTo(42L);
+      }
+    }
+    @Test void desconexionDespuesDelBodyNoReenviaGet() throws Exception {
+      try (var server = new Local(e -> e.close())) {
+        expectStatus(502, () -> client(server.origin(), 2000).crear(payload));
+        assertThat(server.body.get()).isNotEmpty();
+        assertThat(server.count.get()).isEqualTo(1);
+      }
+    }
+    @Test void redireccion307NoSeSigue() throws Exception {
+      try (var server = new Local(e -> { e.getResponseHeaders().set("Location", "/otra-creacion"); reply(e, 307, "secret", "text/plain"); })) {
+        expectStatus(502, () -> client(server.origin(), 2000).crear(payload));
+        assertThat(server.count.get()).isEqualTo(1);
+      }
+    }
+    @Test void deadlineIncluyeBodyQueNoTermina() throws Exception {
+      try (var server = new Local(e -> {
+        e.getResponseHeaders().set("Content-Type", "application/json"); e.sendResponseHeaders(201, 0);
+        e.getResponseBody().write('{'); e.getResponseBody().flush();
+        try { Thread.sleep(5000); } catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
+      })) {
+        long start = System.nanoTime();
+        expectStatus(504, () -> client(server.origin(), 200).crear(payload));
+        assertThat(java.time.Duration.ofNanos(System.nanoTime()-start)).isLessThan(java.time.Duration.ofSeconds(3));
+        assertThat(server.count.get()).isEqualTo(1);
+      }
+    }
+    @Test void respuestaMayor64KiBNoSeAcepta() throws Exception {
+      try (var server = new Local(e -> reply(e, 201, valid() + " ".repeat(65536), "application/json"))) {
+        expectStatus(502, () -> client(server.origin(), 2000).crear(payload));
+        assertThat(server.count.get()).isEqualTo(1);
+      }
+    }
+    @Test void excesoDe64KiBAbortaSinEsperarRestoDelBody() throws Exception {
+      try (var server = new Local(e -> {
+        e.getResponseHeaders().set("Content-Type", "application/json"); e.sendResponseHeaders(201, 0);
+        e.getResponseBody().write(new byte[65537]); e.getResponseBody().flush();
+        try { Thread.sleep(5000); } catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
+      })) {
+        long start = System.nanoTime();
+        expectStatus(502, () -> client(server.origin(), 1500).crear(payload));
+        assertThat(java.time.Duration.ofNanos(System.nanoTime()-start)).isLessThan(java.time.Duration.ofSeconds(1));
+        assertThat(server.count.get()).isEqualTo(1);
+      }
+    }
+    @Test void contratoRespuestaInvalidoNoEsExito() throws Exception {
+      for (String invalid : List.of("null", "{}", "not-json", valid().replace("\"success\":true", "\"success\":false"),
+          valid().replace("\"id\":6", "\"id\":9"), valid().replace("\"id\":7", "\"id\":9"),
+          valid().replace("CLIENTE-PRUEBA", "OTRO"), valid().replace("2.50", "3.00"),
+          valid().replace("\"indice\":0", "\"indice\":1"), valid().replace("borrador_app", "aprobado"))) {
+        try (var server = new Local(e -> reply(e, 201, invalid, "application/json"))) {
+          expectStatus(502, () -> client(server.origin(), 2000).crear(payload));
+          assertThat(server.count.get()).isEqualTo(1);
+        }
+      }
+    }
+    @Test void statusYContentTypeSeValidanSinReintentar() throws Exception {
+      for (int status : List.of(200, 400, 401, 403, 409, 422, 429, 500, 503)) {
+        try (var server = new Local(e -> reply(e, status, valid(), "application/json"))) {
+          expectStatus(Set.of(401,403,422,429).contains(status) ? status : 502, () -> client(server.origin(), 2000).crear(payload));
+          assertThat(server.count.get()).isEqualTo(1);
+        }
+      }
+      try (var server = new Local(e -> reply(e, 201, valid(), "text/html"))) {
+        expectStatus(502, () -> client(server.origin(), 2000).crear(payload));
+      }
+    }
+    @Test void guardDePerfilesEnabledYOrigenBloqueaAntesDeHttp() throws Exception {
+      try (var server = new Local(e -> reply(e, 201, valid(), "application/json"))) {
+        for (String[] profiles : List.of(new String[]{}, new String[]{"prod"}, new String[]{"qa", "prod"}, new String[]{"unknown"})) {
+          var env = new MockEnvironment(); env.setActiveProfiles(profiles);
+          expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, true, server.origin(), true).crear(payload));
+        }
+        var env = new MockEnvironment(); env.setActiveProfiles("qa");
+        expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, false, server.origin(), true).crear(payload));
+        expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, true, server.origin(), false).crear(payload));
+        for (String origin : List.of("", "not-url", server.origin()+"/path", server.origin()+"?x=1", server.origin()+"#x", "http://user@127.0.0.1", "http://127.0.0.1:0", "http://127.0.0.1:65536")) {
+          expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, true, origin, true).crear(payload));
+        }
+        assertThat(server.count.get()).isZero();
+      }
+    }
+  }
 }

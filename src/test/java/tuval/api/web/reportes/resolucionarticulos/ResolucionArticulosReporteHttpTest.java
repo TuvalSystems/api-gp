@@ -100,4 +100,164 @@ class ResolucionArticulosReporteHttpTest {
         .andReturn().getResponse().getContentAsString();
     assertThat(response).doesNotContain("SELECT", "costo", "interno", "secret");
   }
+
+  @org.junit.jupiter.api.Nested
+  class CreacionBorrador {
+    private static final String CREATE = "/api/reportes/resolucion-articulos/crear-borrador";
+    private static final String ID = "e0f7a456-2026-4000-8000-000000000001";
+    private final com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+    private final ResolucionArticulosReporteService resolver = mock(ResolucionArticulosReporteService.class);
+    private final tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient backend =
+        mock(tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.class);
+    private MockMvc createMvc;
+
+    @BeforeEach void crearController() {
+      var service = new tuval.api.web.reportes.resolucionarticulos.service.tuvalbackend.ResolucionBorradorService(resolver, backend, mapper);
+      createMvc = MockMvcBuilders.standaloneSetup(
+          new tuval.api.web.reportes.resolucionarticulos.controller.ResolucionBorradorController(service)).build();
+      when(resolver.consultar(any())).thenReturn(List.of(resolucion("identificado", true, List.of(candidato("020-000006-I")))));
+      when(backend.crear(any())).thenReturn(new tuval.api.web.reportes.resolucionarticulos.dto.ResolucionBorradorDto(
+          42L, "COT42", "borrador_app", null, null, null, List.of()));
+    }
+
+    private String json(String fields, String lines) {
+      return "{\"request_id\":\"" + ID + "\",\"renglones\":" + lines + fields + "}";
+    }
+    private String normal() { return json("", "[{\"texto\":\"020-000006-I\"}]"); }
+    private org.springframework.test.web.servlet.ResultActions enviar(String json) throws Exception {
+      return createMvc.perform(post(CREATE).contentType("application/json").content(json));
+    }
+    private tuval.api.web.reportes.resolucionarticulos.dto.ResolucionArticulosReporteDto.Candidato candidato(String code) {
+      return new tuval.api.web.reportes.resolucionarticulos.dto.ResolucionArticulosReporteDto.Candidato(
+          code, "Z", "L", "articulo", null, java.util.Map.of());
+    }
+    private tuval.api.web.reportes.resolucionarticulos.dto.ResolucionArticulosReporteDto resolucion(
+        String state, boolean complete, List<tuval.api.web.reportes.resolucionarticulos.dto.ResolucionArticulosReporteDto.Candidato> candidates) {
+      return new tuval.api.web.reportes.resolucionarticulos.dto.ResolucionArticulosReporteDto(
+          0, "texto", java.math.BigDecimal.ONE, true, state,
+          state.equals("identificado") ? candidates.getFirst() : null, candidates, List.of(), java.util.Map.of(),
+          complete, !complete, false, List.of("unidad_comercial_no_disponible"));
+    }
+
+    @Test void conectaResuelveUnaVezYEnviaSoloDatosRequeridosConDefaults() throws Exception {
+      enviar(normal()).andExpect(status().isCreated()).andExpect(header().string("Cache-Control", "no-store"))
+          .andExpect(jsonPath("$.data.borrador.numero").value("COT42"))
+          .andExpect(jsonPath("$.data.resoluciones[0].cantidadAsumida").value(true));
+      var captor = org.mockito.ArgumentCaptor.forClass(tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Peticion.class);
+      verify(backend).crear(captor.capture());
+      assertThat(mapper.writeValueAsString(captor.getValue())).isEqualTo(
+          "{\"cliente_ruc\":\"0990007020001\",\"pv_id\":2,\"items\":[{\"codigo\":\"020-000006-I\",\"cantidad\":1}]}");
+      verify(resolver).consultar(any());
+    }
+
+    @Test void conservaClientePuntoVentaYCantidadExplicitos() throws Exception {
+      var resolved = resolucion("identificado", true, List.of(candidato("020-000006-I")));
+      when(resolver.consultar(any())).thenReturn(List.of(new tuval.api.web.reportes.resolucionarticulos.dto.ResolucionArticulosReporteDto(
+          0, "texto", new java.math.BigDecimal("2.50"), false, resolved.estado(), resolved.articulo(), resolved.candidatos(),
+          List.of(), java.util.Map.of(), true, false, false, List.of())));
+      enviar(json(",\"cliente_ruc\":\"CLIENTE\",\"pv_id\":9", "[{\"texto\":\"020-000006-I\",\"cantidad\":2.50}]"))
+          .andExpect(status().isCreated());
+      var captor = org.mockito.ArgumentCaptor.forClass(tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Peticion.class);
+      verify(backend).crear(captor.capture());
+      assertThat(captor.getValue().clienteRuc()).isEqualTo("CLIENTE");
+      assertThat(captor.getValue().pvId()).isEqualTo(9);
+      assertThat(captor.getValue().items().getFirst().cantidad()).isEqualByComparingTo("2.50");
+    }
+
+    @Test void noCreaAnteAmbiguosIncompletosOSinCoincidenciaNiCreaLotesParciales() throws Exception {
+      for (var result : List.of(resolucion("ambiguo", true, List.of(candidato("020-000006-I"))),
+          resolucion("identificado", false, List.of(candidato("020-000006-I"))),
+          resolucion("sin_coincidencia", true, List.of()))) {
+        when(resolver.consultar(any())).thenReturn(List.of(result));
+        enviar(normal()).andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.data.creado").value(false));
+      }
+      when(resolver.consultar(any())).thenReturn(List.of(resolucion("identificado", true, List.of(candidato("020-000006-I"))),
+          resolucion("ambiguo", false, List.of(candidato("020-000007-I")))));
+      enviar(json("", "[{\"texto\":\"a\"},{\"texto\":\"b\"}]")).andExpect(status().isUnprocessableEntity());
+      verify(backend, never()).crear(any());
+    }
+
+    @Test void seleccionExplicitaDebeSerUnCandidatoUnicoYNoEligeElPrimero() throws Exception {
+      when(resolver.consultar(any())).thenReturn(List.of(resolucion("ambiguo", false,
+          List.of(candidato("020-000006-I"), candidato("020-000007-I")))));
+      enviar(json("", "[{\"texto\":\"bushing\",\"codigoSeleccionado\":\"020-000008-I\"}]"))
+          .andExpect(status().isUnprocessableEntity());
+      verify(backend, never()).crear(any());
+      enviar(json("", "[{\"texto\":\"bushing\",\"codigoSeleccionado\":\"020-000007-I\"}]"))
+          .andExpect(status().isCreated());
+      var captor = org.mockito.ArgumentCaptor.forClass(tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Peticion.class);
+      verify(backend).crear(captor.capture());
+      assertThat(captor.getValue().items().getFirst().codigo()).isEqualTo("020-000007-I");
+    }
+
+    @Test void noConsolidaCodigosRepetidosNiAceptaCandidatoDuplicado() throws Exception {
+      var item = resolucion("identificado", true, List.of(candidato("020-000006-I")));
+      when(resolver.consultar(any())).thenReturn(List.of(item, item));
+      enviar(json("", "[{\"texto\":\"a\"},{\"texto\":\"b\"}]")).andExpect(status().isUnprocessableEntity());
+      when(resolver.consultar(any())).thenReturn(List.of(resolucion("ambiguo", true,
+          List.of(candidato("020-000006-I"), candidato("020-000006-I")))));
+      enviar(json("", "[{\"texto\":\"bushing\",\"codigoSeleccionado\":\"020-000006-I\"}]"))
+          .andExpect(status().isUnprocessableEntity());
+      verify(backend, never()).crear(any());
+    }
+
+    @Test void mismoUuidReproduceSoloResultadoLocalYSuCambioEsConflicto() throws Exception {
+      enviar(normal()).andExpect(status().isCreated());
+      enviar(normal()).andExpect(status().isOk()).andExpect(jsonPath("$.data.repeticion_local").value(true));
+      enviar(json(",\"pv_id\":3", "[{\"texto\":\"020-000006-I\"}]")).andExpect(status().isConflict());
+      verify(backend, times(1)).crear(any()); verify(resolver, times(1)).consultar(any());
+    }
+
+    @Test void respuestaInciertaNoSeReintentaYNoFiltraDetalles() throws Exception {
+      when(backend.crear(any())).thenThrow(new tuval.api.web.reportes.cotizacionborrador.service.tuvalbackend.CotizacionBorradorException(502));
+      enviar(normal()).andExpect(status().isBadGateway()).andExpect(jsonPath("$.reintentable").value(false));
+      enviar(normal()).andExpect(status().isConflict()).andExpect(jsonPath("$.reintentable").value(false));
+      verify(backend, times(1)).crear(any());
+    }
+
+    @Test void segundoEnvioConcurrenteSeBloqueaAntesDeCrear() throws Exception {
+      var started = new java.util.concurrent.CountDownLatch(1);
+      var release = new java.util.concurrent.CountDownLatch(1);
+      when(backend.crear(any())).thenAnswer(invocation -> {
+        started.countDown(); release.await(5, java.util.concurrent.TimeUnit.SECONDS);
+        throw new tuval.api.web.reportes.cotizacionborrador.service.tuvalbackend.CotizacionBorradorException(504);
+      });
+      try (var executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+        var first = executor.submit(() -> { try { return enviar(normal()).andReturn().getResponse().getStatus(); }
+          catch (Exception exception) { throw new RuntimeException(exception); } });
+        try {
+          assertThat(started.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+          enviar(normal()).andExpect(status().isConflict());
+        } finally { release.countDown(); }
+        assertThat(first.get(5, java.util.concurrent.TimeUnit.SECONDS)).isEqualTo(504);
+      }
+      verify(backend, times(1)).crear(any());
+    }
+
+    @Test void deshabilitadoNoConsultaCatalogoNiCrea() throws Exception {
+      doThrow(new tuval.api.web.reportes.cotizacionborrador.service.tuvalbackend.CotizacionBorradorException(503))
+          .when(backend).verificarConfiguracion();
+      enviar(normal()).andExpect(status().isServiceUnavailable());
+      verifyNoInteractions(resolver); verify(backend, never()).crear(any());
+    }
+
+    @ParameterizedTest @ValueSource(strings = {"{}", "null", "{", "{\"renglones\":[]}",
+        "{\"texto\":\"a\",\"cantidad\":null}", "{\"texto\":\"a\",\"cantidad\":0}",
+        "{\"texto\":\"a\",\"cantidad\":0.001}", "{\"texto\":\"a\",\"cantidad\":1e2}",
+        "{\"texto\":\"a\",\"cantidad\":1000001}", "{\"texto\":\"a\",\"precio\":10}",
+        "{\"texto\":123}", "{\"texto\":\" \"}", "{\"texto\":\"a\",\"codigoSeleccionado\":null}"})
+    void rechazaDatosInvalidosSinConsultarNiCrear(String line) throws Exception {
+      String body = line.equals("{}") || line.equals("null") || line.equals("{") || line.contains("renglones")
+          ? line : json("", "[" + line + "]");
+      enviar(body).andExpect(status().isBadRequest());
+      verifyNoInteractions(resolver, backend);
+    }
+
+    @ParameterizedTest @ValueSource(strings = {",\"cliente_ruc\":null", ",\"cliente_ruc\":\" \"", ",\"pv_id\":0",
+        ",\"pv_id\":\"2\"", ",\"pv_id\":null", ",\"user_id\":6", ",\"precio\":1", ",\"unidad\":\"UN\""})
+    void rechazaContextoInvalidoOCamposAjenos(String fields) throws Exception {
+      enviar(json(fields, "[{\"texto\":\"a\"}]")).andExpect(status().isBadRequest());
+      verifyNoInteractions(resolver, backend);
+    }
+  }
 }

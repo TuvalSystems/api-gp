@@ -352,3 +352,9 @@ temporal creado para esta comprobación antes del commit. Se conservaron las pru
 existentes y sus regresiones de mapeo, unidad desconocida, atributos crudos,
 ambigüedad, NULL y contrato HTTP. Suite final: Java 21, Maven 3.9.9, clean verify,
 281 pruebas, 0 fallos, 0 errores y 1 omitida preexistente (requiere bases reales).
+
+## Creacion explicita de borrador en pruebas
+
+La nueva operacion POST /api/reportes/resolucion-articulos/crear-borrador reutiliza
+el resolver y conecta el contrato real GET de tuvalBackend. /consultar conserva
+solo lectura. Ver [contrato, habilitacion y limites](resolucion-articulos-borrador.md).
