@@ -369,3 +369,7 @@ ni se interpreta una marca cruda para completar la consulta. La observacion
 `comparacion_descripcion_exacta` distingue este caso de la interpretacion por reglas.
 Duplicados, busqueda truncada y contradicciones conservan ambiguedad. El resto de
 consultas sigue usando el comportamiento conservador anterior; no hay fuzzy matching.
+La operacion explicita crear-borrador puede enviar los codigos opcion de resultados
+ambiguos como lineas ordinarias, por confirmacion del usuario. /consultar sigue
+siendo de lectura y mantiene el estado ambiguo y avisos; la creacion no implica
+que se haya seleccionado o aprendido el articulo correcto. Ver el contrato enlazado.

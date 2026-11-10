@@ -19,7 +19,7 @@ Se verifico el 2026-11-10 el codigo de tuvalBackend/develop:
 
 Este contrato NO es el anterior `POST /api/cotizaciones/borrador-items` con Bearer/UUID.
 El puente anterior `/api/reportes/cotizacion-borrador` queda intacto y no se usa como fallback.
-No se verifico el despliegue remoto ni se creo un borrador real en esta tarea.
+No se verifico el despliegue remoto de estos cambios ni se creo un borrador real en esta tarea.
 
 ## Peticion
 
@@ -43,10 +43,14 @@ hasta 1000000 con maximo 2 decimales (limite real del destino), sin exponentes n
 Se rechazan null explicitos, precios, unidades, URLs y campos desconocidos. El contrato
 original de consulta sigue admitiendo 3 decimales; no significa que se puedan persistir sin redondear.
 
-Solo se crea cuando TODOS los renglones quedan resueltos. Un resultado `identificado`
-con busqueda completa y sin datos faltantes puede usarse. Un ambiguo, incompleto o
-sin coincidencias nunca se selecciona automaticamente y devuelve 422 sin llamada de escritura.
-Los codigos repetidos se rechazan, no se suman cantidades automaticamente.
+El flujo confirmado por el usuario envia el codigo identificado o los codigos opcion
+que devuelve el resolver, hasta cinco por renglon. Un ambiguo no se convierte en una
+seleccion unica: sus opciones se guardan como lineas ordinarias del borrador, cada una
+con la cantidad solicitada. El vendedor revisa y elimina las que no correspondan antes
+de generar la cotizacion. Las busquedas incompletas y listas recortadas siempre se advierten.
+No se crea un lote parcial si algun renglon carece de codigos utilizables, hay cantidades
+conflictivas para el mismo codigo o el lote supera 20 codigos distintos. Repeticiones del
+mismo codigo con igual cantidad se unifican sin sumar, con aviso y trazabilidad por renglon.
 
 Para una seleccion humana explicita:
 
@@ -91,7 +95,7 @@ No se usa java.net.http.HttpClient para este GET: sus reintentos internos consid
 - 200: la misma instancia devuelve un exito anterior de la misma UUID/contenido,
   con `data.repeticion_local=true`. NO implica idempotencia en Laravel.
 - 400: entrada invalida, sin consultas ni escritura.
-- 422 con `data.creado=false`: resolver incompleto, seleccion faltante/invalida o duplicados;
+- 422 con `data.creado=false`: renglon sin codigos utilizables, seleccion explicita invalida, cantidades conflictivas o mas de 20 codigos;
   se incluyen resoluciones para corregir el lote. Tambien se conserva 422 remoto, sin errores internos.
 - 409: UUID en curso/incierta o reutilizada con contenido distinto.
 - 401/403/429: rechazo remoto, sin transmitir su cuerpo.
@@ -211,7 +215,8 @@ perfiles mixtos y resolucion de destino fijada. No abren sockets al destino real
 `codigoSeleccionado`, cantidad o PV para el ejemplo inicial. `request_id` es solo
 metadato tecnico obligatorio de proteccion local contra repeticion, no un dato
 del articulo. El flujo primero resuelve, luego forma el cuerpo interno de items
-y solo entonces llama a Laravel si todos los renglones quedan identificados.
+y llama a Laravel cuando cada renglon tiene codigos utilizables, sin cantidades
+conflictivas ni superar 20 codigos distintos.
 
 Se agrega una regla conservadora de identidad textual: la descripcion completa
 puede diferir solo en mayusculas/minusculas y espacios. Debe existir una unica
@@ -219,7 +224,8 @@ fila exacta, con codigo GP no vacio y no duplicado en la fuente, y la busqueda d
 familia debe estar completa. No admite contradicciones ni atributos estructurales
 faltantes; no traduce marcas o materiales crudos. No aplica similitud, fuzzy
 matching ni elimina palabras, certificaciones, signos, fracciones o acentos.
-Si no cumple, siguen las reglas anteriores y la ambiguedad no crea borradores.
+Si no cumple, siguen las reglas anteriores del resolver. La creacion puede enviar
+las opciones ambiguas como lineas ordinarias, conforme al flujo confirmado abajo.
 La respuesta agrega la observacion `comparacion_descripcion_exacta` cuando aplica.
 
 Validacion descriptiva de solo lectura en DEV: la familia BUSHING devolvio 212
@@ -240,3 +246,45 @@ con 326 casos, 0 fallos, 0 errores, 1 omitido. Se retiro solo DescripcionRealTem
 y se conservo ademas una regresion HTTP completa con fixture local; clean test y
 clean verify finales: 326 casos, 0 fallos, 0 errores, 1 omitido preexistente.
 No se crearon borradores reales ni se aplico la configuracion descrita.
+
+## Opciones como lineas del borrador (flujo confirmado)
+
+El usuario confirmo que, si no hay coincidencia unica, se envian los codigos opcion
+al mismo endpoint de creacion. No se requiere seleccionar manualmente uno antes de
+crear. Laravel recibe exclusivamente codigo/cantidad por cada opcion, sin campos nuevos.
+`CHECK_ALTERNATIVO` existe en otros flujos, pero esta API no lo admite ni guarda grupos.
+No se cambia tuvalBackend ni se supone que el vendedor vea las opciones agrupadas.
+Todas son lineas normales y deben revisarse antes de generar la cotizacion.
+
+La respuesta de api-gp agrega:
+- `opciones_por_renglon`: indice, codigos efectivamente preparados, cantidad por linea,
+  origen (`identificado`, `seleccion_explicita` u `opciones`) y `listaCompleta`.
+- `advertencias`: lineas ordinarias pendientes de revision; busqueda incompleta, lista
+  recortada o candidatos sin codigo utilizable; codigos repetidos unificados; conflictos
+  y limite del lote cuando corresponda.
+
+Las advertencias se conservan tambien en una repeticion local. `resoluciones` sigue
+mostrando estado ambiguo, datos faltantes, truncamientos y observaciones originales.
+Una sola opcion utilizable de una busqueda incompleta no se declara identificacion unica.
+Los candidatos sin codigo GP utilizable no se inventan: se informa su exclusion y la lista
+queda incompleta. Si no queda ninguno, no se envia la operacion. No se recorta a 20 para
+forzar un borrador: mas de 20 codigos distintos devuelve 422 sin ninguna escritura.
+
+La cantidad solicitada se repite en cada linea opcion; no representa una compra de todos
+los candidatos. Mismo codigo e igual cantidad se envia una sola vez y aparece ligado a
+cada renglon de origen; cantidades distintas para ese codigo requieren correccion, no suma.
+Laravel puede rechazar atomicamente el lote si algun codigo no cumple sus validaciones
+actuales de actividad, permisos, unidad o precision.
+
+La asociacion renglon/opciones queda en la respuesta de esta operacion, no persistida
+como agrupacion en Laravel. No hay aprendizaje automatico ni captura de la validacion final
+implementados: registrar la eleccion posterior y aprender de ella es una fase pendiente.
+No se infiere una seleccion validada por el mero hecho de crear o consultar un borrador.
+
+
+Verificacion final del flujo de opciones: clean test y clean verify, 331 casos,
+0 fallos, 0 errores y 1 omitido preexistente en cada ejecucion. Se comprobaron
+lista incompleta, maximo 20 codigos sin recorte silencioso, opciones sin codigo,
+duplicados dentro y entre renglones, cantidades conflictivas y repeticion local.
+No quedaron tests temporales, no se eliminaron tests existentes y el JAR no incluye
+application-dev.properties, application-qa.properties ni application-prod.properties.
