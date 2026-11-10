@@ -19,15 +19,16 @@ Se verifico el 2026-11-10 el codigo de tuvalBackend/develop:
 
 Este contrato NO es el anterior `POST /api/cotizaciones/borrador-items` con Bearer/UUID.
 El puente anterior `/api/reportes/cotizacion-borrador` queda intacto y no se usa como fallback.
-No se verifico el despliegue remoto ni se creo un borrador real en esta tarea.
+No se verifico el despliegue remoto de estos cambios ni se creo un borrador real en esta tarea.
 
 ## Peticion
 
 ```json
 {
   "request_id": "e0f7a456-2026-4000-8000-000000000001",
+  "cliente_ruc": "0990007020001",
   "renglones": [
-    {"texto": "020-000006-I", "cantidad": 2}
+    {"texto": "MECH BUSHING GALVANIZADO 150 UL/FM 1\" X 1/2\" NPT"}
   ]
 }
 ```
@@ -42,10 +43,14 @@ hasta 1000000 con maximo 2 decimales (limite real del destino), sin exponentes n
 Se rechazan null explicitos, precios, unidades, URLs y campos desconocidos. El contrato
 original de consulta sigue admitiendo 3 decimales; no significa que se puedan persistir sin redondear.
 
-Solo se crea cuando TODOS los renglones quedan resueltos. Un resultado `identificado`
-con busqueda completa y sin datos faltantes puede usarse. Un ambiguo, incompleto o
-sin coincidencias nunca se selecciona automaticamente y devuelve 422 sin llamada de escritura.
-Los codigos repetidos se rechazan, no se suman cantidades automaticamente.
+El flujo confirmado por el usuario envia el codigo identificado o los codigos opcion
+que devuelve el resolver, hasta cinco por renglon. Un ambiguo no se convierte en una
+seleccion unica: sus opciones se guardan como lineas ordinarias del borrador, cada una
+con la cantidad solicitada. El vendedor revisa y elimina las que no correspondan antes
+de generar la cotizacion. Las busquedas incompletas y listas recortadas siempre se advierten.
+No se crea un lote parcial si algun renglon carece de codigos utilizables, hay cantidades
+conflictivas para el mismo codigo o el lote supera 20 codigos distintos. Repeticiones del
+mismo codigo con igual cantidad se unifican sin sumar, con aviso y trazabilidad por renglon.
 
 Para una seleccion humana explicita:
 
@@ -72,7 +77,7 @@ comercial: Laravel sigue validando unidad base, precision y elegibilidad. No se 
 Solo se envia este cuerpo, por GET al path fijo `/cotizaciones/borrador-items`:
 
 ```json
-{"cliente_ruc":"0990007020001","pv_id":2,"items":[{"codigo":"020-000006-I","cantidad":2}]}
+{"cliente_ruc":"0990007020001","pv_id":2,"items":[{"codigo":"020-000006-I","cantidad":1}]}
 ```
 
 El GET mutante es compatibilidad temporal de pruebas, no un patron recomendado.
@@ -90,7 +95,7 @@ No se usa java.net.http.HttpClient para este GET: sus reintentos internos consid
 - 200: la misma instancia devuelve un exito anterior de la misma UUID/contenido,
   con `data.repeticion_local=true`. NO implica idempotencia en Laravel.
 - 400: entrada invalida, sin consultas ni escritura.
-- 422 con `data.creado=false`: resolver incompleto, seleccion faltante/invalida o duplicados;
+- 422 con `data.creado=false`: renglon sin codigos utilizables, seleccion explicita invalida, cantidades conflictivas o mas de 20 codigos;
   se incluyen resoluciones para corregir el lote. Tambien se conserva 422 remoto, sin errores internos.
 - 409: UUID en curso/incierta o reutilizada con contenido distinto.
 - 401/403/429: rechazo remoto, sin transmitir su cuerpo.
@@ -129,7 +134,8 @@ reportes.resolucion-borrador.backend-origin=https://HOST_QA_VERIFICADO
 
 El origen es configuracion de servidor, no entrada HTTP, sin path, credenciales, query o fragmento.
 Exige perfiles activos no vacios y todos en `local`, `testing`, `qa`, `staging`.
-`dev`, `prod`, desconocidos y mezclas con produccion se bloquean. No renombrar perfiles
+`dev` solo se permite con la excepcion adicional descrita abajo. `prod`,
+`production`, desconocidos y mezclas con produccion siempre se bloquean. No renombrar perfiles
 compartidos para eludirlo: un nombre de perfil no demuestra el destino de las bases.
 
 La URL que entrego el usuario usa HTTP. Solo para el piloto y con verificacion previa del
@@ -164,3 +170,121 @@ Resultados locales finales (2026-11-10): clean test con temporal, 321 casos,
 clean test y clean verify: 320 casos, 0 fallos, 0 errores, 1 omitido en ambas
 ejecuciones. JAR construido y verificado sin perfiles privados. Inventario de
 tests previos conservado y git diff --check correcto.
+
+## Excepcion DEV de pruebas (continuacion de PR #55)
+
+El usuario confirmo el DEV de pruebas del servicio y su base de pruebas. No se
+renombra ningun perfil ni se cambia configuracion de servidores. Para admitir
+el perfil literal `dev` hacen falta TODAS estas condiciones del modulo:
+
+```properties
+reportes.resolucion-borrador.enabled=true
+reportes.resolucion-borrador.dev-test-target-verified=true
+reportes.resolucion-borrador.backend-origin=http://tuvalapi.cosenco.ec
+reportes.resolucion-borrador.allow-insecure-http=true
+```
+
+Estos son valores para que el administrador los revise, NO cambios aplicados
+por este PR. Si el destino dispone de HTTPS valido se debe preferir HTTPS y
+omitir `allow-insecure-http`. No se envian tokens en ninguno de los dos casos.
+El flag `dev-test-target-verified` es una atestacion administrativa posterior a
+comprobar ambiente/BD, no una comprobacion automatica de la base Laravel.
+
+La excepcion DEV solo acepta el hostname exacto `tuvalapi.cosenco.ec` y el puerto
+estandar 80 HTTP o 443 HTTPS (u omitido). Su cliente fija tambien la conexion a
+`172.30.1.7`, el servidor de pruebas comprobado, manteniendo Host/SNI y validacion
+TLS normal. Otros destinos, URLs con path/credenciales/query/fragmento y mezclas
+dev+prod siguen bloqueados. La fijacion de IP evita que un cambio DNS redirija
+esta excepcion a otro servidor. Un cambio del servidor requiere nueva revision;
+no basta cambiar la configuracion. No modifica DNS, proxy ni seguridad del SO.
+
+Comprobacion de solo lectura del 2026-11-10 desde SISTEMAS6: DNS del hostname
+resolvio a 172.30.1.7 y GET sin cuerpo devolvio 422 con los tres campos requeridos
+(cliente_ruc, pv_id, items). No se envio ningun cliente/articulo ni se creo un
+borrador. Es consistente con la ruta y guard de entorno Laravel verificados en
+codigo, pero no prueba su conexion fisica de BD. Antes de habilitar, confirmar
+esa conexion y permisos del usuario 6; las bases de Pruebas y QA son ambientes
+distintos y no deben intercambiarse por inferencia.
+
+Regresiones permanentes: DEV sin opt-in, HTTP sin opt-in, host/IP/puerto indebidos,
+perfiles mixtos y resolucion de destino fijada. No abren sockets al destino real.
+
+## Descripcion y cliente, sin codigo elegido por el consumidor
+
+`renglones[].texto` contiene la descripcion del usuario. No hace falta codigo,
+`codigoSeleccionado`, cantidad o PV para el ejemplo inicial. `request_id` es solo
+metadato tecnico obligatorio de proteccion local contra repeticion, no un dato
+del articulo. El flujo primero resuelve, luego forma el cuerpo interno de items
+y llama a Laravel cuando cada renglon tiene codigos utilizables, sin cantidades
+conflictivas ni superar 20 codigos distintos.
+
+Se agrega una regla conservadora de identidad textual: la descripcion completa
+puede diferir solo en mayusculas/minusculas y espacios. Debe existir una unica
+fila exacta, con codigo GP no vacio y no duplicado en la fuente, y la busqueda de
+familia debe estar completa. No admite contradicciones ni atributos estructurales
+faltantes; no traduce marcas o materiales crudos. No aplica similitud, fuzzy
+matching ni elimina palabras, certificaciones, signos, fracciones o acentos.
+Si no cumple, siguen las reglas anteriores del resolver. La creacion puede enviar
+las opciones ambiguas como lineas ordinarias, conforme al flujo confirmado abajo.
+La respuesta agrega la observacion `comparacion_descripcion_exacta` cuando aplica.
+
+Validacion descriptiva de solo lectura en DEV: la familia BUSHING devolvio 212
+filas mediante listado-items (limite 500), y la descripcion inicial aparecio una
+sola vez para 020-000006-I. Un test temporal usa esa captura fuera del repositorio
+para ejecutar el resolver y orquestador reales con el creador simulado. No hace
+una creacion real ni demuestra que el cambio ya este desplegado. Se elimina el
+temporal antes del commit y se repiten las suites limpias. La captura no se publica.
+
+Las regresiones permanentes cubren literal unico, case/espacios, duplicados de
+descripcion/codigo, fuente truncada, errores tipograficos, omisiones y contradicciones.
+La prueba existente de no descartar filas inciertas conserva esa propiedad para
+especificaciones interpretadas no literales; la nueva regla de identidad literal
+se prueba por separado.
+
+Resultados de la continuacion DEV/descripciones: captura temporal verificada
+con 326 casos, 0 fallos, 0 errores, 1 omitido. Se retiro solo DescripcionRealTemporalTest.java
+y se conservo ademas una regresion HTTP completa con fixture local; clean test y
+clean verify finales: 326 casos, 0 fallos, 0 errores, 1 omitido preexistente.
+No se crearon borradores reales ni se aplico la configuracion descrita.
+
+## Opciones como lineas del borrador (flujo confirmado)
+
+El usuario confirmo que, si no hay coincidencia unica, se envian los codigos opcion
+al mismo endpoint de creacion. No se requiere seleccionar manualmente uno antes de
+crear. Laravel recibe exclusivamente codigo/cantidad por cada opcion, sin campos nuevos.
+`CHECK_ALTERNATIVO` existe en otros flujos, pero esta API no lo admite ni guarda grupos.
+No se cambia tuvalBackend ni se supone que el vendedor vea las opciones agrupadas.
+Todas son lineas normales y deben revisarse antes de generar la cotizacion.
+
+La respuesta de api-gp agrega:
+- `opciones_por_renglon`: indice, codigos efectivamente preparados, cantidad por linea,
+  origen (`identificado`, `seleccion_explicita` u `opciones`) y `listaCompleta`.
+- `advertencias`: lineas ordinarias pendientes de revision; busqueda incompleta, lista
+  recortada o candidatos sin codigo utilizable; codigos repetidos unificados; conflictos
+  y limite del lote cuando corresponda.
+
+Las advertencias se conservan tambien en una repeticion local. `resoluciones` sigue
+mostrando estado ambiguo, datos faltantes, truncamientos y observaciones originales.
+Una sola opcion utilizable de una busqueda incompleta no se declara identificacion unica.
+Los candidatos sin codigo GP utilizable no se inventan: se informa su exclusion y la lista
+queda incompleta. Si no queda ninguno, no se envia la operacion. No se recorta a 20 para
+forzar un borrador: mas de 20 codigos distintos devuelve 422 sin ninguna escritura.
+
+La cantidad solicitada se repite en cada linea opcion; no representa una compra de todos
+los candidatos. Mismo codigo e igual cantidad se envia una sola vez y aparece ligado a
+cada renglon de origen; cantidades distintas para ese codigo requieren correccion, no suma.
+Laravel puede rechazar atomicamente el lote si algun codigo no cumple sus validaciones
+actuales de actividad, permisos, unidad o precision.
+
+La asociacion renglon/opciones queda en la respuesta de esta operacion, no persistida
+como agrupacion en Laravel. No hay aprendizaje automatico ni captura de la validacion final
+implementados: registrar la eleccion posterior y aprender de ella es una fase pendiente.
+No se infiere una seleccion validada por el mero hecho de crear o consultar un borrador.
+
+
+Verificacion final del flujo de opciones: clean test y clean verify, 331 casos,
+0 fallos, 0 errores y 1 omitido preexistente en cada ejecucion. Se comprobaron
+lista incompleta, maximo 20 codigos sin recorte silencioso, opciones sin codigo,
+duplicados dentro y entre renglones, cantidades conflictivas y repeticion local.
+No quedaron tests temporales, no se eliminaron tests existentes y el JAR no incluye
+application-dev.properties, application-qa.properties ni application-prod.properties.

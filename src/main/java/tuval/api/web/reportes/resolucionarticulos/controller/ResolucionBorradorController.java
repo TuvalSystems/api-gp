@@ -22,12 +22,14 @@ public class ResolucionBorradorController {
     try {
       var result = service.crear(request);
       if (result.status() == 422) return response(422, Map.of("success", false,
-          "message", "Revise los renglones: faltan selecciones explicitas, hay codigos repetidos o no se pudo resolver todo el lote.",
-          "data", Map.of("request_id", request.requestId(), "resoluciones", result.resoluciones(), "creado", false)));
+          "message", "Revise los renglones sin opciones, cantidades conflictivas o limite de 20 lineas. No se creo un lote parcial.",
+          "data", Map.of("request_id", request.requestId(), "resoluciones", result.resoluciones(), "creado", false,
+              "opciones_por_renglon", result.opcionesPorRenglon(), "advertencias", result.advertencias())));
       return response(result.status(), Map.of("success", true,
-          "message", "Borrador de prueba disponible para revision. Los precios se validan al generar la cotizacion.",
+          "message", "Borrador de prueba para revision. Las opciones se guardan como lineas ordinarias; valide cuales conservar antes de cotizar.",
           "data", Map.of("request_id", request.requestId(), "borrador", result.borrador(),
-              "resoluciones", result.resoluciones(), "repeticion_local", result.repeticionLocal())));
+              "resoluciones", result.resoluciones(), "repeticion_local", result.repeticionLocal(),
+              "opciones_por_renglon", result.opcionesPorRenglon(), "advertencias", result.advertencias())));
     } catch (IllegalArgumentException exception) {
       return invalidRequest();
     } catch (CotizacionBorradorException exception) {

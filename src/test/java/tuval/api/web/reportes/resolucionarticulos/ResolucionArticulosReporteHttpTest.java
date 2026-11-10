@@ -150,6 +150,24 @@ class ResolucionArticulosReporteHttpTest {
       verify(resolver).consultar(any());
     }
 
+    @Test void descripcionYClienteSeResuelvenAntesDeLlamarCreadorSinCodigoEnBody() throws Exception {
+      when(dao.buscar(any(), any())).thenReturn(List.of(
+          ResolucionArticulosReporteServiceTest.row("020-000006-I", "MECH BUSHING GALVANIZADO 150 UL/FM 1\" X 1/2\" NPT"),
+          ResolucionArticulosReporteServiceTest.row("OTRO", "SM BUSHING ACERO FORJADO A105 CLASE 3000 1\" X 1/2\" NPT")));
+      var service = new tuval.api.web.reportes.resolucionarticulos.service.tuvalbackend.ResolucionBorradorService(
+          new ResolucionArticulosReporteService(dao), backend, mapper);
+      createMvc = MockMvcBuilders.standaloneSetup(new tuval.api.web.reportes.resolucionarticulos.controller.ResolucionBorradorController(service)).build();
+      String body = mapper.writeValueAsString(java.util.Map.of("request_id", ID, "cliente_ruc", "0990007020001",
+          "renglones", List.of(java.util.Map.of("texto", "MECH BUSHING GALVANIZADO 150 UL/FM 1\" X 1/2\" NPT"))));
+      enviar(body).andExpect(status().isCreated()).andExpect(jsonPath("$.data.resoluciones[0].estado").value("identificado"))
+          .andExpect(jsonPath("$.data.resoluciones[0].articulo.codigoGP").value("020-000006-I"));
+      var captor = org.mockito.ArgumentCaptor.forClass(tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Peticion.class);
+      verify(backend).crear(captor.capture());
+      assertThat(captor.getValue().items()).containsExactly(new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Item(
+          "020-000006-I", java.math.BigDecimal.ONE));
+      assertThat(captor.getValue().pvId()).isEqualTo(2);
+      verifyNoInteractions(resolver);
+    }
     @Test void conservaClientePuntoVentaYCantidadExplicitos() throws Exception {
       var resolved = resolucion("identificado", true, List.of(candidato("020-000006-I")));
       when(resolver.consultar(any())).thenReturn(List.of(new tuval.api.web.reportes.resolucionarticulos.dto.ResolucionArticulosReporteDto(
@@ -164,19 +182,63 @@ class ResolucionArticulosReporteHttpTest {
       assertThat(captor.getValue().items().getFirst().cantidad()).isEqualByComparingTo("2.50");
     }
 
-    @Test void noCreaAnteAmbiguosIncompletosOSinCoincidenciaNiCreaLotesParciales() throws Exception {
-      for (var result : List.of(resolucion("ambiguo", true, List.of(candidato("020-000006-I"))),
-          resolucion("identificado", false, List.of(candidato("020-000006-I"))),
-          resolucion("sin_coincidencia", true, List.of()))) {
-        when(resolver.consultar(any())).thenReturn(List.of(result));
-        enviar(normal()).andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.data.creado").value(false));
-      }
+    @Test void sinOpcionesNoCreaNiEnviaLotesParciales() throws Exception {
+      when(resolver.consultar(any())).thenReturn(List.of(resolucion("sin_coincidencia", true, List.of())));
+      enviar(normal()).andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.data.creado").value(false));
       when(resolver.consultar(any())).thenReturn(List.of(resolucion("identificado", true, List.of(candidato("020-000006-I"))),
-          resolucion("ambiguo", false, List.of(candidato("020-000007-I")))));
+          resolucion("ambiguo", false, List.of())));
       enviar(json("", "[{\"texto\":\"a\"},{\"texto\":\"b\"}]")).andExpect(status().isUnprocessableEntity());
       verify(backend, never()).crear(any());
     }
 
+    @Test void enviaCodigosOpcionConCantidadPorLineaYAdvierteBusquedaIncompleta() throws Exception {
+      var partial = resolucion("ambiguo", false, List.of(candidato("020-000006-I"), candidato("020-000007-I")));
+      when(resolver.consultar(any())).thenReturn(List.of(new tuval.api.web.reportes.resolucionarticulos.dto.ResolucionArticulosReporteDto(
+          0, partial.texto(), partial.cantidad(), true, partial.estado(), null, partial.candidatos(), List.of(),
+          java.util.Map.of(), false, true, true, List.of())));
+      enviar(normal()).andExpect(status().isCreated())
+          .andExpect(jsonPath("$.data.opciones_por_renglon[0].origen").value("opciones"))
+          .andExpect(jsonPath("$.data.opciones_por_renglon[0].codigos.length()").value(2))
+          .andExpect(jsonPath("$.data.opciones_por_renglon[0].listaCompleta").value(false))
+          .andExpect(jsonPath("$.data.advertencias", org.hamcrest.Matchers.hasItems(
+              "opciones_son_lineas_ordinarias_revisar_antes_de_cotizar", "busqueda_incompleta_renglon_0", "lista_candidatos_recortada_renglon_0")));
+      var captor = org.mockito.ArgumentCaptor.forClass(tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Peticion.class);
+      verify(backend).crear(captor.capture());
+      assertThat(captor.getValue().items()).containsExactly(
+          new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Item("020-000006-I", java.math.BigDecimal.ONE),
+          new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Item("020-000007-I", java.math.BigDecimal.ONE));
+      var query = org.mockito.ArgumentCaptor.forClass(tuval.api.web.reportes.resolucionarticulos.request.ResolucionArticulosReporteRequest.class);
+      verify(resolver).consultar(query.capture()); assertThat(query.getValue().maxCandidatos()).isEqualTo(5);
+      enviar(normal()).andExpect(status().isOk()).andExpect(jsonPath("$.data.advertencias", org.hamcrest.Matchers.hasItem("busqueda_incompleta_renglon_0")));
+      verify(backend, times(1)).crear(any());
+    }
+
+    @Test void masDe20OpcionesNoSeRecortaNiCreaPero20SiSeAdmiten() throws Exception {
+      var results = new java.util.ArrayList<tuval.api.web.reportes.resolucionarticulos.dto.ResolucionArticulosReporteDto>();
+      for (int i=0;i<5;i++) {
+        var candidates = new java.util.ArrayList<tuval.api.web.reportes.resolucionarticulos.dto.ResolucionArticulosReporteDto.Candidato>();
+        for (int j=0;j<5;j++) candidates.add(candidato("ITEM-"+i+"-"+j));
+        results.add(resolucion("ambiguo", true, candidates));
+      }
+      when(resolver.consultar(any())).thenReturn(results);
+      enviar(json("", "["+String.join(",", java.util.Collections.nCopies(5,"{\"texto\":\"a\"}"))+"]"))
+          .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.data.advertencias", org.hamcrest.Matchers.hasItem("limite_20_lineas_superado_no_se_envia_lote_parcial")));
+      verify(backend, never()).crear(any());
+      when(resolver.consultar(any())).thenReturn(results.subList(0,4));
+      enviar(json("", "["+String.join(",", java.util.Collections.nCopies(4,"{\"texto\":\"a\"}"))+"]"))
+          .andExpect(status().isCreated());
+      var captor = org.mockito.ArgumentCaptor.forClass(tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Peticion.class);
+      verify(backend).crear(captor.capture()); assertThat(captor.getValue().items()).hasSize(20);
+    }
+
+    @Test void candidatosSinCodigoNoSeInventanYLaListaSeDeclaraIncompleta() throws Exception {
+      when(resolver.consultar(any())).thenReturn(List.of(resolucion("ambiguo", true, List.of(candidato(null), candidato("020-000006-I")))));
+      enviar(normal()).andExpect(status().isCreated())
+          .andExpect(jsonPath("$.data.opciones_por_renglon[0].listaCompleta").value(false))
+          .andExpect(jsonPath("$.data.advertencias", org.hamcrest.Matchers.hasItem("candidatos_sin_codigo_utilizable_renglon_0")));
+      var captor = org.mockito.ArgumentCaptor.forClass(tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Peticion.class);
+      verify(backend).crear(captor.capture()); assertThat(captor.getValue().items()).hasSize(1);
+    }
     @Test void seleccionExplicitaDebeSerUnCandidatoUnicoYNoEligeElPrimero() throws Exception {
       when(resolver.consultar(any())).thenReturn(List.of(resolucion("ambiguo", false,
           List.of(candidato("020-000006-I"), candidato("020-000007-I")))));
@@ -190,17 +252,35 @@ class ResolucionArticulosReporteHttpTest {
       assertThat(captor.getValue().items().getFirst().codigo()).isEqualTo("020-000007-I");
     }
 
-    @Test void noConsolidaCodigosRepetidosNiAceptaCandidatoDuplicado() throws Exception {
+    @Test void codigosRepetidosMismaCantidadSeUnificanConAvisoYTrazabilidad() throws Exception {
       var item = resolucion("identificado", true, List.of(candidato("020-000006-I")));
       when(resolver.consultar(any())).thenReturn(List.of(item, item));
-      enviar(json("", "[{\"texto\":\"a\"},{\"texto\":\"b\"}]")).andExpect(status().isUnprocessableEntity());
-      when(resolver.consultar(any())).thenReturn(List.of(resolucion("ambiguo", true,
-          List.of(candidato("020-000006-I"), candidato("020-000006-I")))));
-      enviar(json("", "[{\"texto\":\"bushing\",\"codigoSeleccionado\":\"020-000006-I\"}]"))
-          .andExpect(status().isUnprocessableEntity());
-      verify(backend, never()).crear(any());
+      enviar(json("", "[{\"texto\":\"a\"},{\"texto\":\"b\"}]")).andExpect(status().isCreated())
+          .andExpect(jsonPath("$.data.opciones_por_renglon.length()").value(2))
+          .andExpect(jsonPath("$.data.advertencias", org.hamcrest.Matchers.hasItem("codigo_repetido_misma_cantidad_unificado_020-000006-I")));
+      var captor = org.mockito.ArgumentCaptor.forClass(tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Peticion.class);
+      verify(backend).crear(captor.capture()); assertThat(captor.getValue().items()).hasSize(1);
+      assertThat(captor.getValue().items().getFirst().cantidad()).isEqualByComparingTo("1");
     }
 
+    @Test void candidatosDuplicadosDentroDeUnRenglonTambienSeUnificanConAviso() throws Exception {
+      when(resolver.consultar(any())).thenReturn(List.of(resolucion("ambiguo",true,
+          List.of(candidato("020-000006-I"),candidato("020-000006-I")))));
+      enviar(normal()).andExpect(status().isCreated())
+          .andExpect(jsonPath("$.data.opciones_por_renglon[0].codigos.length()").value(1))
+          .andExpect(jsonPath("$.data.advertencias", org.hamcrest.Matchers.hasItem("codigo_repetido_en_renglon_0_unificado_020-000006-I")));
+      var captor = org.mockito.ArgumentCaptor.forClass(tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Peticion.class);
+      verify(backend).crear(captor.capture()); assertThat(captor.getValue().items()).hasSize(1);
+    }
+    @Test void cantidadesConflictivasNoSeSumanNiSeCrea() throws Exception {
+      var item = resolucion("identificado", true, List.of(candidato("020-000006-I")));
+      var other = new tuval.api.web.reportes.resolucionarticulos.dto.ResolucionArticulosReporteDto(
+          1,"b",new java.math.BigDecimal("2"),false,item.estado(),item.articulo(),item.candidatos(),List.of(),java.util.Map.of(),true,false,false,List.of());
+      when(resolver.consultar(any())).thenReturn(List.of(item, other));
+      enviar(json("", "[{\"texto\":\"a\"},{\"texto\":\"b\",\"cantidad\":2}]")).andExpect(status().isUnprocessableEntity())
+          .andExpect(jsonPath("$.data.advertencias", org.hamcrest.Matchers.hasItem("codigo_con_cantidades_conflictivas_020-000006-I")));
+      verify(backend, never()).crear(any());
+    }
     @Test void mismoUuidReproduceSoloResultadoLocalYSuCambioEsConflicto() throws Exception {
       enviar(normal()).andExpect(status().isCreated());
       enviar(normal()).andExpect(status().isOk()).andExpect(jsonPath("$.data.repeticion_local").value(true));

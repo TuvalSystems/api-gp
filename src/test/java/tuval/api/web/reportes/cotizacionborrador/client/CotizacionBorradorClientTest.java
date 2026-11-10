@@ -215,7 +215,7 @@ class CotizacionBorradorClientTest {
     @Test void getConJsonExactoSinCredencialesYRespuestaAllowlist() throws Exception {
       try (var server = new Local(e -> reply(e, 201, valid(), "application/json; charset=utf-8"))) {
         var env = new MockEnvironment(); env.setActiveProfiles("qa");
-        var client = new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, true, server.origin(), true);
+        var client = new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, true, server.origin(), true, false);
         var result = client.crear(payload);
         assertThat(server.count.get()).isEqualTo(1);
         assertThat(server.method.get()).isEqualTo("GET");
@@ -297,16 +297,49 @@ class CotizacionBorradorClientTest {
       try (var server = new Local(e -> reply(e, 201, valid(), "application/json"))) {
         for (String[] profiles : List.of(new String[]{}, new String[]{"prod"}, new String[]{"qa", "prod"}, new String[]{"unknown"})) {
           var env = new MockEnvironment(); env.setActiveProfiles(profiles);
-          expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, true, server.origin(), true).crear(payload));
+          expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, true, server.origin(), true, false).crear(payload));
         }
         var env = new MockEnvironment(); env.setActiveProfiles("qa");
-        expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, false, server.origin(), true).crear(payload));
-        expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, true, server.origin(), false).crear(payload));
+        expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, false, server.origin(), true, false).crear(payload));
+        expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, true, server.origin(), false, false).crear(payload));
         for (String origin : List.of("", "not-url", server.origin()+"/path", server.origin()+"?x=1", server.origin()+"#x", "http://user@127.0.0.1", "http://127.0.0.1:0", "http://127.0.0.1:65536")) {
-          expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, true, origin, true).crear(payload));
+          expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(mapper, env, true, origin, true, false).crear(payload));
         }
         assertThat(server.count.get()).isZero();
       }
+    }
+    @Test void devExigeOptInDestinoVerificadoYSinMezclaProduccion() throws Exception {
+      var type = tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.class;
+      var env = new MockEnvironment(); env.setActiveProfiles("dev");
+      String origin = "http://tuvalapi.cosenco.ec";
+      expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(
+          mapper, env, true, origin, true, false).verificarConfiguracion());
+      expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(
+          mapper, env, true, origin, false, true).verificarConfiguracion());
+      for (String allowed : List.of(origin, origin+":80", "https://tuvalapi.cosenco.ec", "https://tuvalapi.cosenco.ec:443")) {
+        var client = new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(
+            mapper, env, true, allowed, true, true);
+        client.verificarConfiguracion();
+        var pinned = type.getDeclaredField("pinDevTarget"); pinned.setAccessible(true);
+        assertThat(pinned.getBoolean(client)).isTrue();
+      }
+      for (String denied : List.of("http://172.32.1.6", "http://172.30.1.7", "https://prod.example.invalid", origin+":8080",
+          origin+"/path", origin+"?x=1", origin+"#fragment", "http://user@tuvalapi.cosenco.ec")) {
+        expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(
+            mapper, env, true, denied, true, true).verificarConfiguracion());
+      }
+      for (String[] profiles : List.of(new String[]{"dev","prod"}, new String[]{"dev","production"}, new String[]{"dev","unknown"})) {
+        env.setActiveProfiles(profiles);
+        expectStatus(503, () -> new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient(
+            mapper, env, true, origin, true, true).verificarConfiguracion());
+      }
+      // No socket is opened: inspect the resolver that the DEV transport installs.
+      var method = type.getDeclaredMethod("destinoDev"); method.setAccessible(true);
+      var dns = (org.apache.hc.client5.http.DnsResolver) method.invoke(null);
+      assertThat(dns.resolve("tuvalapi.cosenco.ec")).hasSize(1);
+      assertThat(dns.resolve("tuvalapi.cosenco.ec")[0].getHostAddress()).isEqualTo("172.30.1.7");
+      assertThatThrownBy(() -> dns.resolve("172.32.1.6")).isInstanceOf(java.net.UnknownHostException.class);
+      assertThatThrownBy(() -> dns.resolve("otro.example.invalid")).isInstanceOf(java.net.UnknownHostException.class);
     }
   }
 }

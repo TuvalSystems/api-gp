@@ -57,6 +57,10 @@ public class ResolucionArticulosReporteService {
   private ResolucionArticulosReporteDto resolver(int indice,
       ResolucionArticulosReporteRequest.Renglon linea, ReglasArticulo.Especificacion spec,
       String codigo, Fuente fuente, int max) {
+    if (codigo == null && fuente.completa()) {
+      var exacta = descripcionExacta(indice, linea, spec, fuente, max);
+      if (exacta != null) return exacta;
+    }
     var attrs = new LinkedHashMap<>(spec.atributos());
     var pending = new ArrayList<>(spec.pendientes());
     // Unvalidated source attributes must not complete or contradict a specification.
@@ -113,6 +117,34 @@ public class ResolucionArticulosReporteService {
         recortados, List.copyOf(obs));
   }
 
+  private ResolucionArticulosReporteDto descripcionExacta(int indice,
+      ResolucionArticulosReporteRequest.Renglon linea, ReglasArticulo.Especificacion spec, Fuente fuente, int max) {
+    // Literal catalog identity, not fuzzy matching or inference from unvalidated brand/material fields.
+    // Structural omissions/contradictions still block automatic resolution.
+    if (ReglasArticulo.faltantes(spec).stream().anyMatch(value -> !value.startsWith("termino:"))) return null;
+    String texto = espacios(linea.texto());
+    var exactas = fuente.filas().stream().filter(row -> row.descripcion() != null
+        && texto.equalsIgnoreCase(espacios(row.descripcion()))).toList();
+    if (exactas.isEmpty()) return null;
+    String gp = exactas.getFirst().codigoGP();
+    boolean unica = exactas.size() == 1 && gp != null && !gp.isBlank()
+        && fuente.filas().stream().filter(row -> gp.equals(row.codigoGP())).count() == 1;
+    var candidates = exactas.stream().limit(max).map(row -> {
+      var attributes = new LinkedHashMap<>(ReglasArticulo.interpretar(row.descripcion()).atributos());
+      if (row.esquemaUnidad() != null) attributes.put("esquemaUnidad", row.esquemaUnidad());
+      if (row.atributoMarca() != null) attributes.put("tx_atrMar", row.atributoMarca());
+      if (row.atributoMaterial() != null) attributes.put("tx_atrMat", row.atributoMaterial());
+      return new Candidato(row.codigoGP(), row.codigoZafiro(), row.codigo3L(), row.descripcion(), null, attributes);
+    }).toList();
+    return new ResolucionArticulosReporteDto(indice, linea.texto(),
+        linea.cantidad() == null ? BigDecimal.ONE : linea.cantidad(), linea.cantidad() == null,
+        unica ? "identificado" : "ambiguo", unica ? candidates.getFirst() : null, candidates,
+        unica ? List.of() : List.of("catalogo:descripcion_o_codigo_no_univoco"), diferencias(candidates),
+        true, false, exactas.size() > max, List.of("fuente_listado_items", "unidad_comercial_no_disponible",
+            "atributos_fuente_sin_equivalencia_comercial", "comparacion_descripcion_exacta"));
+  }
+
+  private static String espacios(String value) { return value.strip().replaceAll("\\s+", " "); }
   private static boolean atributoIncierto(String key, List<String> pendientes) {
     return (key.equals("medidas") && (pendientes.contains("medidas")
             || pendientes.contains("formato_medidas_no_soportado")))
