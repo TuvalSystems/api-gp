@@ -37,8 +37,8 @@ public class ResolucionArticulosReporteDao {
     var parameters = new MapSqlParameterSource().addValue("limite", LIMITE + 1, Types.INTEGER);
     var sql = new StringBuilder("""
         SELECT TOP (:limite) tx_itm, codZafiro, cod3L, Descripcion, unidadMedida,
-               Marca, Material
-        FROM dbo.vw_MaestroArticulo WHERE (
+               tx_atrMar, tx_atrMat
+        FROM dbo.vw_listadoItems WHERE (
         """);
     if (codigo != null) {
       sql.append("tx_itm = :codigo OR codZafiro = :codigo OR cod3L = :codigo");
@@ -51,8 +51,18 @@ public class ResolucionArticulosReporteDao {
       }
     }
     // No offsets, COUNT, hints, shared-template changes, or database objects.
-    sql.append(") ORDER BY tx_itm, codZafiro, cod3L, Descripcion, unidadMedida, "
-        + "Marca, Material");
+    sql.append("""
+        ) ORDER BY tx_itm COLLATE Latin1_General_100_BIN2,
+        codZafiro COLLATE Latin1_General_100_BIN2,
+        cod3L COLLATE Latin1_General_100_BIN2,
+        Descripcion COLLATE Latin1_General_100_BIN2,
+        unidadMedida COLLATE Latin1_General_100_BIN2,
+        tx_atrMar COLLATE Latin1_General_100_BIN2,
+        tx_atrMat COLLATE Latin1_General_100_BIN2,
+        DATALENGTH(tx_itm), DATALENGTH(codZafiro), DATALENGTH(cod3L),
+        DATALENGTH(Descripcion), DATALENGTH(unidadMedida),
+        DATALENGTH(tx_atrMar), DATALENGTH(tx_atrMat)
+        """);
     return jdbcTemplate.execute(sql.toString(), parameters, statement -> {
       statement.setQueryTimeout(2);
       statement.setFetchSize(LIMITE + 1);
@@ -62,7 +72,7 @@ public class ResolucionArticulosReporteDao {
         while (rows.next()) {
           result.add(new CatalogoArticuloDto(rows.getString("tx_itm"), rows.getString("codZafiro"),
               rows.getString("cod3L"), rows.getString("Descripcion"), rows.getString("unidadMedida"),
-              rows.getString("Marca"), rows.getString("Material")));
+              rows.getString("tx_atrMar"), rows.getString("tx_atrMat")));
         }
         return result;
       }

@@ -1,5 +1,6 @@
 package tuval.api.web.reportes.resolucionarticulos.dto;
 
-// Deliberately independent of the report DTO containing financial information.
+// Raw descriptive fields from vw_listadoItems. A unit schedule is not a sales unit,
+// and source attributes are not assumed equivalent to the old master's labels.
 public record CatalogoArticuloDto(String codigoGP, String codigoZafiro, String codigo3L,
-    String descripcion, String unidad, String marca, String material) {}
+    String descripcion, String esquemaUnidad, String atributoMarca, String atributoMaterial) {}

@@ -34,8 +34,8 @@ class ResolucionArticulosReporteDaoTest {
     var sql = ArgumentCaptor.forClass(String.class);
     verify(connection).prepareStatement(sql.capture());
     assertThat(sql.getValue()).startsWith("SELECT TOP (?) tx_itm, codZafiro, cod3L, Descripcion, unidadMedida,")
-        .contains("Marca, Material", "FROM dbo.vw_MaestroArticulo",
-            "UPPER(Descripcion) LIKE ? OR UPPER(Descripcion) LIKE ?", "ORDER BY tx_itm, codZafiro")
+        .contains("tx_atrMar, tx_atrMat", "FROM dbo.vw_listadoItems",
+            "UPPER(Descripcion) LIKE ? OR UPPER(Descripcion) LIKE ?", "ORDER BY tx_itm COLLATE Latin1_General_100_BIN2")
         .doesNotContain("*", "precio", "costo", "marUti", "NOLOCK", "INSERT", "UPDATE", "DELETE",
             "categoriaCompra", "lineaCompra", "claseCompra");
     verify(statement).setObject(1, 501, Types.INTEGER);
@@ -76,8 +76,36 @@ class ResolucionArticulosReporteDaoTest {
     assertThat(row.codigoGP()).isEqualTo("GP");
     assertThat(row.descripcion()).isEqualTo("DESCRIPCION");
     assertThat(row.codigoZafiro()).isNull();
-    assertThat(row.unidad()).isNull();
+    assertThat(row.esquemaUnidad()).isNull();
     verify(rows, never()).getBigDecimal(anyString());
+  }
+
+  @Test
+  void usaFuenteLigeraYOrdenBinarioDeTodosLosCamposSinMaestroNiPaginacion() throws Exception {
+    dao.buscar(Familia.BUSHING, null);
+    var sql = ArgumentCaptor.forClass(String.class);
+    verify(connection).prepareStatement(sql.capture());
+    assertThat(sql.getValue()).contains("FROM dbo.vw_listadoItems")
+        .doesNotContain("vw_MaestroArticulo", "OFFSET", "DISTINCT", "COUNT(");
+    for (String columna : java.util.List.of("tx_itm", "codZafiro", "cod3L", "Descripcion",
+        "unidadMedida", "tx_atrMar", "tx_atrMat")) {
+      assertThat(sql.getValue()).contains(columna + " COLLATE Latin1_General_100_BIN2",
+          "DATALENGTH(" + columna + ")");
+    }
+  }
+
+  @Test
+  void mapeaEsquemaYAtributosSinRenombrarlosComoCamposDelMaestro() throws Exception {
+    when(rows.next()).thenReturn(true, false);
+    when(rows.getString("unidadMedida")).thenReturn("ESQUEMA");
+    when(rows.getString("tx_atrMar")).thenReturn("ATR-MAR");
+    when(rows.getString("tx_atrMat")).thenReturn("ATR-MAT");
+    var row = dao.buscar(Familia.BUSHING, null).getFirst();
+    assertThat(row.esquemaUnidad()).isEqualTo("ESQUEMA");
+    assertThat(row.atributoMarca()).isEqualTo("ATR-MAR");
+    assertThat(row.atributoMaterial()).isEqualTo("ATR-MAT");
+    verify(rows, never()).getString("Marca");
+    verify(rows, never()).getString("Material");
   }
 
   @Test

@@ -101,7 +101,7 @@ class ResolucionArticulosReporteServiceTest {
   @Test
   void identificaSoloConBusquedaCompletaYEspecificacionComprendida() {
     bushingUnico();
-    var result = consultar("MECH bushing galvanizado 150 1\" por ½\" NPT", null);
+    var result = consultar("bushing galvanizado 150 1\" por ½\" NPT", null);
     assertThat(result.estado()).isEqualTo("identificado");
     assertThat(result.articulo().codigoGP()).isEqualTo("020-000006-I");
     assertThat(result.cantidadAsumida()).isTrue();
@@ -215,6 +215,62 @@ class ResolucionArticulosReporteServiceTest {
     assertThat(consultar("020-000006-I", null).estado()).isEqualTo("identificado");
     when(dao.buscar(null, "020-000006-I")).thenReturn(List.of(row, row));
     assertThat(consultar("020-000006-I", null).estado()).isEqualTo("ambiguo");
+  }
+
+  @Test
+  void conservaAtributosCrudosSinInventarUnidadOMarcaComercial() {
+    when(dao.buscar(null, "020-000006-I")).thenReturn(List.of(new CatalogoArticuloDto(
+        "020-000006-I", "ZF", "3L", "BUSHING", "ESQUEMA-CAJA", "ATRIBUTO-MARCA", "ATRIBUTO-MATERIAL")));
+    var result = consultar("020-000006-I", null);
+    assertThat(result.estado()).isEqualTo("identificado");
+    assertThat(result.articulo().unidad()).isNull();
+    assertThat(result.articulo().atributos()).containsEntry("esquemaUnidad", "ESQUEMA-CAJA")
+        .containsEntry("tx_atrMar", "ATRIBUTO-MARCA")
+        .containsEntry("tx_atrMat", "ATRIBUTO-MATERIAL")
+        .doesNotContainKeys("marca", "material");
+    assertThat(result.observaciones()).contains("fuente_listado_items", "unidad_comercial_no_disponible",
+        "atributos_fuente_sin_equivalencia_comercial");
+  }
+
+  @Test
+  void marcaDeFuenteNoResuelveUnTerminoDesconocido() {
+    bushingUnico();
+    var result = consultar("MECH bushing galvanizado 150 1\" x 1/2\" NPT", null);
+    assertThat(result.estado()).isEqualTo("ambiguo");
+    assertThat(result.datosFaltantes()).contains("termino:MECH");
+    assertThat(result.candidatos()).hasSize(1);
+    assertThat(result.candidatos().getFirst().atributos()).doesNotContainKey("marca");
+  }
+
+  @Test
+  void materialDeFuenteNoCompletaMaterialDesconocidoDeDescripcion() {
+    when(dao.buscar(Familia.BUSHING, null)).thenReturn(List.of(new CatalogoArticuloDto(
+        "A", null, null, "BUSHING 150 1\" X 1/2\" NPT", null, null, "GALVANIZADO")));
+    var result = consultar("bushing galvanizado 150 1\" x 1/2\" NPT", null);
+    assertThat(result.estado()).isEqualTo("ambiguo");
+    assertThat(result.datosFaltantes()).contains("catalogo:material");
+    assertThat(result.candidatos().getFirst().atributos()).doesNotContainKey("material");
+  }
+
+  @Test
+  void atributoCrudoDistintoNoDescartaUnCandidatoDescriptivo() {
+    when(dao.buscar(Familia.BUSHING, null)).thenReturn(List.of(new CatalogoArticuloDto(
+        "A", null, null, "BUSHING GALVANIZADO 150 1\" X 1/2\" NPT", null, null, "BRONCE")));
+    var result = consultar("bushing galvanizado 150 1\" x 1/2\" NPT", null);
+    assertThat(result.estado()).isEqualTo("identificado");
+    assertThat(result.articulo().atributos()).containsEntry("material", "GALVANIZADO")
+        .containsEntry("tx_atrMat", "BRONCE");
+    assertThat(result.articulo().unidad()).isNull();
+  }
+
+  @Test
+  void atributosNulosNoSeConviertenEnCadenasNiValoresComerciales() {
+    when(dao.buscar(null, "020-000006-I")).thenReturn(List.of(new CatalogoArticuloDto(
+        "020-000006-I", null, null, null, null, null, null)));
+    var candidate = consultar("020-000006-I", null).articulo();
+    assertThat(candidate.descripcion()).isNull();
+    assertThat(candidate.unidad()).isNull();
+    assertThat(candidate.atributos()).doesNotContainKeys("esquemaUnidad", "tx_atrMar", "tx_atrMat");
   }
 
   private void bushingUnico() {

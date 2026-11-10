@@ -2,7 +2,6 @@ package tuval.api.web.reportes.resolucionarticulos.service.dynamics;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.regex.Pattern;
 import org.springframework.dao.QueryTimeoutException;
 import org.springframework.stereotype.Service;
 import tuval.api.web.reportes.resolucionarticulos.dao.dynamics.ResolucionArticulosReporteDao;
@@ -60,23 +59,7 @@ public class ResolucionArticulosReporteService {
       String codigo, Fuente fuente, int max) {
     var attrs = new LinkedHashMap<>(spec.atributos());
     var pending = new ArrayList<>(spec.pendientes());
-    // Recognize brands from the retrieved catalog, without inventing a brand dictionary.
-    String text = " " + ReglasArticulo.normalizar(linea.texto()) + " ";
-    Set<String> marcas = new LinkedHashSet<>();
-    for (var row : fuente.filas()) {
-      String marca = ReglasArticulo.normalizar(row.marca());
-      if (!marca.isBlank() && !marca.equals("NO_TIENE") &&
-          Pattern.compile("(?<![A-Z0-9])" + Pattern.quote(marca) + "(?![A-Z0-9])").matcher(text).find()) {
-        marcas.add(marca);
-      }
-    }
-    if (marcas.size() == 1) {
-      String marca = marcas.iterator().next();
-      attrs.put("marca", marca);
-      pending.removeIf(p -> p.startsWith("termino:") &&
-          Arrays.asList(marca.split("\\s+")).contains(p.substring(8)));
-    }
-    if (marcas.size() > 1) pending.add("marcas_multiples");
+    // Unvalidated source attributes must not complete or contradict a specification.
     var interpreted = new ReglasArticulo.Especificacion(spec.familia(), attrs, pending);
     Set<String> faltantes = codigo == null ? new LinkedHashSet<>(ReglasArticulo.faltantes(interpreted))
         : new LinkedHashSet<>();
@@ -86,24 +69,12 @@ public class ResolucionArticulosReporteService {
       if (codigo == null && observed.familia() != null && observed.familia() != spec.familia()
           && !observed.pendientes().contains("tipos_articulo_multiples")) continue;
       var candidateAttrs = new LinkedHashMap<>(observed.atributos());
-      String marca = ReglasArticulo.normalizar(row.marca());
-      if (!marca.isBlank() && !marca.equals("NO_TIENE")) candidateAttrs.put("marca", marca);
-      // Structured material is used only when the description lacks a recognized material.
-      if (!candidateAttrs.containsKey("material")) {
-        String material = ReglasArticulo.interpretar(row.material()).atributos().get("material");
-        if (material != null) candidateAttrs.put("material", material);
-      }
       boolean contradice = false;
       Set<String> desconocidos = new LinkedHashSet<>();
       if (codigo == null) {
         if (observed.familia() == null) desconocidos.add("catalogo:tipo_articulo");
         for (String pendiente : observed.pendientes()) {
           if (!pendiente.startsWith("termino:")) desconocidos.add("catalogo:" + pendiente);
-        }
-        String materialEstructurado = ReglasArticulo.interpretar(row.material()).atributos().get("material");
-        if (materialEstructurado != null && candidateAttrs.containsKey("material") &&
-            !materialEstructurado.equals(candidateAttrs.get("material"))) {
-          desconocidos.add("catalogo:material_contradictorio");
         }
         for (var attr : attrs.entrySet()) {
           String actual = candidateAttrs.get(attr.getKey());
@@ -116,13 +87,20 @@ public class ResolucionArticulosReporteService {
       if (!contradice) {
         faltantes.addAll(desconocidos);
         if (row.codigoGP() == null || row.codigoGP().isBlank()) faltantes.add("catalogo:codigoGP");
+        // Preserve the original raw names separately from inferred business attributes.
+        if (row.esquemaUnidad() != null) candidateAttrs.put("esquemaUnidad", row.esquemaUnidad());
+        if (row.atributoMarca() != null) candidateAttrs.put("tx_atrMar", row.atributoMarca());
+        if (row.atributoMaterial() != null) candidateAttrs.put("tx_atrMat", row.atributoMaterial());
         compatibles.add(new Candidato(row.codigoGP(), row.codigoZafiro(), row.codigo3L(),
-            row.descripcion(), row.unidad(), candidateAttrs));
+            row.descripcion(), null, candidateAttrs));
       }
     }
     String estado = !fuente.completa() ? "ambiguo" : compatibles.isEmpty() ? "sin_coincidencia"
         : compatibles.size() == 1 && faltantes.isEmpty() ? "identificado" : "ambiguo";
     List<String> obs = new ArrayList<>();
+    obs.add("fuente_listado_items");
+    obs.add("unidad_comercial_no_disponible");
+    obs.add("atributos_fuente_sin_equivalencia_comercial");
     if (!fuente.motivo().isEmpty()) obs.add(fuente.motivo());
     if (codigo == null) obs.add("reglas_limitadas_al_vocabulario_documentado");
     boolean recortados = compatibles.size() > max;

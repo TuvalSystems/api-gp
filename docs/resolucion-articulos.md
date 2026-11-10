@@ -59,9 +59,12 @@ Cada resultado incluye:
 | `candidatosTruncados` | Se omitieron candidatos compatibles al limitar la respuesta |
 | `observaciones` | Motivos de búsqueda incompleta y límites de interpretación |
 
-Los códigos y la unidad conservan NULL si la vista no los informa. `atributos` solo
-contiene datos reconocidos: `medidas`, `unidadMedidas`, `material`, `clase`, `refuerzo`,
-`angulo`, `rosca`, `cedula`, `construccion`, `gradoMaterial`, `marca`, `paso`.
+Los códigos conservan NULL si la vista no los informa. `unidad` se devuelve siempre
+null: la fuente aporta un esquema de unidades (UOMSCHDL), no una unidad comercial.
+`atributos` contiene datos interpretados de la descripción: `medidas`, `unidadMedidas`,
+`material`, `clase`, `refuerzo`, `angulo`, `rosca`, `cedula`, `construccion`,
+`gradoMaterial`, `paso`. Si no son NULL, agrega por separado los valores crudos
+`esquemaUnidad`, `tx_atrMar` y `tx_atrMat`, sin equivalencia comercial.
 Las medidas se expresan como fracciones reducidas y en el orden escrito; `1½` pasa
 a `3/2`, nunca a `1/2`. También se reconoce la fracción mixta `1-1/2`.
 Las diferencias muestran hasta cinco valores por atributo;
@@ -84,17 +87,18 @@ dos variantes conocidas (los alias no se inventan en este ejemplo):
     "candidatos": [
       {"codigoGP":"020-000006-I", "codigoZafiro":null, "codigo3L":null,
        "descripcion":"MECH BUSHING GALVANIZADO 150 UL/FM 1\" X 1/2\" NPT",
-       "unidad":"PZAS", "atributos":{"medidas":"1 x 1/2","clase":"150"}},
+       "unidad":null, "atributos":{"medidas":"1 x 1/2","clase":"150"}},
       {"codigoGP":"022-000084-I", "codigoZafiro":null, "codigo3L":null,
        "descripcion":"MECH BUSHING GALVANIZADO 300 UL/FM 1\" X 1/2\" NPT",
-       "unidad":"PZAS", "atributos":{"medidas":"1 x 1/2","clase":"300"}}
+       "unidad":null, "atributos":{"medidas":"1 x 1/2","clase":"300"}}
     ],
     "datosFaltantes":["unidadMedidas","rosca","clase_o_refuerzo"],
     "diferencias":{"clase":["150","300"]},
     "busquedaCompleta":true,
     "busquedaTruncada":false,
     "candidatosTruncados":false,
-    "observaciones":["reglas_limitadas_al_vocabulario_documentado"]
+    "observaciones":["fuente_listado_items","unidad_comercial_no_disponible",
+      "atributos_fuente_sin_equivalencia_comercial","reglas_limitadas_al_vocabulario_documentado"]
   }]
 }
 ```
@@ -126,8 +130,10 @@ Familias acotadas:
 Se reconocen galvanizado/galv, inoxidable/inox (grado 304/316 si está explícito),
 bronce, latón, PVC, acero negro; clase 150/300, reforzado/estándar, sin/con costura,
 NPT/BSP/BSPT/BSPP y cédula/SCH explícita. Clase y refuerzo son atributos diferentes:
-un codo 150 también puede ser reforzado. Las marcas solo se reconocen si aparecen
-literalmente en la petición y en el campo Marca de las filas exploradas.
+un codo 150 también puede ser reforzado. No se infieren marcas desde `tx_atrMar` ni se completa el material desde
+`tx_atrMat`: su equivalencia con las etiquetas del maestro no está validada.
+Una marca escrita en la petición permanece como término pendiente; las válvulas
+no pueden identificarse automáticamente por texto mientras falte ese dato.
 
 Una contradicción explícita descarta un candidato. La ausencia de un atributo en
 su descripción es desconocida: no equivale a estándar, NPT, sin refuerzo u otra
@@ -161,11 +167,13 @@ regla todavía no está demostrada en la fuente.
 
 Código en `tuval.api.web.reportes.resolucionarticulos`, con Controller →
 Service/dynamics → DAO/dynamics, DTO y Request. Conexión exclusiva mediante
-`@Qualifier("dynamicsNamedParameterJdbcTemplate")`; origen `dbo.vw_MaestroArticulo`.
+`@Qualifier("dynamicsNamedParameterJdbcTemplate")`; origen `dbo.vw_listadoItems`.
 Se seleccionan explícitamente los siete campos descriptivos necesarios: tx_itm,
-codZafiro, cod3L, Descripcion, unidadMedida, Marca y Material. El DTO público solo
+codZafiro, cod3L, Descripcion, unidadMedida, tx_atrMar y tx_atrMat. El DTO público solo
 expone identificadores, descripción, unidad y
-atributos interpretados. No reutiliza el DTO financiero de ReporteArticulos.
+atributos interpretados y crudos diferenciados. No reutiliza el DTO financiero
+de ReporteArticulos. Comparte la vista con `/api/reportes/listado-items`, sin una
+llamada HTTP entre APIs, y conserva el contrato de resolución.
 
 Por lote hay como máximo seis exploraciones distintas y un presupuesto de diez
 segundos comprobado antes de iniciar cada búsqueda. Se reutiliza una familia/código
@@ -179,7 +187,8 @@ incompleta y `presupuesto_de_busqueda_agotado`. El límite temporal es una prote
 de admisión, **no un SLA total de diez segundos**: una consulta ya iniciada puede
 terminar después y los tiempos de obtención de conexión/cancelación dependen del
 DataSource/driver. Como máximo se inician seis statements. El orden SQL usa los siete
-campos proyectados; empates idénticos o cambios concurrentes no prueban unicidad.
+campos proyectados con collation binaria y DATALENGTH para desempatar espacios
+finales; empates idénticos o cambios concurrentes no prueban unicidad.
 
 La recuperación por familia usa anclas cerradas de descripción (incluidos los
 sinónimos documentados y las grafías VÁLVULA, UNIÓN UNIVERSAL y TEFLÓN), no la frase
@@ -189,10 +198,12 @@ escanear la vista. El límite de filas y el timeout no garantizan una consulta r
 No se agregan tablas, índices, objetos SQL, hints, cambios de aislamiento, conexiones
 ni cachés persistentes. Tampoco se precarga el maestro al arrancar.
 
-Si las familias frecuentes truncan o expiran, el pendiente es medir en DEV/QA y
-acordar una fuente de búsqueda propia: copia descriptiva controlada y actualizable,
-con cobertura/antigüedad explícitas. Eso requiere una decisión posterior; esta v1
-mantiene la respuesta incompleta y no fabrica certeza para compensar el rendimiento.
+La vista ligera reduce el costo de la consulta, pero no amplía el límite de 500
+filas ni el vocabulario del resolvedor. Una familia amplia puede seguir truncada.
+No se afirma equivalencia de cobertura o de atributos con el maestro anterior.
+`identificado` identifica un código dentro del alcance descrito: no significa que
+la unidad comercial esté disponible ni que se pueda cotizar automáticamente.
+Validar la unidad y los atributos antes de usarlos en la creación de cotizaciones.
 
 ## Acceso y seguridad
 
@@ -231,7 +242,7 @@ continuación. Siguen pendientes DEV directo, cancelación, cobertura completa,
 NULL/duplicados adicionales, presupuesto bajo carga y controles externos de acceso.
 No hay prueba de despliegue ni de reglas de habilitación comercial.
 
-### Comprobación real de QA, 2026-11-09
+### Histórico: comprobación de la fuente anterior en QA, 2026-11-09
 
 Se ejecutó el DAO de esta rama mediante un harness Java independiente, sin
 SpringApplication, contexto Spring, Eureka, jobs ni servidor HTTP. Se reutilizó
@@ -304,3 +315,40 @@ Usar únicamente una conexión DEV/QA verificada, timeout de dos segundos y un
 harness sin arranque de aplicación. Las credenciales y perfiles privados no se
 incluyen en el repositorio. El código final pasó `mvn clean verify` con Java 21:
 145 casos, 0 fallos, 0 errores y 1 omitido preexistente que requiere bases reales.
+
+### Integración con listado ligero en pruebas, 2026-11-10
+
+Se verificó exclusivamente el perfil DEV que corresponde al ambiente de pruebas
+indicado por el solicitante, catálogo Dynamics2021. No se usó el perfil QA ni
+producción, ni se modificaron configuración, objetos o permisos.
+
+El harness temporal ejecutó el DAO y servicio reales, sin SpringApplication,
+Eureka, tareas programadas ni servidor de red. Verificó destino, identidad del
+servidor, catálogo y SELECT antes de consultar. Solo ejecutó lecturas.
+Dos ejecuciones por familia, con el SQL final y timeout de dos segundos:
+
+| Familia | Filas | Tiempo DAO observado |
+|---|---:|---:|
+| Bushing | 212 | 106–178 ms |
+| Niple/neplo | 501 | 184–214 ms |
+| Codo | 501 | 120–151 ms |
+| Nudo | 155 | 225–232 ms |
+| Válvula/llave | 501 | 228–229 ms |
+| Teflón/PTFE | 104 | 206–230 ms |
+
+Una búsqueda exacta devolvió una fila en 53 ms. Las 501 filas incluyen el centinela;
+no se eliminó el límite ni se ocultó truncamiento en codos, neplos o válvulas.
+
+MockMvc con controller, servicio y DAO reales contra la base de pruebas verificó:
+- Un lote de seis familias: HTTP 200, seis resultados ambiguos y hasta tres
+  candidatos por línea; 1913 ms incluyendo serialización e interpretación.
+- Código exacto: identificado; código sintético inexistente: sin_coincidencia.
+- Entrada inválida: HTTP 400. Todos los candidatos conservaron unidad=null.
+
+Estas mediciones no son un SLA ni una comparación de equivalencia con la fuente
+anterior. MockMvc no prueba el despliegue, gateway o red del endpoint compartido.
+No se ejecutó ningún creador de cotizaciones. Se retiró únicamente el harness
+temporal creado para esta comprobación antes del commit. Se conservaron las pruebas
+existentes y sus regresiones de mapeo, unidad desconocida, atributos crudos,
+ambigüedad, NULL y contrato HTTP. Suite final: Java 21, Maven 3.9.9, clean verify,
+281 pruebas, 0 fallos, 0 errores y 1 omitida preexistente (requiere bases reales).
