@@ -139,7 +139,8 @@ class ResolucionArticulosReporteServiceTest {
     when(dao.buscar(Familia.BUSHING, null)).thenReturn(List.of(
         row("incierto", "BUSHING GALVANIZADO 150 300 1\" X 1/2\" NPT"),
         row("conocido", "BUSHING GALVANIZADO 300 1\" X 1/2\" NPT")));
-    var result = consultar("bushing galvanizado 300 1\" x 1/2\" NPT", null);
+    // Keep this regression about interpreted specifications, not the new literal catalog identity.
+    var result = consultar("bushing galvanizado clase 300 1\" x 1/2\" NPT", null);
     assertThat(result.estado()).isEqualTo("ambiguo");
     assertThat(result.candidatos()).hasSize(2);
     when(dao.buscar(Familia.VALVULA_BOLA, null)).thenReturn(List.of(
@@ -273,6 +274,58 @@ class ResolucionArticulosReporteServiceTest {
     assertThat(candidate.atributos()).doesNotContainKeys("esquemaUnidad", "tx_atrMar", "tx_atrMat");
   }
 
+  private static final String DESCRIPCION_REAL = "MECH BUSHING GALVANIZADO 150 UL/FM 1\" X 1/2\" NPT";
+
+  @Test void descripcionLiteralUnicaResuelveSinInferirMarcaNiCompletarAtributosAjenos() {
+    when(dao.buscar(Familia.BUSHING, null)).thenReturn(List.of(row("020-000006-I", DESCRIPCION_REAL),
+        row("OTRO", "SM BUSHING ACERO FORJADO A105 CLASE 3000 1\" X 1/2\" NPT")));
+    for (String texto : List.of(DESCRIPCION_REAL, "  " + DESCRIPCION_REAL.toLowerCase(Locale.ROOT).replace(" ", "  ") + "  ")) {
+      var result = consultar(texto, null);
+      assertThat(result.estado()).isEqualTo("identificado");
+      assertThat(result.articulo().codigoGP()).isEqualTo("020-000006-I");
+      assertThat(result.datosFaltantes()).isEmpty();
+      assertThat(result.articulo().atributos()).doesNotContainKey("marca");
+      assertThat(result.articulo().unidad()).isNull();
+      assertThat(result.cantidad()).isEqualByComparingTo("1");
+      assertThat(result.cantidadAsumida()).isTrue();
+      assertThat(result.observaciones()).contains("comparacion_descripcion_exacta");
+    }
+  }
+
+  @Test void descripcionExactaDuplicadaOCodigoDuplicadoNoSonIdentificacionUnica() {
+    for (List<CatalogoArticuloDto> rows : List.of(
+        List.of(row("A", DESCRIPCION_REAL), row("B", DESCRIPCION_REAL)),
+        List.of(row("A", DESCRIPCION_REAL), row("A", DESCRIPCION_REAL.replace("150", "300"))),
+        List.of(row("", DESCRIPCION_REAL)))) {
+      when(dao.buscar(Familia.BUSHING, null)).thenReturn(rows);
+      var result = consultar(DESCRIPCION_REAL, null);
+      assertThat(result.estado()).isEqualTo("ambiguo");
+      assertThat(result.articulo()).isNull();
+    }
+  }
+
+  @Test void coincidenciaLiteralNoAnulaBusquedaTruncada() {
+    var rows = new ArrayList<CatalogoArticuloDto>();
+    rows.add(row("020-000006-I", DESCRIPCION_REAL));
+    for (int i=0; i<500; i++) rows.add(row("OTRO"+i,"BUSHING GALVANIZADO 300 2\" X 1\" NPT"));
+    when(dao.buscar(Familia.BUSHING, null)).thenReturn(rows);
+    var result = consultar(DESCRIPCION_REAL, null);
+    assertThat(result.estado()).isEqualTo("ambiguo");
+    assertThat(result.busquedaCompleta()).isFalse();
+  }
+
+  @Test void noConvierteDescripcionAproximadaOConContradiccionEnCoincidenciaLiteral() {
+    bushingUnico();
+    for (String text : List.of(DESCRIPCION_REAL.replace("MECH", "MEHC"),
+        DESCRIPCION_REAL.replace(" UL/FM", ""), DESCRIPCION_REAL.replace("150", "300"))) {
+      assertThat(consultar(text, null).estado()).isNotEqualTo("identificado");
+    }
+    String contradictory = DESCRIPCION_REAL.replace("150", "150 300");
+    when(dao.buscar(Familia.BUSHING, null)).thenReturn(List.of(row("A", contradictory)));
+    assertThat(consultar(contradictory, null).estado()).isEqualTo("ambiguo");
+    when(dao.buscar(Familia.BUSHING, null)).thenReturn(List.of(row("A", "BUSHING")));
+    assertThat(consultar("BUSHING", null).estado()).isEqualTo("ambiguo");
+  }
   private void bushingUnico() {
     when(dao.buscar(Familia.BUSHING, null)).thenReturn(List.of(
         row("020-000006-I", "MECH BUSHING GALVANIZADO 150 UL/FM 1\" X 1/2\" NPT")));

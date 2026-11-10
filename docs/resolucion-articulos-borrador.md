@@ -26,8 +26,9 @@ No se verifico el despliegue remoto ni se creo un borrador real en esta tarea.
 ```json
 {
   "request_id": "e0f7a456-2026-4000-8000-000000000001",
+  "cliente_ruc": "0990007020001",
   "renglones": [
-    {"texto": "020-000006-I", "cantidad": 2}
+    {"texto": "MECH BUSHING GALVANIZADO 150 UL/FM 1\" X 1/2\" NPT"}
   ]
 }
 ```
@@ -72,7 +73,7 @@ comercial: Laravel sigue validando unidad base, precision y elegibilidad. No se 
 Solo se envia este cuerpo, por GET al path fijo `/cotizaciones/borrador-items`:
 
 ```json
-{"cliente_ruc":"0990007020001","pv_id":2,"items":[{"codigo":"020-000006-I","cantidad":2}]}
+{"cliente_ruc":"0990007020001","pv_id":2,"items":[{"codigo":"020-000006-I","cantidad":1}]}
 ```
 
 El GET mutante es compatibilidad temporal de pruebas, no un patron recomendado.
@@ -129,7 +130,8 @@ reportes.resolucion-borrador.backend-origin=https://HOST_QA_VERIFICADO
 
 El origen es configuracion de servidor, no entrada HTTP, sin path, credenciales, query o fragmento.
 Exige perfiles activos no vacios y todos en `local`, `testing`, `qa`, `staging`.
-`dev`, `prod`, desconocidos y mezclas con produccion se bloquean. No renombrar perfiles
+`dev` solo se permite con la excepcion adicional descrita abajo. `prod`,
+`production`, desconocidos y mezclas con produccion siempre se bloquean. No renombrar perfiles
 compartidos para eludirlo: un nombre de perfil no demuestra el destino de las bases.
 
 La URL que entrego el usuario usa HTTP. Solo para el piloto y con verificacion previa del
@@ -164,3 +166,77 @@ Resultados locales finales (2026-11-10): clean test con temporal, 321 casos,
 clean test y clean verify: 320 casos, 0 fallos, 0 errores, 1 omitido en ambas
 ejecuciones. JAR construido y verificado sin perfiles privados. Inventario de
 tests previos conservado y git diff --check correcto.
+
+## Excepcion DEV de pruebas (continuacion de PR #55)
+
+El usuario confirmo el DEV de pruebas del servicio y su base de pruebas. No se
+renombra ningun perfil ni se cambia configuracion de servidores. Para admitir
+el perfil literal `dev` hacen falta TODAS estas condiciones del modulo:
+
+```properties
+reportes.resolucion-borrador.enabled=true
+reportes.resolucion-borrador.dev-test-target-verified=true
+reportes.resolucion-borrador.backend-origin=http://tuvalapi.cosenco.ec
+reportes.resolucion-borrador.allow-insecure-http=true
+```
+
+Estos son valores para que el administrador los revise, NO cambios aplicados
+por este PR. Si el destino dispone de HTTPS valido se debe preferir HTTPS y
+omitir `allow-insecure-http`. No se envian tokens en ninguno de los dos casos.
+El flag `dev-test-target-verified` es una atestacion administrativa posterior a
+comprobar ambiente/BD, no una comprobacion automatica de la base Laravel.
+
+La excepcion DEV solo acepta el hostname exacto `tuvalapi.cosenco.ec` y el puerto
+estandar 80 HTTP o 443 HTTPS (u omitido). Su cliente fija tambien la conexion a
+`172.30.1.7`, el servidor de pruebas comprobado, manteniendo Host/SNI y validacion
+TLS normal. Otros destinos, URLs con path/credenciales/query/fragmento y mezclas
+dev+prod siguen bloqueados. La fijacion de IP evita que un cambio DNS redirija
+esta excepcion a otro servidor. Un cambio del servidor requiere nueva revision;
+no basta cambiar la configuracion. No modifica DNS, proxy ni seguridad del SO.
+
+Comprobacion de solo lectura del 2026-11-10 desde SISTEMAS6: DNS del hostname
+resolvio a 172.30.1.7 y GET sin cuerpo devolvio 422 con los tres campos requeridos
+(cliente_ruc, pv_id, items). No se envio ningun cliente/articulo ni se creo un
+borrador. Es consistente con la ruta y guard de entorno Laravel verificados en
+codigo, pero no prueba su conexion fisica de BD. Antes de habilitar, confirmar
+esa conexion y permisos del usuario 6; las bases de Pruebas y QA son ambientes
+distintos y no deben intercambiarse por inferencia.
+
+Regresiones permanentes: DEV sin opt-in, HTTP sin opt-in, host/IP/puerto indebidos,
+perfiles mixtos y resolucion de destino fijada. No abren sockets al destino real.
+
+## Descripcion y cliente, sin codigo elegido por el consumidor
+
+`renglones[].texto` contiene la descripcion del usuario. No hace falta codigo,
+`codigoSeleccionado`, cantidad o PV para el ejemplo inicial. `request_id` es solo
+metadato tecnico obligatorio de proteccion local contra repeticion, no un dato
+del articulo. El flujo primero resuelve, luego forma el cuerpo interno de items
+y solo entonces llama a Laravel si todos los renglones quedan identificados.
+
+Se agrega una regla conservadora de identidad textual: la descripcion completa
+puede diferir solo en mayusculas/minusculas y espacios. Debe existir una unica
+fila exacta, con codigo GP no vacio y no duplicado en la fuente, y la busqueda de
+familia debe estar completa. No admite contradicciones ni atributos estructurales
+faltantes; no traduce marcas o materiales crudos. No aplica similitud, fuzzy
+matching ni elimina palabras, certificaciones, signos, fracciones o acentos.
+Si no cumple, siguen las reglas anteriores y la ambiguedad no crea borradores.
+La respuesta agrega la observacion `comparacion_descripcion_exacta` cuando aplica.
+
+Validacion descriptiva de solo lectura en DEV: la familia BUSHING devolvio 212
+filas mediante listado-items (limite 500), y la descripcion inicial aparecio una
+sola vez para 020-000006-I. Un test temporal usa esa captura fuera del repositorio
+para ejecutar el resolver y orquestador reales con el creador simulado. No hace
+una creacion real ni demuestra que el cambio ya este desplegado. Se elimina el
+temporal antes del commit y se repiten las suites limpias. La captura no se publica.
+
+Las regresiones permanentes cubren literal unico, case/espacios, duplicados de
+descripcion/codigo, fuente truncada, errores tipograficos, omisiones y contradicciones.
+La prueba existente de no descartar filas inciertas conserva esa propiedad para
+especificaciones interpretadas no literales; la nueva regla de identidad literal
+se prueba por separado.
+
+Resultados de la continuacion DEV/descripciones: captura temporal verificada
+con 326 casos, 0 fallos, 0 errores, 1 omitido. Se retiro solo DescripcionRealTemporalTest.java
+y se conservo ademas una regresion HTTP completa con fixture local; clean test y
+clean verify finales: 326 casos, 0 fallos, 0 errores, 1 omitido preexistente.
+No se crearon borradores reales ni se aplico la configuracion descrita.

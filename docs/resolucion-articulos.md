@@ -358,3 +358,14 @@ ambigüedad, NULL y contrato HTTP. Suite final: Java 21, Maven 3.9.9, clean veri
 La nueva operacion POST /api/reportes/resolucion-articulos/crear-borrador reutiliza
 el resolver y conecta el contrato real GET de tuvalBackend. /consultar conserva
 solo lectura. Ver [contrato, habilitacion y limites](resolucion-articulos-borrador.md).
+
+### Identidad por descripcion literal
+
+/consultar y la creacion explicita reconocen una descripcion completa de catalogo
+unica, comparada solo ignorando mayusculas y diferencias de espacios. Se exige
+busqueda completa, codigo GP no vacio y unico en esa fuente, y atributos estructurales
+sin omisiones ni contradicciones. No se descartan terminos, signos o certificaciones
+ni se interpreta una marca cruda para completar la consulta. La observacion
+`comparacion_descripcion_exacta` distingue este caso de la interpretacion por reglas.
+Duplicados, busqueda truncada y contradicciones conservan ambiguedad. El resto de
+consultas sigue usando el comportamiento conservador anterior; no hay fuzzy matching.

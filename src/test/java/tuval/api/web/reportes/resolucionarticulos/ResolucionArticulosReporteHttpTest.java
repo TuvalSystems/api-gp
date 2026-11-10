@@ -150,6 +150,24 @@ class ResolucionArticulosReporteHttpTest {
       verify(resolver).consultar(any());
     }
 
+    @Test void descripcionYClienteSeResuelvenAntesDeLlamarCreadorSinCodigoEnBody() throws Exception {
+      when(dao.buscar(any(), any())).thenReturn(List.of(
+          ResolucionArticulosReporteServiceTest.row("020-000006-I", "MECH BUSHING GALVANIZADO 150 UL/FM 1\" X 1/2\" NPT"),
+          ResolucionArticulosReporteServiceTest.row("OTRO", "SM BUSHING ACERO FORJADO A105 CLASE 3000 1\" X 1/2\" NPT")));
+      var service = new tuval.api.web.reportes.resolucionarticulos.service.tuvalbackend.ResolucionBorradorService(
+          new ResolucionArticulosReporteService(dao), backend, mapper);
+      createMvc = MockMvcBuilders.standaloneSetup(new tuval.api.web.reportes.resolucionarticulos.controller.ResolucionBorradorController(service)).build();
+      String body = mapper.writeValueAsString(java.util.Map.of("request_id", ID, "cliente_ruc", "0990007020001",
+          "renglones", List.of(java.util.Map.of("texto", "MECH BUSHING GALVANIZADO 150 UL/FM 1\" X 1/2\" NPT"))));
+      enviar(body).andExpect(status().isCreated()).andExpect(jsonPath("$.data.resoluciones[0].estado").value("identificado"))
+          .andExpect(jsonPath("$.data.resoluciones[0].articulo.codigoGP").value("020-000006-I"));
+      var captor = org.mockito.ArgumentCaptor.forClass(tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Peticion.class);
+      verify(backend).crear(captor.capture());
+      assertThat(captor.getValue().items()).containsExactly(new tuval.api.web.reportes.resolucionarticulos.client.BorradorItemsPruebasClient.Item(
+          "020-000006-I", java.math.BigDecimal.ONE));
+      assertThat(captor.getValue().pvId()).isEqualTo(2);
+      verifyNoInteractions(resolver);
+    }
     @Test void conservaClientePuntoVentaYCantidadExplicitos() throws Exception {
       var resolved = resolucion("identificado", true, List.of(candidato("020-000006-I")));
       when(resolver.consultar(any())).thenReturn(List.of(new tuval.api.web.reportes.resolucionarticulos.dto.ResolucionArticulosReporteDto(

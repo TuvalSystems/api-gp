@@ -6,11 +6,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.hc.client5.http.DnsResolver;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ContentType;
@@ -30,28 +35,76 @@ public class BorradorItemsPruebasClient {
   private final URI endpoint;
   private final ObjectMapper mapper;
   private final Duration timeout;
+  private final boolean pinDevTarget;
+  private static final String DEV_HOST = "tuvalapi.cosenco.ec";
 
   @Autowired
   public BorradorItemsPruebasClient(ObjectMapper mapper, Environment environment,
       @Value("${reportes.resolucion-borrador.enabled:false}") boolean enabled,
       @Value("${reportes.resolucion-borrador.backend-origin:}") String origin,
-      @Value("${reportes.resolucion-borrador.allow-insecure-http:false}") boolean allowHttp) {
-    this(mapper, entornoDePruebas(environment) && enabled, origin, allowHttp, Duration.ofSeconds(30));
+      @Value("${reportes.resolucion-borrador.allow-insecure-http:false}") boolean allowHttp,
+      @Value("${reportes.resolucion-borrador.dev-test-target-verified:false}") boolean devVerified) {
+    this(mapper, entornoDePruebas(environment, origin, devVerified) && enabled, origin, allowHttp,
+        Duration.ofSeconds(30), contieneDev(environment));
   }
 
   // Tests use a loopback server. No system/global HTTP settings are modified.
   BorradorItemsPruebasClient(ObjectMapper mapper, boolean enabled, String origin, boolean allowHttp, Duration timeout) {
+    this(mapper, enabled, origin, allowHttp, timeout, false);
+  }
+
+  private BorradorItemsPruebasClient(ObjectMapper mapper, boolean enabled, String origin, boolean allowHttp,
+      Duration timeout, boolean pinDevTarget) {
+    this.pinDevTarget = pinDevTarget;
     this.enabled = enabled;
     this.endpoint = destino(origin, allowHttp);
     this.mapper = mapper.copy().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     this.timeout = timeout;
   }
 
-  private static boolean entornoDePruebas(Environment environment) {
-    var profiles = Arrays.stream(environment.getActiveProfiles()).map(p -> p.toLowerCase(Locale.ROOT)).toList();
-    return !profiles.isEmpty() && profiles.stream().allMatch(Set.of("local", "testing", "qa", "staging")::contains);
+  private static boolean contieneDev(Environment environment) {
+    return Arrays.stream(environment.getActiveProfiles()).anyMatch("dev"::equalsIgnoreCase);
   }
 
+  private static boolean entornoDePruebas(Environment environment, String origin, boolean devVerified) {
+    var profiles = Arrays.stream(environment.getActiveProfiles()).map(p -> p.toLowerCase(Locale.ROOT)).toList();
+    if (profiles.isEmpty() || !profiles.stream().allMatch(Set.of("local", "testing", "qa", "staging", "dev")::contains))
+      return false;
+    if (!contieneDev(environment)) return true;
+    if (!devVerified) return false;
+    try {
+      var uri = URI.create(origin);
+      return DEV_HOST.equalsIgnoreCase(uri.getHost()) && (uri.getPort() == -1
+          || ("http".equalsIgnoreCase(uri.getScheme()) && uri.getPort() == 80)
+          || ("https".equalsIgnoreCase(uri.getScheme()) && uri.getPort() == 443));
+    } catch (IllegalArgumentException exception) { return false; }
+  }
+
+  // The DEV exception is tied to the verified test backend, not any URL labelled "dev".
+  // Pin the socket destination as well as the hostname, retaining Host/SNI and normal TLS verification.
+  private static DnsResolver destinoDev() {
+    return new DnsResolver() {
+      public InetAddress[] resolve(String host) throws UnknownHostException {
+        if (!DEV_HOST.equalsIgnoreCase(host)) throw new UnknownHostException();
+        return new InetAddress[] { InetAddress.getByAddress(DEV_HOST, new byte[] {(byte)172, 30, 1, 7}) };
+      }
+      public String resolveCanonicalHostname(String host) throws UnknownHostException {
+        if (!DEV_HOST.equalsIgnoreCase(host)) throw new UnknownHostException();
+        return DEV_HOST;
+      }
+    };
+  }
+
+  private CloseableHttpClient transporte() {
+    var builder = HttpClients.custom().disableAutomaticRetries().disableRedirectHandling()
+        .disableCookieManagement().disableAuthCaching().disableContentCompression()
+        .setDefaultRequestConfig(RequestConfig.custom().setAuthenticationEnabled(false)
+            .setConnectTimeout(Timeout.ofSeconds(5)).setConnectionRequestTimeout(Timeout.ofSeconds(5))
+            .setResponseTimeout(Timeout.ofMilliseconds(timeout.toMillis())).build());
+    if (pinDevTarget) builder.setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
+        .setDnsResolver(destinoDev()).build());
+    return builder.build();
+  }
   private static URI destino(String origin, boolean allowHttp) {
     try {
       var uri = URI.create(origin);
@@ -73,11 +126,7 @@ public class BorradorItemsPruebasClient {
     var expired = new AtomicBoolean();
     // Per-operation timer and connection: cancellation includes slow bodies, and no pooled stale retry is possible.
     try (var timer = Executors.newSingleThreadScheduledExecutor(Thread.ofPlatform().daemon().factory());
-         var http = HttpClients.custom().disableAutomaticRetries().disableRedirectHandling()
-             .disableCookieManagement().disableAuthCaching().disableContentCompression()
-             .setDefaultRequestConfig(RequestConfig.custom().setAuthenticationEnabled(false)
-                 .setConnectTimeout(Timeout.ofSeconds(5)).setConnectionRequestTimeout(Timeout.ofSeconds(5))
-                 .setResponseTimeout(Timeout.ofMilliseconds(timeout.toMillis())).build()).build()) {
+         var http = transporte()) {
       request.setHeader("Accept", "application/json");
       request.setHeader("Cache-Control", "no-store");
       request.setEntity(new ByteArrayEntity(mapper.writeValueAsBytes(payload), ContentType.APPLICATION_JSON));
