@@ -66,3 +66,6 @@ tuval.api.web.ventas.ordenCompra.dao.dynamics.PurchaseOrderDao
 tuval.api.web.reportes.cotizacionborrador.client.CotizacionBorradorClient
 tuval.api.web.reportes.cotizacionborrador.controller.CotizacionBorradorReporteController
 tuval.api.web.reportes.cotizacionborrador.service.tuvalbackend.CotizacionBorradorReporteService
+tuval.api.web.reportes.listadoitems.controller.ListadoItemsReporteController
+tuval.api.web.reportes.listadoitems.dao.dynamics.ListadoItemsReporteDao
+tuval.api.web.reportes.listadoitems.service.dynamics.ListadoItemsReporteService

@@ -167,3 +167,8 @@ provisionalmente en reportes, aunque delega una escritura a tuvalBackend.
 No utiliza JDBC/JPA; su service se ubica en `service/tuvalbackend` y el cliente
 HTTP en `client`. Está deshabilitado por defecto y bloqueado fuera de perfiles
 de pruebas. Esto no cambia la regla de solo lectura de los demás reportes.
+
+## Listado ligero de items
+
+El modulo reportes/listadoitems implementa GET /api/reportes/listado-items sobre
+dbo.vw_listadoItems mediante Dynamics. Ver [contrato y validacion en pruebas](reporte-listado-items.md).
