@@ -1,80 +1,70 @@
 package tuval.api.web.reportes.inventario.varianza.dao.dynamics;
 
-import java.sql.CallableStatement;
 import java.sql.Date;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataRetrievalFailureException;
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.SqlOutParameter;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.reportes.inventario.varianza.dto.VarianzaDto;
 import tuval.api.web.reportes.inventario.varianza.request.VarianzaRequest;
 
 @Repository
 public class VarianzaDao {
-  private static final String CALL = "{? = call dbo.spInv60(@NumeroDocumento = ?)}";
-  private final JdbcTemplate jdbcTemplate;
+  private final SimpleJdbcCall spInv60;
 
   public VarianzaDao(@Qualifier("dynamicsJdbcTemplate") JdbcTemplate jdbcTemplate) {
-    this.jdbcTemplate = jdbcTemplate;
+    JdbcTemplate dynamicsJdbcTemplate =
+        Objects.requireNonNull(jdbcTemplate, "El bean dynamicsJdbcTemplate no puede ser null");
+
+    // Configuración local del reporte, sin alterar el template compartido.
+    JdbcTemplate reporteJdbcTemplate =
+        new JdbcTemplate(Objects.requireNonNull(dynamicsJdbcTemplate.getDataSource()));
+    reporteJdbcTemplate.setQueryTimeout(30);
+    reporteJdbcTemplate.setFetchSize(100);
+    reporteJdbcTemplate.setMaxRows(0);
+
+    this.spInv60 =
+        new SimpleJdbcCall(reporteJdbcTemplate)
+            .withSchemaName("dbo")
+            .withProcedureName("spInv60")
+            .withReturnValue()
+            .withNamedBinding()
+            .withoutProcedureColumnMetaDataAccess()
+            .declareParameters(
+                new SqlOutParameter("RETURN_VALUE", Types.INTEGER),
+                new SqlParameter("NumeroDocumento", Types.VARCHAR))
+            .returningResultSet("data", varianzaMapper());
   }
 
+  @SuppressWarnings("unchecked")
   public List<VarianzaDto> consultar(VarianzaRequest request) {
-    return jdbcTemplate.execute((ConnectionCallback<List<VarianzaDto>>) connection -> {
-      try (CallableStatement statement = connection.prepareCall(CALL)) {
-        statement.registerOutParameter(1, Types.INTEGER); // SQL Server procedure return status.
-        if (request.numeroDocumento() == null) {
-          statement.setNull(2, Types.VARCHAR);
-        } else {
-          statement.setObject(2, request.numeroDocumento(), Types.VARCHAR);
-        }
-        statement.setQueryTimeout(30);
-        statement.setFetchSize(100); // Fetch hint only; all returned rows are retained.
-        statement.setMaxRows(0); // Clear any inherited template cap for this statement only.
+    MapSqlParameterSource params =
+        new MapSqlParameterSource()
+            .addValue("NumeroDocumento", request.numeroDocumento(), Types.VARCHAR);
+    Map<String, Object> result = spInv60.execute(params);
 
-        List<VarianzaDto> result = null;
-        boolean hasResultSet = statement.execute();
-        while (true) {
-          if (hasResultSet) {
-            if (result != null) {
-              throw new DataRetrievalFailureException("Conjunto de resultados inesperado en spInv60");
-            }
-            try (ResultSet rows = statement.getResultSet()) {
-              if (rows == null) {
-                throw new DataRetrievalFailureException("Resultado ausente en spInv60");
-              }
-              result = readRows(rows);
-            }
-          } else if (statement.getUpdateCount() == -1) {
-            break;
-          }
-          hasResultSet = statement.getMoreResults(Statement.CLOSE_CURRENT_RESULT);
-        }
-        int returnStatus = statement.getInt(1);
-        if (statement.wasNull() || returnStatus != 0 || result == null) {
-          throw new DataRetrievalFailureException("spInv60 no devolvio un reporte valido");
-        }
-        return result;
-      }
-    });
-  }
-
-  private static List<VarianzaDto> readRows(ResultSet rows) throws SQLException {
-    List<VarianzaDto> result = new ArrayList<>();
-    while (rows.next()) {
-      result.add(ROW_MAPPER.mapRow(rows, result.size()));
+    Number returnStatus = (Number) result.get("RETURN_VALUE");
+    if (returnStatus == null || returnStatus.intValue() != 0 || result.get("data") == null) {
+      throw new DataRetrievalFailureException("spInv60 no devolvio un reporte valido");
     }
-    return result;
+    if (result.keySet().stream().anyMatch(key -> key.startsWith("#result-set-"))) {
+      throw new DataRetrievalFailureException("Conjunto de resultados inesperado en spInv60");
+    }
+
+    return (List<VarianzaDto>) result.get("data");
   }
 
-  private static final RowMapper<VarianzaDto> ROW_MAPPER = (rows, rowNum) -> {
+  private static RowMapper<VarianzaDto> varianzaMapper() {
+    return (rows, rowNum) -> {
     Date date = rows.getDate("DOCDATE");
     return new VarianzaDto(
         rows.getObject("IVDOCTYP", Integer.class),
@@ -94,5 +84,6 @@ public class VarianzaDao {
         rows.getString("Reason_Code"),
         rows.getBigDecimal("CURRCOST"),
         rows.getBigDecimal("EXISTENCIA"));
-  };
+    };
+  }
 }
