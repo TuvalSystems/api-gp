@@ -1,9 +1,9 @@
-package tuval.api.web.reportes.inv60.request;
+package tuval.api.web.reportes.inventario.varianza.request;
 
 import jakarta.validation.constraints.Size;
 import org.springframework.web.bind.annotation.BindParam;
 
-public record Inv60ReporteRequest(
+public record VarianzaRequest(
     @BindParam("NumeroDocumento") @Size(max = 50) String numeroDocumento) {
 
   public boolean isConsultaValida() {

@@ -1,4 +1,4 @@
-package tuval.api.web.reportes.inv60.dao.dynamics;
+package tuval.api.web.reportes.inventario.varianza.dao.dynamics;
 
 import java.sql.CallableStatement;
 import java.sql.Date;
@@ -14,20 +14,20 @@ import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import tuval.api.web.reportes.inv60.dto.Inv60ReporteDto;
-import tuval.api.web.reportes.inv60.request.Inv60ReporteRequest;
+import tuval.api.web.reportes.inventario.varianza.dto.VarianzaDto;
+import tuval.api.web.reportes.inventario.varianza.request.VarianzaRequest;
 
 @Repository
-public class Inv60ReporteDao {
+public class VarianzaDao {
   private static final String CALL = "{? = call dbo.spInv60(@NumeroDocumento = ?)}";
   private final JdbcTemplate jdbcTemplate;
 
-  public Inv60ReporteDao(@Qualifier("dynamicsJdbcTemplate") JdbcTemplate jdbcTemplate) {
+  public VarianzaDao(@Qualifier("dynamicsJdbcTemplate") JdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  public List<Inv60ReporteDto> consultar(Inv60ReporteRequest request) {
-    return jdbcTemplate.execute((ConnectionCallback<List<Inv60ReporteDto>>) connection -> {
+  public List<VarianzaDto> consultar(VarianzaRequest request) {
+    return jdbcTemplate.execute((ConnectionCallback<List<VarianzaDto>>) connection -> {
       try (CallableStatement statement = connection.prepareCall(CALL)) {
         statement.registerOutParameter(1, Types.INTEGER); // SQL Server procedure return status.
         if (request.numeroDocumento() == null) {
@@ -39,7 +39,7 @@ public class Inv60ReporteDao {
         statement.setFetchSize(100); // Fetch hint only; all returned rows are retained.
         statement.setMaxRows(0); // Clear any inherited template cap for this statement only.
 
-        List<Inv60ReporteDto> result = null;
+        List<VarianzaDto> result = null;
         boolean hasResultSet = statement.execute();
         while (true) {
           if (hasResultSet) {
@@ -66,17 +66,17 @@ public class Inv60ReporteDao {
     });
   }
 
-  private static List<Inv60ReporteDto> readRows(ResultSet rows) throws SQLException {
-    List<Inv60ReporteDto> result = new ArrayList<>();
+  private static List<VarianzaDto> readRows(ResultSet rows) throws SQLException {
+    List<VarianzaDto> result = new ArrayList<>();
     while (rows.next()) {
       result.add(ROW_MAPPER.mapRow(rows, result.size()));
     }
     return result;
   }
 
-  private static final RowMapper<Inv60ReporteDto> ROW_MAPPER = (rows, rowNum) -> {
+  private static final RowMapper<VarianzaDto> ROW_MAPPER = (rows, rowNum) -> {
     Date date = rows.getDate("DOCDATE");
-    return new Inv60ReporteDto(
+    return new VarianzaDto(
         rows.getObject("IVDOCTYP", Integer.class),
         rows.getString("IVDOCNBR"),
         date == null ? null : date.toLocalDate(),

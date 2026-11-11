@@ -28,7 +28,9 @@ tuval.api.web
 ├── transacciones
 ├── diagnostico
 ├── reportes
-│   └── <funcionalidad> (nuevas APIs de reportes)
+│   ├── inventario
+│   │   └── varianza
+│   └── <funcionalidad> (otras APIs de reportes)
 ├── common
 │   ├── response
 │   └── util
@@ -76,11 +78,17 @@ externos de acceso pendientes antes de habilitarlo.
 15 campos solicitados sin `co_docGP`, ordena por `tx_nom` y rechaza resultados
 de más de 500 filas sin entregar datos parciales.
 
-`reportes/inv60` implementa [Consulta de varianzas spInv60](reporte-inv60.md):
-`GET /api/reportes/listado-varianzas-trabajo`, llamada JDBC parametrizada a `dbo.spInv60` mediante
+`reportes/inventario/varianza` implementa [Consulta de varianzas spInv60](reporte-inv60.md),
+reubicada desde `reportes/inv60` según su función de negocio:
+`GET /api/reportes/inventario/varianza/listado-trabajo`, llamada JDBC parametrizada a `dbo.spInv60` mediante
 `dynamicsJdbcTemplate`, con `NumeroDocumento` opcional. Conserva los 17 campos,
 los valores nulos y todas las filas; el documento vacio u omitido consulta todo.
 Su documentacion detalla timeout, alcance y validacion pendiente en QA.
+
+Sus clases son `VarianzaController`, `VarianzaService`, `VarianzaDao`,
+`VarianzaDto` y `VarianzaRequest`, con las capas existentes y conexión Dynamics.
+La ruta anterior `/api/reportes/listado-varianzas-trabajo` se retira; los consumidores
+deben actualizar la URL. Se conservan el parámetro `NumeroDocumento` y la respuesta.
 
 `reportes/resolucionarticulos` implementa la [resolución conservadora de artículos](resolucion-articulos.md):
 `POST /api/reportes/resolucion-articulos/consultar` recibe un lote acotado de texto y

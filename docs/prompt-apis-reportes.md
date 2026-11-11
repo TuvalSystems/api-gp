@@ -220,6 +220,16 @@ concretos porque aún no se proporcionó una tabla, vista o SP con su contrato.
 El cumplimiento debe comprobarse con pruebas y revisión del PR; un prompt no
 constituye por sí solo un control automático ni un generador en tiempo de ejecución.
 
+## Reubicación por negocio: varianzas de inventario
+
+La consulta antes ubicada en `reportes/inv60` se mantiene ahora en
+`reportes/inventario/varianza`, con clases `Varianza...` y ruta
+`GET /api/reportes/inventario/varianza/listado-trabajo`. Para cambios a esa consulta,
+reutilizar su módulo existente; no regenerar `reportes/inv60` ni restaurar la ruta
+anterior. Se conservan conexión Dynamics, SP, parámetros y respuesta.
+El reporte permanece dentro de `reportes`, organizado por área y funcionalidad.
+Esta reubicación no mueve los demás reportes ni cambia sus rutas.
+
 ## Excepción específica autorizada: cotización borrador
 
 Por solicitud expresa del usuario, el módulo temporal

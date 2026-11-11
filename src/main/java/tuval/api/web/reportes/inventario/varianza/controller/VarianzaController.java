@@ -1,4 +1,4 @@
-package tuval.api.web.reportes.inv60.controller;
+package tuval.api.web.reportes.inventario.varianza.controller;
 
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -10,21 +10,21 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tuval.api.web.common.response.ResponseJsonUtils;
-import tuval.api.web.reportes.inv60.request.Inv60ReporteRequest;
-import tuval.api.web.reportes.inv60.service.dynamics.Inv60ReporteService;
+import tuval.api.web.reportes.inventario.varianza.request.VarianzaRequest;
+import tuval.api.web.reportes.inventario.varianza.service.dynamics.VarianzaService;
 
 @RestController
-@RequestMapping(value = "/api/reportes/listado-varianzas-trabajo", produces = "application/json")
-public class Inv60ReporteController {
-  private final Inv60ReporteService service;
+@RequestMapping(value = "/api/reportes/inventario/varianza", produces = "application/json")
+public class VarianzaController {
+  private final VarianzaService service;
 
-  public Inv60ReporteController(Inv60ReporteService service) {
+  public VarianzaController(VarianzaService service) {
     this.service = service;
   }
 
-  @GetMapping
+  @GetMapping("/listado-trabajo")
   public ResponseEntity<Map<String, Object>> consultar(
-      @Valid @ModelAttribute Inv60ReporteRequest request) {
+      @Valid @ModelAttribute VarianzaRequest request) {
     try {
       return ResponseJsonUtils.buildSuccessWithData("Respuesta exitosa", service.consultar(request));
     } catch (IllegalArgumentException exception) {

@@ -1,6 +1,32 @@
-# Consulta de varianzas en trabajo: spInv60
+# Inventario / varianza: consulta de varianzas en trabajo
 
-`GET /api/reportes/listado-varianzas-trabajo` expone la consulta del procedimiento existente
+## Organización actual
+
+La consulta se ubica en `src/main/java/tuval/api/web/reportes/inventario/varianza/`:
+
+```text
+reportes/inventario/varianza/
+├── controller/VarianzaController.java
+├── service/dynamics/VarianzaService.java
+├── dao/dynamics/VarianzaDao.java
+├── dto/VarianzaDto.java
+└── request/VarianzaRequest.java
+```
+
+Se retira la ruta `/api/reportes/listado-varianzas-trabajo`. Los consumidores deben
+usar `/api/reportes/inventario/varianza/listado-trabajo`; se conservan el parámetro
+`NumeroDocumento`, la conexión, el procedimiento y los campos de respuesta.
+La verificación local descrita al final corresponde a la implementación original,
+anterior a esta reorganización.
+
+Validación de la reorganización (2026-11-11): `mvn -o clean verify` finalizó
+correctamente con Java 21. Esta copia del repositorio no contiene `src/test`,
+por lo que Maven no ejecutó pruebas. Se verificaron las cinco clases nuevas en
+el JAR y la ausencia del paquete antiguo, además de comparar el código con el
+original: solo cambian paquetes, nombres de clases y ruta HTTP. No se ejecutó
+el SP contra SQL Server ni se desplegó esta reorganización.
+
+`GET /api/reportes/inventario/varianza/listado-trabajo` expone la consulta del procedimiento existente
 `Dynamics2021.dbo.spInv60` mediante `dynamicsJdbcTemplate`. api-gp es el
 intermediario entre tuvalBackend y Dynamics/Tuval, por lo que este reporte sigue
 la ubicacion y el contrato HTTP de los reportes existentes.
@@ -26,7 +52,7 @@ respuesta exitosa parcial. Se admiten conteos intermedios del controlador JDBC.
 ## Peticion
 
 ```http
-GET /api/reportes/listado-varianzas-trabajo?NumeroDocumento=VAR0000617
+GET /api/reportes/inventario/varianza/listado-trabajo?NumeroDocumento=VAR0000617
 Accept: application/json
 ```
 
@@ -41,8 +67,8 @@ consulta todos los documentos segun el procedimiento. No enviar la palabra
 literal `NULL` para representar un nulo: seria un numero de documento.
 
 ```http
-GET /api/reportes/listado-varianzas-trabajo
-GET /api/reportes/listado-varianzas-trabajo?NumeroDocumento=
+GET /api/reportes/inventario/varianza/listado-trabajo
+GET /api/reportes/inventario/varianza/listado-trabajo?NumeroDocumento=
 ```
 
 Ambas peticiones anteriores tienen alcance completo. Usar un documento concreto
@@ -134,7 +160,7 @@ flujo de despliegue ni se publica a produccion. Tras completar ese flujo, la URL
 esperada para la prueba es:
 
 ```text
-http://172.30.1.25:8006/api/reportes/listado-varianzas-trabajo?NumeroDocumento=VAR0000617
+http://172.30.1.25:8006/api/reportes/inventario/varianza/listado-trabajo?NumeroDocumento=VAR0000617
 ```
 
 ## Validacion pendiente en QA

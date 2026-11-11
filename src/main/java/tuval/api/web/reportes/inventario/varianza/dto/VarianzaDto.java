@@ -1,4 +1,4 @@
-package tuval.api.web.reportes.inv60.dto;
+package tuval.api.web.reportes.inventario.varianza.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @JsonInclude(JsonInclude.Include.ALWAYS)
-public record Inv60ReporteDto(
+public record VarianzaDto(
     Integer IVDOCTYP,
     String IVDOCNBR,
     @JsonFormat(shape = JsonFormat.Shape.STRING) LocalDate DOCDATE,
