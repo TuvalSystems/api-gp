@@ -23,7 +23,6 @@ public class VarianzaController {
   public VarianzaController(VarianzaService service) {
     this.service = service;
   }
-
   @GetMapping("/listado-trabajo")
   public ResponseEntity<Map<String, Object>> consultar(
       @Valid @ModelAttribute VarianzaRequest request) {
