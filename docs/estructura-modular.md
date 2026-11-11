@@ -87,6 +87,8 @@ Su documentacion detalla timeout, alcance y validacion pendiente en QA.
 
 Sus clases son `VarianzaController`, `VarianzaService`, `VarianzaDao`,
 `VarianzaDto` y `VarianzaRequest`, con las capas existentes y conexión Dynamics.
+`VarianzaService` es una interfaz; su implementación `VarianzaServiceImp` se ubica
+en `service/dynamics/imp`, siguiendo el patrón de cobranzas y devoluciones.
 La ruta anterior `/api/reportes/listado-varianzas-trabajo` se retira; los consumidores
 deben actualizar la URL. Se conservan el parámetro `NumeroDocumento` y la respuesta.
 

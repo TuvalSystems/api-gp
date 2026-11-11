@@ -7,7 +7,8 @@ La consulta se ubica en `src/main/java/tuval/api/web/reportes/inventario/varianz
 ```text
 reportes/inventario/varianza/
 ├── controller/VarianzaController.java
-├── service/dynamics/VarianzaService.java
+├── service/dynamics/VarianzaService.java (interfaz)
+├── service/dynamics/imp/VarianzaServiceImp.java
 ├── dao/dynamics/VarianzaDao.java
 ├── dto/VarianzaDto.java
 └── request/VarianzaRequest.java
@@ -44,10 +45,69 @@ la ubicacion y el contrato HTTP de los reportes existentes.
   `RCRDTYPE = 2`, `INNER JOIN` y orden por `IVDOCNBR, LNSEQNBR`. No se modifica el
   procedimiento ni se duplican sus joins en Java.
 
-El DAO usa `CallableStatement` con firma explicita, valores enlazados y un unico
-conjunto de resultados. Un retorno distinto de cero, retorno nulo, ausencia de
+El DAO sigue el patrón de los DAO de artículos, cobranzas y órdenes de compra:
+`SimpleJdbcCall` configurado en el constructor, `MapSqlParameterSource` para las
+entradas y `returningResultSet("data", varianzaMapper())` para mapear las filas.
+Declara esquema `dbo`, procedimiento `spInv60`, retorno `INTEGER` y parámetro
+`@NumeroDocumento` de tipo `VARCHAR`, con enlace por nombre y sin inferencia de
+columnas del procedimiento desde metadatos. Spring administra los recursos JDBC.
+Un retorno distinto de cero, retorno nulo, ausencia de
 resultado o un segundo conjunto de resultados produce un error; nunca una
 respuesta exitosa parcial. Se admiten conteos intermedios del controlador JDBC.
+
+La configuración local usa un `JdbcTemplate` con el mismo DataSource de Dynamics,
+timeout de 30 segundos, fetch size de 100 y max rows de 0. No agrega conexiones
+configuradas ni altera el bean compartido.
+
+Validación del ajuste del DAO (2026-11-11): se ejecutó una comprobación temporal
+con JDBC simulado y el `SimpleJdbcCall` real, verificando firma y enlace de
+parámetros, documento omitido/vacío/espacios, lista vacía, nulos, fecha, decimales
+negativos, duplicados, 1505 filas sin recorte, conteos intermedios, cierre del
+statement, configuración compartida intacta y rechazo de retorno fallido/nulo,
+resultado ausente o adicional. La comprobación temporal se retiró tras validar.
+`mvn -o clean verify` compila y empaqueta el proyecto; no hay suite de pruebas en
+esta copia. La validación con SQL Server real sigue pendiente.
+
+## Service y diagnóstico de errores
+
+`VarianzaService` define el contrato y `service/dynamics/imp/VarianzaServiceImp`
+implementa la validación y delegación al DAO, con `@Service`,
+`@RequiredArgsConstructor` e inyección por constructor. Se sigue el patrón de
+interfaz/implementación usado en cobranzas y devoluciones.
+
+Al usar `withNamedBinding()` en SQL Server, el nombre SQL se declara como
+`@NumeroDocumento` tanto en `SqlParameter` como en `MapSqlParameterSource`.
+El nombre HTTP sigue siendo `NumeroDocumento`. La declaración anterior sin `@`
+generaba `NumeroDocumento = ?` dentro de la llamada; se corrigió para generar
+`@NumeroDocumento = ?`. El driver JDBC conserva ese prefijo al traducir a `EXEC`.
+Esta corrección no confirma por sí sola la causa del fallo observado en el entorno.
+
+El controller registra la excepción completa con SLF4J y mantiene el mensaje
+genérico de error en el JSON. Así se pueden distinguir errores de SQL, permisos,
+conexión y mapeo sin exponerlos en la respuesta HTTP.
+
+Validación temporal del flujo (2026-11-11): contexto Spring real con ambos beans
+JDBC y conexión simulada, una implementación del service, delegación
+controller/service/DAO, documento opcional y vacío, decimales y nulos, respuesta
+200 con datos, validación 400 sin consultar el DAO y error 500 controlado con log.
+También se comprobó con el traductor real del driver Microsoft SQL Server que la
+llamada corregida produce `EXEC ? = dbo.spInv60 @NumeroDocumento = ?`.
+La comprobación temporal se retiró después de validar. No había servicio local
+escuchando en el puerto 8006 y no se ejecutó el SP en una base real.
+
+## Comprobación integrada posterior (2026-11-11)
+
+Se consultó `VAR0000617` usando el DAO actual y el perfil DEV local, sin modificar
+datos ni mostrar credenciales. SQL Server confirmó el catálogo `Dynamics2021`,
+la visibilidad de `dbo.spInv60` y permiso `EXECUTE = 1`. El DAO devolvió 17 filas.
+La petición HTTP al mismo documento en `http://localhost:8006` devolvió 200 con
+datos; en `http://172.30.1.25:8006` devolvió 500 con el mensaje genérico.
+La diferencia entre instancias requiere comprobar versión y configuración del
+servidor, además de su excepción interna; no demuestra que ambas ejecuten el
+mismo código ni usen la misma configuración. No se desplegaron cambios durante
+esta comprobación. El diagnóstico temporal se retiró.
+Las notas de permisos pendientes en QA más abajo corresponden a ese otro perfil
+y no se sustituyen con esta validación DEV.
 
 ## Peticion
 

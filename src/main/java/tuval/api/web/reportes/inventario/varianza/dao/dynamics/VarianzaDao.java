@@ -41,7 +41,7 @@ public class VarianzaDao {
             .withoutProcedureColumnMetaDataAccess()
             .declareParameters(
                 new SqlOutParameter("RETURN_VALUE", Types.INTEGER),
-                new SqlParameter("NumeroDocumento", Types.VARCHAR))
+                new SqlParameter("@NumeroDocumento", Types.VARCHAR))
             .returningResultSet("data", varianzaMapper());
   }
 
@@ -49,7 +49,7 @@ public class VarianzaDao {
   public List<VarianzaDto> consultar(VarianzaRequest request) {
     MapSqlParameterSource params =
         new MapSqlParameterSource()
-            .addValue("NumeroDocumento", request.numeroDocumento(), Types.VARCHAR);
+            .addValue("@NumeroDocumento", request.numeroDocumento(), Types.VARCHAR);
     Map<String, Object> result = spInv60.execute(params);
 
     Number returnStatus = (Number) result.get("RETURN_VALUE");
@@ -65,25 +65,25 @@ public class VarianzaDao {
 
   private static RowMapper<VarianzaDto> varianzaMapper() {
     return (rows, rowNum) -> {
-    Date date = rows.getDate("DOCDATE");
-    return new VarianzaDto(
-        rows.getObject("IVDOCTYP", Integer.class),
-        rows.getString("IVDOCNBR"),
-        date == null ? null : date.toLocalDate(),
-        rows.getString("BACHNUMB"),
-        rows.getString("ITEMNMBR"),
-        rows.getString("ITMGEDSC"),
-        rows.getString("ITMSHNAM"),
-        rows.getString("ITEMDESC"),
-        rows.getBigDecimal("LNSEQNBR"),
-        rows.getBigDecimal("QTYBSUOM"),
-        rows.getString("TRXLOCTN"),
-        rows.getBigDecimal("TRXQTY"),
-        rows.getBigDecimal("UNITCOST"),
-        rows.getBigDecimal("EXTDCOST"),
-        rows.getString("Reason_Code"),
-        rows.getBigDecimal("CURRCOST"),
-        rows.getBigDecimal("EXISTENCIA"));
+      Date date = rows.getDate("DOCDATE");
+      return new VarianzaDto(
+          rows.getObject("IVDOCTYP", Integer.class),
+          rows.getString("IVDOCNBR"),
+          date == null ? null : date.toLocalDate(),
+          rows.getString("BACHNUMB"),
+          rows.getString("ITEMNMBR"),
+          rows.getString("ITMGEDSC"),
+          rows.getString("ITMSHNAM"),
+          rows.getString("ITEMDESC"),
+          rows.getBigDecimal("LNSEQNBR"),
+          rows.getBigDecimal("QTYBSUOM"),
+          rows.getString("TRXLOCTN"),
+          rows.getBigDecimal("TRXQTY"),
+          rows.getBigDecimal("UNITCOST"),
+          rows.getBigDecimal("EXTDCOST"),
+          rows.getString("Reason_Code"),
+          rows.getBigDecimal("CURRCOST"),
+          rows.getBigDecimal("EXISTENCIA"));
     };
   }
 }
