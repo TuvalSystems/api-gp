@@ -9,7 +9,7 @@ import tuval.api.web.cobranzas.cobros.dto.CustomerPendingApplicationDocumentDto;
 import tuval.api.web.cobranzas.cobros.request.CustomerCollectionRequest;
 
 public interface ReceivablesService {
-  Integer checkMaterialRelease(String factura, String condicionPago);
+  Integer checkMaterialRelease(String factura);
 
   List<CustomerCollectionDto> getInvoicePaymentApplications(CustomerCollectionRequest payload);
 

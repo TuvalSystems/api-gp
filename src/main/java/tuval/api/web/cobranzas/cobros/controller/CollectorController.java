@@ -42,7 +42,7 @@ public class CollectorController {
       @Valid @RequestBody InvoicePaymentConditionRequest payload) {
     try {
       Integer codigo = receivablesService.checkMaterialRelease(
-          payload.getFactura(), payload.getCondicionPago());
+          payload.getFactura());
       return ResponseJsonUtils.buildSuccessWithData(
           "Consulta de liberacion de material realizada correctamente", Map.of("codigo", codigo));
     } catch (Exception e) {

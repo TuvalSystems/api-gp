@@ -29,20 +29,19 @@ public class CollectionDao {
   private final SimpleJdbcCall spCxC34;
   private final SimpleJdbcCall spCxC35;
   private final SimpleJdbcCall spCxC36;
-  private final SimpleJdbcCall spCxC37;
+  private final SimpleJdbcCall spCxC38;
 
   public CollectionDao(@Qualifier("dynamicsJdbcTemplate") JdbcTemplate jdbcTemplate) {
     JdbcTemplate dynamicsJdbcTemplate =
         Objects.requireNonNull(jdbcTemplate, "El bean dynamicsJdbcTemplate no puede ser null");
 
-    this.spCxC37 = new SimpleJdbcCall(dynamicsJdbcTemplate)
+    this.spCxC38 = new SimpleJdbcCall(dynamicsJdbcTemplate)
         .withCatalogName("Dynamics2021")
         .withSchemaName("dbo")
-        .withProcedureName("spCxC37")
+        .withProcedureName("spCxC38")
         .withoutProcedureColumnMetaDataAccess()
         .declareParameters(
-            new SqlParameter("Factura", Types.VARCHAR),
-            new SqlParameter("CondicionPago", Types.VARCHAR))
+            new SqlParameter("Factura", Types.VARCHAR))
         .returningResultSet("data", (rs, rowNum) -> rs.getInt("Codigo"));
 
     this.spCxC32 =
@@ -175,14 +174,14 @@ public class CollectionDao {
   }
 
   @SuppressWarnings("unchecked")
-  public Integer executeSpCxC37(String factura, String condicionPago) {
+  public Integer executeSpCxC38(String factura) {
     MapSqlParameterSource params = new MapSqlParameterSource()
         .addValue("Factura", factura)
-        .addValue("CondicionPago", condicionPago);
-    Map<String, Object> result = spCxC37.execute(params);
+       ;
+    Map<String, Object> result = spCxC38.execute(params);
     List<Integer> rows = (List<Integer>) result.get("data");
     if (rows == null || rows.size() != 1 || rows.get(0) == null) {
-      throw new IllegalStateException("spCxC37 no devolvio un Codigo valido");
+      throw new IllegalStateException("spCxC38 no devolvio un Codigo valido");
     }
     return rows.get(0);
   }

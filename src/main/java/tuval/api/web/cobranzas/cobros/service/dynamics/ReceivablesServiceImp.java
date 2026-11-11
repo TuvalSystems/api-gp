@@ -16,8 +16,8 @@ public class ReceivablesServiceImp implements ReceivablesService {
   private final CollectionDao collectionDao;
 
   @Override
-  public Integer checkMaterialRelease(String factura, String condicionPago) {
-    return collectionDao.executeSpCxC37(factura, condicionPago);
+  public Integer checkMaterialRelease(String factura) {
+    return collectionDao.executeSpCxC38(factura);
   }
 
   @Override
