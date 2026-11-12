@@ -210,6 +210,58 @@ public class ArticulosDao {
 
   public List<CatalogoArticuloDto> buscarCandidatosResolucion(Familia familia, String codigo,
       Map<String, String> filtros) {
+    var consulta = consultaResolucion(familia, codigo, filtros);
+    return jdbcTemplate.execute(consulta.sql(), consulta.parametros(), statement -> {
+      statement.setQueryTimeout(2);
+      statement.setFetchSize(LIMITE_RESOLUCION + 1);
+      statement.setMaxRows(LIMITE_RESOLUCION + 1);
+      try (ResultSet rows = statement.executeQuery()) {
+        return leerCatalogo(rows);
+      }
+    });
+  }
+
+  public record BusquedaResolucion(Familia familia, String codigo, Map<String, String> filtros) {
+    public BusquedaResolucion { filtros = Map.copyOf(filtros); }
+  }
+
+  /** One JDBC execution, with an independent TOP and deterministic order for each search. */
+  public List<List<CatalogoArticuloDto>> buscarCandidatosResolucionLote(List<BusquedaResolucion> busquedas) {
+    if (busquedas == null || busquedas.isEmpty() || busquedas.size() > 20) {
+      throw new IllegalArgumentException("Lote de busquedas invalido");
+    }
+    var sql = new StringBuilder();
+    var parametros = new MapSqlParameterSource();
+    for (int i = 0; i < busquedas.size(); i++) {
+      var busqueda = busquedas.get(i);
+      var consulta = consultaResolucion(busqueda.familia(), busqueda.codigo(), busqueda.filtros());
+      String prefijo = "b" + i + "_";
+      sql.append(consulta.sql().replaceAll(":([A-Za-z][A-Za-z0-9]*)", ":" + prefijo + "$1")).append(";\n");
+      for (String nombre : consulta.parametros().getParameterNames()) {
+        parametros.addValue(prefijo + nombre, consulta.parametros().getValue(nombre),
+            consulta.parametros().getSqlType(nombre));
+      }
+    }
+    return jdbcTemplate.execute(sql.toString(), parametros, statement -> {
+      statement.setQueryTimeout(2);
+      statement.setFetchSize(LIMITE_RESOLUCION + 1);
+      // TOP belongs to each SELECT. A statement-wide maxRows would obscure that scope.
+      List<List<CatalogoArticuloDto>> resultado = new ArrayList<>();
+      boolean disponible = statement.execute();
+      for (int i = 0; i < busquedas.size(); i++) {
+        if (!disponible) throw new SQLException("Resultado de busqueda incompleto");
+        try (ResultSet rows = statement.getResultSet()) {
+          resultado.add(leerCatalogo(rows));
+        }
+        if (i + 1 < busquedas.size()) disponible = statement.getMoreResults();
+      }
+      return resultado;
+    });
+  }
+
+  private record ConsultaResolucion(String sql, MapSqlParameterSource parametros) {}
+
+  private ConsultaResolucion consultaResolucion(Familia familia, String codigo, Map<String, String> filtros) {
     if ((familia == null) == (codigo == null) || (codigo != null &&
         (codigo.isBlank() || codigo.length() > 31))) {
       throw new IllegalArgumentException("Busqueda invalida");
@@ -260,19 +312,16 @@ public class ArticulosDao {
         DATALENGTH(Descripcion), DATALENGTH(unidadMedida),
         DATALENGTH(tx_atrMar), DATALENGTH(tx_atrMat)
         """);
-    return jdbcTemplate.execute(sql.toString(), parameters, statement -> {
-      statement.setQueryTimeout(2);
-      statement.setFetchSize(LIMITE_RESOLUCION + 1);
-      statement.setMaxRows(LIMITE_RESOLUCION + 1);
-      try (ResultSet rows = statement.executeQuery()) {
-        List<CatalogoArticuloDto> result = new ArrayList<>();
-        while (rows.next()) {
-          result.add(new CatalogoArticuloDto(rows.getString("tx_itm"), rows.getString("codZafiro"),
-              rows.getString("cod3L"), rows.getString("Descripcion"), rows.getString("unidadMedida"),
-              rows.getString("tx_atrMar"), rows.getString("tx_atrMat")));
-        }
-        return result;
-      }
-    });
+    return new ConsultaResolucion(sql.toString(), parameters);
+  }
+
+  private static List<CatalogoArticuloDto> leerCatalogo(ResultSet rows) throws SQLException {
+    List<CatalogoArticuloDto> result = new ArrayList<>();
+    while (rows.next()) {
+      result.add(new CatalogoArticuloDto(rows.getString("tx_itm"), rows.getString("codZafiro"),
+          rows.getString("cod3L"), rows.getString("Descripcion"), rows.getString("unidadMedida"),
+          rows.getString("tx_atrMar"), rows.getString("tx_atrMat")));
+    }
+    return result;
   }
 }

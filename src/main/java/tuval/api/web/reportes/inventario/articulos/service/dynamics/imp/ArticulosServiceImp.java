@@ -62,41 +62,71 @@ public class ArticulosServiceImp implements ArticulosService {
     validar(request);
     int max = request.maxCandidatos() == null ? 3 : request.maxCandidatos();
     long inicio = System.nanoTime();
-    // Request-scoped reuse: no persistent cache, freshness assumptions or infrastructure.
+    // Both caches are request-scoped: catalog changes are visible on the next request.
     Map<String, Fuente> fuentes = new HashMap<>();
-    List<ResolucionArticulosDto> results = new ArrayList<>();
+    Map<String, ReglasArticulo.Especificacion> interpretaciones = new HashMap<>();
+    var busquedas = new LinkedHashMap<String, ArticulosDao.BusquedaResolucion>();
+    record Linea(ResolucionArticulosRequest.Detalle detalle, ReglasArticulo.Especificacion spec,
+        String codigo, String key) {}
+    List<Linea> lineas = new ArrayList<>();
     for (var linea : request.detalle()) {
       var spec = ReglasArticulo.interpretar(linea.texto());
       String codigo = codigo(linea.texto());
       var filtros = ReglasArticulo.filtros(spec);
       String key = codigo != null ? "codigo:" + codigo : spec.familia() + ":" + filtros;
-      Fuente fuente = fuentes.get(key);
-      if (fuente == null) {
-        if (codigo == null && spec.familia() == null) {
-          fuente = new Fuente(List.of(), false, false, "fuera_del_vocabulario_soportado");
-        } else if (fuentes.size() >= MAX_BUSQUEDAS || System.nanoTime() - inicio >= PRESUPUESTO_NANOS) {
-          fuente = new Fuente(List.of(), false, false, "presupuesto_de_busqueda_agotado");
-        } else {
-          try {
-            var filas = articulosDao.buscarCandidatosResolucion(codigo == null ? spec.familia() : null, codigo, filtros);
-            boolean truncada = filas.size() > ArticulosDao.LIMITE_RESOLUCION;
-            fuente = new Fuente(List.copyOf(filas.subList(0, Math.min(filas.size(),
-                ArticulosDao.LIMITE_RESOLUCION))), !truncada, truncada,
-                truncada ? "limite_de_exploracion" : "");
-          } catch (QueryTimeoutException exception) {
-            fuente = new Fuente(List.of(), false, false, "timeout_de_busqueda");
-          }
-        }
-        fuentes.put(key, fuente);
+      lineas.add(new Linea(linea, spec, codigo, key));
+      if (fuentes.containsKey(key) || busquedas.containsKey(key)) continue;
+      if (codigo == null && spec.familia() == null) {
+        fuentes.put(key, new Fuente(List.of(), false, false, "fuera_del_vocabulario_soportado"));
+      } else if (busquedas.size() >= MAX_BUSQUEDAS) {
+        fuentes.put(key, new Fuente(List.of(), false, false, "presupuesto_de_busqueda_agotado"));
+      } else {
+        busquedas.put(key, new ArticulosDao.BusquedaResolucion(codigo == null ? spec.familia() : null,
+            codigo, filtros));
       }
-      results.add(resolver(results.size(), linea, spec, codigo, fuente, max));
+    }
+    if (busquedas.size() > 1 && System.nanoTime() - inicio < PRESUPUESTO_NANOS) {
+      try {
+        var lotes = articulosDao.buscarCandidatosResolucionLote(List.copyOf(busquedas.values()));
+        int indice = 0;
+        for (String key : busquedas.keySet()) fuentes.put(key, fuente(lotes.get(indice++)));
+        busquedas.clear();
+      } catch (QueryTimeoutException exception) {
+        // Retry individually within the original budget so one slow search does not hide the rest.
+      }
+    }
+    for (var entrada : busquedas.entrySet()) {
+      Fuente fuente;
+      if (System.nanoTime() - inicio >= PRESUPUESTO_NANOS) {
+        fuente = new Fuente(List.of(), false, false, "presupuesto_de_busqueda_agotado");
+      } else {
+        var busqueda = entrada.getValue();
+        try {
+          fuente = fuente(articulosDao.buscarCandidatosResolucion(busqueda.familia(), busqueda.codigo(),
+              busqueda.filtros()));
+        } catch (QueryTimeoutException exception) {
+          fuente = new Fuente(List.of(), false, false, "timeout_de_busqueda");
+        }
+      }
+      fuentes.put(entrada.getKey(), fuente);
+    }
+    List<ResolucionArticulosDto> results = new ArrayList<>();
+    for (var linea : lineas) {
+      results.add(resolver(results.size(), linea.detalle(), linea.spec(), linea.codigo(),
+          fuentes.get(linea.key()), max, interpretaciones));
     }
     return results;
   }
 
+  private static Fuente fuente(List<CatalogoArticuloDto> filas) {
+    boolean truncada = filas.size() > ArticulosDao.LIMITE_RESOLUCION;
+    return new Fuente(List.copyOf(filas.subList(0, Math.min(filas.size(), ArticulosDao.LIMITE_RESOLUCION))),
+        !truncada, truncada, truncada ? "limite_de_exploracion" : "");
+  }
+
   private ResolucionArticulosDto resolver(int indice,
       ResolucionArticulosRequest.Detalle linea, ReglasArticulo.Especificacion spec,
-      String codigo, Fuente fuente, int max) {
+      String codigo, Fuente fuente, int max, Map<String, ReglasArticulo.Especificacion> interpretaciones) {
     var attrs = new LinkedHashMap<>(spec.atributos());
     var pending = new ArrayList<>(spec.pendientes());
     // Unvalidated source attributes must not complete or contradict a specification.
@@ -107,7 +137,7 @@ public class ArticulosServiceImp implements ArticulosService {
     Map<Candidato, Integer> puntajes = new HashMap<>();
     boolean ampliada = spec.familia() != null && ReglasArticulo.ampliada(spec.familia());
     for (var row : fuente.filas()) {
-      var observed = ReglasArticulo.interpretar(row.descripcion());
+      var observed = interpretaciones.computeIfAbsent(row.descripcion(), ReglasArticulo::interpretar);
       if (codigo == null && ampliada && observed.familia() == null) continue;
       if (codigo == null && observed.familia() != null && observed.familia() != spec.familia()
           && !observed.pendientes().contains("tipos_articulo_multiples")) continue;

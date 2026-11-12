@@ -144,6 +144,69 @@ siguen requiriendo aclaraciones y tres quedan sin coincidencia. Tampoco permite
 cuantificar por separado cuánto ahorran los nuevos filtros SQL o la reutilización:
 para eso haría falta otro experimento con igual cobertura funcional en ambas variantes.
 
+## Optimización manteniendo cobertura y contrato (2026-11-12)
+
+La comparación de esta sección usa como base la versión ampliada anterior
+(commit `3090284b1e592a822199149f46bdff522529ff9b`), que ya encontraba nueve líneas.
+No se usa como referencia la versión original que no buscaba ninguna de las doce.
+
+Se aplicaron dos cambios internos:
+
+1. Las búsquedas distintas del lote se envían en una ejecución JDBC, con parámetros
+   separados y un resultado por búsqueda. Cada SELECT conserva exactamente sus
+   filtros, `TOP (501)` (500 filas más centinela) y orden determinista. No se cambian
+   la vista, los índices ni las columnas consultadas. Un lote de una sola búsqueda
+   mantiene el camino individual. El timeout del lote es de dos segundos; si vence,
+   se reintentan las búsquedas individualmente dentro del presupuesto restante de
+   diez segundos. Los timeouts y truncamientos siguen visibles en la respuesta.
+2. Las descripciones ya interpretadas se reutilizan dentro de la misma solicitud.
+   Las cuatro planchas y los tres pernos ya no vuelven a interpretar todas las
+   filas de su familia para cada línea. Tanto los resultados como las interpretaciones
+   se descartan al terminar: no hay caché de catálogo entre solicitudes.
+
+Se repitieron cinco calentamientos y treinta mediciones por versión, alternadas,
+con el mismo body, JVM y conexión DEV reutilizada. Se mide deserialización JSON,
+controlador, servicio, DAO y serialización, sin red HTTP ni carga concurrente.
+Cada resultado se comparó por igualdad completa de `data` JSON con la base,
+incluyendo orden de candidatos, cantidades, atributos, diferencias, faltantes y
+banderas. Las sesenta mediciones conservaron la misma cobertura.
+
+| Métrica por lote | Base con cobertura | Optimizada |
+|---|---:|---:|
+| Mediana | 845,03 ms | 664,92 ms |
+| Percentil 95 | 906,41 ms | 732,97 ms |
+| Promedio | 839,12 ms | 667,51 ms |
+| Mínimo / máximo | 748,43 / 931,71 ms | 603,43 / 739,45 ms |
+| Tiempo medio dentro del DAO | 693,97 ms | 617,08 ms |
+| Ejecuciones JDBC | 7 | 1 |
+| SELECT lógicos | 7 | 7 |
+| Filas recuperadas | 498 | 498 |
+| Líneas con candidatos | 9/12 | 9/12 |
+| Candidatos totales devueltos | 37 | 37 |
+| Líneas ambiguas / sin coincidencia | 9 / 3 | 9 / 3 |
+| Líneas identificadas automáticamente | 0 | 0 |
+| Líneas con exploración incompleta o truncada | 0 | 0 |
+
+La mediana bajó **180,11 ms (21,31%)** y el percentil 95 bajó **19,13%**.
+Se mantiene el contrato HTTP y no se cambian las reglas de identificación. Una
+llamada JDBC no implica medir un único paquete de red ni reducir los siete SELECT
+a una sola exploración de la vista. El coste de la base sigue siendo la mayor
+parte del tiempo. Estos resultados corresponden a esta muestra local secuencial,
+no son un SLA ni una prueba bajo concurrencia.
+
+Validaciones adicionales: compilación y empaquetado `mvn -o clean verify`; harness
+temporal para orden y reutilización de fuentes, fallback por timeout con igualdad
+de resultados, timeouts individuales visibles, cambios de catálogo entre solicitudes,
+camino de una búsqueda, texto no soportado, veinte códigos exactos y validación de
+lotes vacíos. Contra DEV se comparó el lote JDBC con consultas individuales para
+un código existente, uno inexistente, codos, neplos y chumaceras: resultados completos
+y ordenados idénticos, tamaños 1/0/501/501/0. Los dos resultados de 501 filas prueban
+que el centinela de truncamiento se conserva independientemente por consulta.
+No se provocaron timeouts reales en el servidor ni se desplegaron los cambios.
+
+Las muestras completas, huellas de fuentes y metodología están en
+[el benchmark de optimización](resolucion-articulos-optimizacion-benchmark-2026-11-12.json).
+
 # Consulta de resolución de artículos (v1)
 
 `POST /api/reportes/inventario/articulos/resolver` recibe líneas extraídas por el
