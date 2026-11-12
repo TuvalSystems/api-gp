@@ -1,4 +1,35 @@
-# ReporteArticulos
+# Reporte de artículos de inventario
+
+## Organización actual
+
+```text
+reportes/inventario/articulos/
+├── controller/ArticulosController.java
+├── service/dynamics/ArticulosService.java
+├── service/dynamics/imp/ArticulosServiceImp.java
+├── dao/dynamics/ArticulosDao.java
+├── dto/ArticulosDto.java
+└── request/ArticulosRequest.java
+```
+
+`ArticulosService` es la interfaz y `ArticulosServiceImp` valida la solicitud y
+delega al DAO con inyección por constructor. El DAO conserva la consulta
+parametrizada de la vista y usa `articulosMapper()` para mapear sus 37 columnas.
+El controller registra las excepciones en el servidor sin incluir sus detalles
+en la respuesta JSON, siguiendo el mismo patrón que varianza.
+
+Se retira `/api/reportes/articulos`; los consumidores deben actualizar la URL a
+`/api/reportes/inventario/articulos`. Filtros, paginación y respuesta se conservan.
+
+Validación de la reorganización (2026-11-12): `mvn -o clean verify` compila y
+empaqueta correctamente. Esta copia no contiene `src/test`, por lo que Maven no
+ejecuta una suite. Se ejecutó y retiró una comprobación temporal con contexto
+Spring y JDBC simulado: selección de Dynamics entre dos beans, una implementación
+del service, nueva ruta, 37 campos JSON, precisión y nulos, filtros parametrizados,
+escape LIKE, orden estable, paginación SQL, timeout/límites locales, respuesta
+vacía y validación 400 sin acceso al DAO. No se ejecutó contra SQL Server real ni
+se desplegaron cambios. La sección de verificación original al final conserva
+el registro histórico de la implementación previa.
 
 Consulta de artículos, precios, costos, tránsito, promedios de venta y
 clasificaciones desde `dbo.vw_MaestroArticulo`. Funcionalidad: `articulos`.
@@ -6,7 +37,7 @@ clasificaciones desde `dbo.vw_MaestroArticulo`. Funcionalidad: `articulos`.
 ## Acceso y seguridad
 
 Por indicación expresa del solicitante, este microservicio no incorpora
-autenticación propia. `GET /api/reportes/articulos` expone **precio, costo y margen
+autenticación propia. `GET /api/reportes/inventario/articulos` expone **precio, costo y margen
 (`marUti`) sin exigir credenciales**. No se verificó que exista un gateway, proxy,
 VPN, firewall u otro control externo que proteja esta ruta.
 
@@ -21,16 +52,16 @@ módulo no registra filtros ni resultados comercialmente sensibles.
 
 ## Arquitectura y conexión
 
-- Código: `tuval.api.web.reportes.articulos`.
+- Código: `tuval.api.web.reportes.inventario.articulos`.
 - Capas: `controller` -> `service/dynamics` -> `dao/dynamics`, con `dto` y `request`.
-- Método/ruta: `GET /api/reportes/articulos`, parámetros en query string, sin body.
+- Método/ruta: `GET /api/reportes/inventario/articulos`, parámetros en query string, sin body.
 - Conexión exclusiva: `dynamics`, mediante el bean existente
   `@Qualifier("dynamicsNamedParameterJdbcTemplate")`.
 - Origen único: vista `dbo.vw_MaestroArticulo`, operación `SELECT`.
 - Catálogo: el configurado en el DataSource; no se fija ni se recibe desde HTTP.
 - Sin entidades JPA, nuevas conexiones, dependencias ni cambios en escaneo JPA.
-- Inventario de componentes: se incorporan controller, service y DAO a
-  `src/test/resources/architecture/components.txt`.
+- No existe inventario `src/test/resources/architecture/components.txt` en esta
+  copia; el registro de la implementación original al final es histórico.
 
 Se revisaron `configVista.xlsx` y `detalleVista.xlsx` adjuntos antes de implementar.
 Ambos contienen las mismas 37 columnas en el mismo orden; el detalle contiene 10
@@ -151,7 +182,7 @@ entre peticiones de páginas.
 ## Petición y respuesta
 
 ```http
-GET /api/reportes/articulos?tx_itm=966-000235-I&page=0&size=100&sort=tx_itm&direction=ASC
+GET /api/reportes/inventario/articulos?tx_itm=966-000235-I&page=0&size=100&sort=tx_itm&direction=ASC
 ```
 
 Ejemplo completo basado en el primer registro de `detalleVista.xlsx`. Es una

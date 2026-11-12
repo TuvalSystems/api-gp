@@ -1,4 +1,4 @@
-package tuval.api.web.reportes.articulos.dto;
+package tuval.api.web.reportes.inventario.articulos.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @JsonInclude(JsonInclude.Include.ALWAYS)
-public record ArticulosReporteDto(
+public record ArticulosDto(
     String tx_itm,
     String codZafiro,
     String cod3L,

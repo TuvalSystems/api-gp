@@ -29,6 +29,7 @@ tuval.api.web
 ├── diagnostico
 ├── reportes
 │   ├── inventario
+│   │   ├── articulos
 │   │   └── varianza
 │   └── <funcionalidad> (otras APIs de reportes)
 ├── common
@@ -66,11 +67,16 @@ Toda API generada con el [prompt de reportes](prompt-apis-reportes.md) debe vivi
 Sus rutas comienzan con `/api/reportes`. Las reglas de generación están en el
 documento del prompt. No se trasladan APIs existentes.
 
-`reportes/articulos` implementa [ReporteArticulos](reporte-articulos.md):
-`GET /api/reportes/articulos`, consulta JDBC de `dbo.vw_MaestroArticulo` mediante
+`reportes/inventario/articulos` implementa [ReporteArticulos](reporte-articulos.md):
+`GET /api/reportes/inventario/articulos`, consulta JDBC de `dbo.vw_MaestroArticulo` mediante
 `dynamicsNamedParameterJdbcTemplate`, con filtros y paginación SQL. Su documentación
 detalla las 37 columnas, límites, ausencia de autenticación propia y controles
 externos de acceso pendientes antes de habilitarlo.
+
+Usa las clases `ArticulosController`, `ArticulosDao`, `ArticulosDto`,
+`ArticulosRequest` y la interfaz `ArticulosService`, implementada por
+`service/dynamics/imp/ArticulosServiceImp`. Se retira la ruta anterior
+`/api/reportes/articulos`, conservando filtros, paginación y respuesta.
 
 `reportes/ven11` implementa [Reporte spVen11](reporte-ven11.md):
 `GET /api/reportes/ven11`, llamada JDBC parametrizada a `dbo.spVen11` mediante

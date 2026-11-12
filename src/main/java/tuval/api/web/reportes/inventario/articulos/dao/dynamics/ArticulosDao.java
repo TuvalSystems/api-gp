@@ -1,8 +1,9 @@
-package tuval.api.web.reportes.articulos.dao.dynamics;
+package tuval.api.web.reportes.inventario.articulos.dao.dynamics;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -10,11 +11,11 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
-import tuval.api.web.reportes.articulos.dto.ArticulosReporteDto;
-import tuval.api.web.reportes.articulos.request.ArticulosReporteRequest;
+import tuval.api.web.reportes.inventario.articulos.dto.ArticulosDto;
+import tuval.api.web.reportes.inventario.articulos.request.ArticulosRequest;
 
 @Repository
-public class ArticulosReporteDao {
+public class ArticulosDao {
   private final NamedParameterJdbcTemplate jdbcTemplate;
 
   private static final String SELECT = """
@@ -28,12 +29,12 @@ public class ArticulosReporteDao {
       WHERE 1 = 1
       """;
 
-  public ArticulosReporteDao(
+  public ArticulosDao(
       @Qualifier("dynamicsNamedParameterJdbcTemplate") NamedParameterJdbcTemplate jdbcTemplate) {
     this.jdbcTemplate = jdbcTemplate;
   }
 
-  public List<ArticulosReporteDto> consultar(ArticulosReporteRequest request) {
+  public List<ArticulosDto> consultar(ArticulosRequest request) {
     var sql = new StringBuilder(SELECT);
     var parameters = new MapSqlParameterSource();
     exact(sql, parameters, "tx_itm", request.getTx_itm());
@@ -59,7 +60,7 @@ public class ArticulosReporteDao {
     // Both identifiers and directions come exclusively from closed enums.
     sql.append(" ORDER BY [").append(request.getSort().name()).append("] ")
         .append(request.getDirection().name());
-    if (request.getSort() != ArticulosReporteRequest.Sort.tx_itm) {
+    if (request.getSort() != ArticulosRequest.Sort.tx_itm) {
       sql.append(", [tx_itm] ASC");
     }
     sql.append(" OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY");
@@ -72,9 +73,10 @@ public class ArticulosReporteDao {
       statement.setFetchSize(request.getSize());
       statement.setMaxRows(request.getSize());
       try (ResultSet rows = statement.executeQuery()) {
-        List<ArticulosReporteDto> result = new ArrayList<>();
+        List<ArticulosDto> result = new ArrayList<>();
+        RowMapper<ArticulosDto> mapper = articulosMapper();
         while (rows.next()) {
-          result.add(ROW_MAPPER.mapRow(rows, result.size()));
+          result.add(mapper.mapRow(rows, result.size()));
         }
         return result;
       }
@@ -94,13 +96,14 @@ public class ArticulosReporteDao {
         .replace("_", "~_").replace("[", "~[");
   }
 
-  private static java.time.LocalDateTime creationDate(ResultSet rows) throws SQLException {
+  private static LocalDateTime creationDate(ResultSet rows) throws SQLException {
     var timestamp = rows.getTimestamp("fechacreacion");
     return timestamp == null ? null : timestamp.toLocalDateTime();
   }
 
-  private static final RowMapper<ArticulosReporteDto> ROW_MAPPER = (rows, rowNum) ->
-      new ArticulosReporteDto(
+  private static RowMapper<ArticulosDto> articulosMapper() {
+    return (rows, rowNum) ->
+      new ArticulosDto(
           rows.getString("tx_itm"), rows.getString("codZafiro"), rows.getString("cod3L"),
           rows.getString("Descripcion"), rows.getString("unidadMedida"), rows.getString("claseItem"),
           rows.getBigDecimal("precio"), rows.getBigDecimal("peso"), rows.getBigDecimal("costo"),
@@ -115,4 +118,5 @@ public class ArticulosReporteDao {
           rows.getString("Control"), rows.getString("SubControl"), creationDate(rows),
           rows.getString("catven"), rows.getString("catpes"), rows.getString("catfre"),
           rows.getString("cattuv"), rows.getBigDecimal("marUti"));
+  }
 }

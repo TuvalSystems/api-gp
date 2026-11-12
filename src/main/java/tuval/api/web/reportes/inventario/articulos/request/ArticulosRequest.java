@@ -1,4 +1,4 @@
-package tuval.api.web.reportes.articulos.request;
+package tuval.api.web.reportes.inventario.articulos.request;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class ArticulosReporteRequest {
+public class ArticulosRequest {
   @Size(max = 31) private String tx_itm;
   @Size(max = 15) private String codZafiro;
   @Size(max = 11) private String cod3L;

@@ -220,7 +220,15 @@ concretos porque aún no se proporcionó una tabla, vista o SP con su contrato.
 El cumplimiento debe comprobarse con pruebas y revisión del PR; un prompt no
 constituye por sí solo un control automático ni un generador en tiempo de ejecución.
 
-## Reubicación por negocio: varianzas de inventario
+## Organización por negocio: reportes de inventario
+
+El reporte de artículos se ubica en `reportes/inventario/articulos`, con clases
+`Articulos...`, interfaz `service/dynamics/ArticulosService` e implementación
+`service/dynamics/imp/ArticulosServiceImp`. Su ruta es
+`GET /api/reportes/inventario/articulos`. Para modificarlo, reutilizar ese módulo;
+no regenerar `reportes/articulos` ni la ruta anterior `/api/reportes/articulos`.
+Conservar la consulta de la vista con `dynamicsNamedParameterJdbcTemplate`,
+los filtros, la paginación y el JSON existentes.
 
 La consulta antes ubicada en `reportes/inv60` se mantiene ahora en
 `reportes/inventario/varianza`, con clases `Varianza...` y ruta
