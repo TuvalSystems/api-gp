@@ -2,12 +2,13 @@ package tuval.api.web.reportes.inventario.articulos.service.dynamics.imp;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.text.Normalizer;
 import java.util.*;
 import java.util.regex.Pattern;
 import tuval.api.web.reportes.inventario.articulos.dao.dynamics.ArticulosDao.Familia;
 
-/** Small, closed vocabulary. Unknown text is retained as a reason to ask, never a score. */
+/** Closed vocabulary. Unknown text remains a clarification, never an invented catalog attribute. */
 final class ReglasArticulo {
   private static final String NUMERO = "(?<![A-Z0-9/])(?:\\d{1,4}\\s+\\d{1,3}/\\d{1,3}"
       + "|\\d{1,4}/\\d{1,3}|\\d{1,4}(?:[.,]\\d{1,3})?)(?![A-Z0-9/])";
@@ -176,6 +177,27 @@ final class ReglasArticulo {
   private static Especificacion interpretarProducto(String text, Familia familia) {
     var attrs = new LinkedHashMap<String, String>();
     var pendientes = new ArrayList<String>();
+    long familias = List.of("PLANCHAS?|PLANCHONES?|PLANCHON", "ANGULOS?", "TUBOS?", "PERNOS?",
+        "EJES?|BARRAS?", "CHUMACERAS?").stream()
+        .filter(regex -> text.matches(".*\\b(?:" + regex + ")\\b.*")).count();
+    if (familias > 1) pendientes.add("tipos_articulo_multiples");
+    long materiales = List.of("INOX(?:IDABLE|ID)?", "BRONCE", "LATON", "GALV(?:ANIZAD[OA]S?)?",
+        "ACERO NEGRO", "PVC").stream()
+        .filter(regex -> !(familia == Familia.PLANCHA && regex.equals("PVC")))
+        .filter(regex -> text.matches(".*\\b(?:" + regex + ")\\b.*")).count();
+    if (materiales > 1) pendientes.add("materiales_multiples");
+    for (String regex : List.of("\\b(201L?|304L?|316L?|430)\\b",
+        "(?<![A-Z/])(?:CEDULA\\s*|CED\\s*|SCH\\s*|C)(\\d{1,3})S?\\b",
+        "\\b(UNC|UNF|NPT|BSPT|BSPP|BSP)\\b")) {
+      var valores = new HashSet<String>();
+      var coincidencias = Pattern.compile(regex).matcher(text);
+      while (coincidencias.find()) valores.add(coincidencias.group(1));
+      if (valores.size() > 1) pendientes.add(regex.contains("201") ? "grados_material_multiples"
+          : regex.contains("CEDULA") ? "cedulas_multiples" : "roscas_multiples");
+    }
+    if (text.matches(".*(?:^|\\s)[-+]\\d.*") || text.matches(".*\\d[.,]\\d+[.,]\\d.*")) {
+      pendientes.add("formato_medidas_no_soportado");
+    }
     put(attrs, "material", material(text));
     if (text.matches(".*\\bINOX(?:IDABLE|ID)?\\b.*")) {
       // PVC/papel describes protection on stainless sheets, not their base material.
@@ -194,12 +216,16 @@ final class ReglasArticulo {
       put(attrs, "acabado", valor(text, "#(2B|BA|[1-48])\\b"));
     }
     if (familia == Familia.PERNO && text.matches(".*\\bCOMPLETOS?\\b.*")) pendientes.add("componentes_de_perno_completo");
+    if (familia == Familia.PERNO) {
+      put(attrs, "tipoCabeza", valor(text, "\\b(HEXAGONAL|ALLEN|AVELLANADA)\\b"));
+    }
     if (familia == Familia.CHUMACERA) {
       put(attrs, "montaje", valor(text, "\\b(PARED|PEDESTAL)\\b"));
       put(attrs, "agujeros", valor(text, "\\b([24])H\\b"));
     }
     if (familia == Familia.BRONCE) {
       put(attrs, "forma", valor(text, "\\b(REDONDA|HEXAGONAL|PLATINA|BUJE|BOCIN)\\b"));
+      put(attrs, "tipoBronce", valor(text, "\\b(DULCE|FOSFORICO)\\b"));
     }
     String rest = text.replaceAll("\\(\\s*(MTS?|METROS?)\\s*\\)", " M")
         .replaceAll("\\b(?:201L?|304L?|316L?|430)\\b", " ")
@@ -217,6 +243,12 @@ final class ReglasArticulo {
     var matcher = DIMENSION.matcher(rest);
     var dimensiones = new ArrayList<Dimension>();
     while (matcher.find()) dimensiones.add(new Dimension(fraccion(matcher.group("valor")), matcher.group("unidad")));
+    int maxDimensiones = switch (familia) {
+      case PLANCHA, ANGULO, BRONCE -> 3;
+      case TUBO, PERNO, EJE -> 2;
+      default -> 1;
+    };
+    if (dimensiones.size() > maxDimensiones) pendientes.add("medidas");
     var valores = new ArrayList<String>();
     var unidades = new LinkedHashSet<String>();
     for (int i = 0; i < dimensiones.size(); i++) {
@@ -255,7 +287,8 @@ final class ReglasArticulo {
     Set<String> conocidos = Set.of("PLANCHA", "PLANCHAS", "PLANCHON", "PLANCHONES", "ANGULO", "ANGULOS",
         "TUBO", "TUBOS", "PERNO", "PERNOS", "EJE", "EJES", "BARRA", "BARRAS", "REDONDA", "CHUMACERA",
         "CHUMACERAS", "PARED", "PEDESTAL", "COMPLETO", "COMPLETOS", "METRO", "METROS", "MT", "MTS", "MTR",
-        "CM", "M", "INOXID", "UNC", "UNF", "HILO", "ESPESOR", "ANCHO", "ALA", "HEXAGONAL", "BUJE", "BOCIN");
+        "CM", "M", "INOXID", "UNC", "UNF", "HILO", "ESPESOR", "ANCHO", "ALA", "HEXAGONAL", "BUJE", "BOCIN",
+        "CABEZA", "ALLEN", "AVELLANADA", "DULCE", "FOSFORICO", "PLATINA");
     while (tokens.find()) {
       String word = tokens.group().replaceAll("[.]$", "");
       if (!VOCABULARIO.contains(word) && !conocidos.contains(word)) pendientes.add("termino:" + word);
@@ -269,7 +302,7 @@ final class ReglasArticulo {
     BigDecimal factor = unidad.equals("\"") || unidad.startsWith("PULG") || unidad.equals("IN")
         ? new BigDecimal("25.4") : unidad.equals("MM") ? BigDecimal.ONE
         : unidad.equals("CM") ? BigDecimal.TEN : new BigDecimal("1000");
-    if (partes.length > 1) valor = valor.multiply(factor).divide(new BigDecimal(partes[1]), 9, java.math.RoundingMode.HALF_UP);
+    if (partes.length > 1) valor = valor.multiply(factor).divide(new BigDecimal(partes[1]), 9, RoundingMode.HALF_UP);
     else valor = valor.multiply(factor);
     return valor.stripTrailingZeros().toPlainString();
   }
@@ -280,10 +313,10 @@ final class ReglasArticulo {
       case PLANCHA -> List.of("material", "espesorMm", "anchoMm", "largoMm", "gradoMaterial", "acabado");
       case ANGULO -> List.of("material", "alaMm", "espesorMm", "largoMm", "gradoMaterial");
       case TUBO -> List.of("material", "diametroNominalMm", "cedula", "largoMm", "construccion");
-      case PERNO -> List.of("material", "diametroMm", "largoMm", "rosca", "tipo_cabeza");
+      case PERNO -> List.of("material", "diametroMm", "largoMm", "rosca", "tipoCabeza");
       case EJE -> List.of("material", "diametroMm", "largoMm", "gradoMaterial");
       case CHUMACERA -> List.of("diametroMm", "montaje", "agujeros");
-      case BRONCE -> List.of("forma", "tipo_bronce");
+      case BRONCE -> List.of("forma", "tipoBronce", "dimension1Mm");
       default -> List.of();
     };
     for (String key : requeridos) if (!spec.atributos().containsKey(key)) missing.add(key);

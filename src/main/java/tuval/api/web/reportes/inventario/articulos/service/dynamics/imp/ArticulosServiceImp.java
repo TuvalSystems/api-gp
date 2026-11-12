@@ -118,7 +118,10 @@ public class ArticulosServiceImp implements ArticulosService {
       if (codigo == null) {
         if (observed.familia() == null) desconocidos.add("catalogo:tipo_articulo");
         for (String pendiente : observed.pendientes()) {
-          if (!ampliada && !pendiente.startsWith("termino:")) desconocidos.add("catalogo:" + pendiente);
+          if (!pendiente.startsWith("termino:") && (!ampliada || Set.of("tipos_articulo_multiples",
+              "materiales_multiples", "atributos_multiples", "formato_medidas_no_soportado",
+              "grados_material_multiples", "cedulas_multiples", "roscas_multiples",
+              "medidas").contains(pendiente))) desconocidos.add("catalogo:" + pendiente);
         }
         for (var attr : attrs.entrySet()) {
           if (ampliada && Set.of("medidas", "unidadMedidas").contains(attr.getKey())) continue;
@@ -175,6 +178,9 @@ public class ArticulosServiceImp implements ArticulosService {
         || (key.equals("clase") && pendientes.contains("clases_multiples"))
         || (key.equals("material") && pendientes.contains("materiales_multiples"))
         || (key.equals("unidadMedidas") && pendientes.contains("unidades_mixtas"))
+        || (key.equals("gradoMaterial") && pendientes.contains("grados_material_multiples"))
+        || (key.equals("cedula") && pendientes.contains("cedulas_multiples"))
+        || (key.equals("rosca") && pendientes.contains("roscas_multiples"))
         || (Set.of("angulo", "refuerzo", "rosca", "construccion", "cedula", "gradoMaterial")
             .contains(key) && pendientes.contains("atributos_multiples"));
   }
@@ -184,7 +190,8 @@ public class ArticulosServiceImp implements ArticulosService {
     for (String key : List.of("medidas", "material", "clase", "refuerzo", "angulo", "rosca",
         "cedula", "construccion", "gradoMaterial", "marca", "unidadMedidas", "paso",
         "espesorMm", "anchoMm", "largoMm", "alaMm", "diametroMm", "diametroNominalMm",
-        "acabado", "condicion", "montaje", "agujeros", "forma")) {
+        "acabado", "condicion", "montaje", "agujeros", "forma", "tipoCabeza", "tipoBronce",
+        "dimension1Mm", "dimension2Mm", "dimension3Mm")) {
       Set<String> values = new LinkedHashSet<>();
       for (var candidato : candidatos) values.add(candidato.atributos().getOrDefault(key, "no_especificado"));
       if (values.size() > 1) {

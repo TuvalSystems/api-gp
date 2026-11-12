@@ -19,6 +19,81 @@ truncamiento, timeout, reutilización de búsquedas dentro del lote, parámetros
 límites SQL, JSON estricto, cantidad por defecto, atributos camelCase y respuestas
 200/400/500. Maestro y listado conservan sus consultas. No se ejecutó una
 creación de borrador, llamada HTTP a Laravel ni consulta a SQL Server real.
+## Ampliación de descripciones y medidas (2026-11-12)
+
+Se conserva `POST /api/reportes/inventario/articulos/resolver`, el body y todos los
+campos del DTO de respuesta. Las reglas nuevas agregan valores dentro de los mapas
+existentes `atributos` y `diferencias`, y motivos en `datosFaltantes`/`observaciones`.
+No se agregaron dependencias, IA externa, objetos SQL ni una suite `src/test`.
+
+- Nuevas familias: plancha/planchón, ángulo, tubo, perno, eje/barra, chumacera y
+  material de bronce (barra/buje/bocín). Una mención a pernos dentro de una brida,
+  por ejemplo, no convierte la brida en un perno. Se excluyen servicios.
+- Se interpretan dimensiones por familia: espesor, ancho, largo, ala, diámetro o
+  diámetro nominal. Los atributos nuevos terminados en `Mm` expresan milímetros
+  como texto decimal, con `BigDecimal`; la conversión de fracciones periódicas se
+  redondea a nueve decimales. `medidas` conserva el orden escrito y las fracciones
+  reducidas; `unidadMedidas` puede ser `MIXTAS` cuando cada dimensión tiene su unidad.
+- Se reconocen los formatos reales `inox`, `inoxidable`, `inoxid.`, `CED 80`,
+  `CEDULA 80`, `C80`, `SCH80S`, medidas pegadas a unidades y cadenas con sufijo
+  común (`6 x 1500 x 6000mm`). Grado, acabado, cédula, paquete y equivalencias
+  entre paréntesis no se toman como dimensiones. Un rango de largo queda incierto.
+- Los alias explícitos de inoxidable, galvanizado, bronce y cédula acotan la
+  consulta antes de las 500 filas. La búsqueda sigue limitada al vocabulario
+  documentado: no es una búsqueda exhaustiva de todas las posibles abreviaturas.
+  Las consultas se reutilizan por familia y filtros dentro del lote. El máximo
+  pasa de seis a veinte búsquedas, conservando el presupuesto previo de diez
+  segundos y el timeout de dos segundos por consulta. No se oculta truncamiento.
+- Se ordenan los compatibles por cantidad de atributos solicitados comprobados,
+  luego por incertidumbres y condición observada (golpeada, rayada, etc.). Los
+  empates conservan el orden determinista del catálogo. No se expone un puntaje.
+- Los faltantes dependen de cada familia. No se pide rosca para planchas o ejes.
+  “Completos” requiere confirmar componentes del perno; paquetes/juegos no alteran
+  la cantidad solicitada. Un eje comercial más largo puede aparecer como candidato,
+  con aclaración de corte y unidad de venta; no se identifica automáticamente.
+  Bronce sin forma ni tipo conserva esas aclaraciones, sin asumir una geometría.
+- `unidad` sigue siendo null: el esquema de unidades no prueba la unidad comercial.
+
+### Comprobación con catálogo DEV
+
+Se hicieron exclusivamente lecturas de `dbo.vw_listadoItems` usando el perfil DEV,
+catálogo `Dynamics2021`, sin iniciar SpringApplication, Eureka ni tareas programadas.
+El servicio y DAO reales procesaron el lote de doce líneas del solicitante con
+`maxCandidatos=6`. Se ejecutaron siete consultas: planchas 229 filas, ángulos 68,
+tubos cédula 80 26, pernos inox 95, bronce 6, eje/barra inox 74 y chumaceras 0.
+Ninguna exploración alcanzó el límite. El lote tardó aproximadamente un segundo
+con una conexión reutilizada; es una muestra local, no un SLA.
+
+| Línea solicitada | Estado | Candidatos devueltos |
+|---|---|---:|
+| Plancha inox 4 mm | ambiguo | 6 (respuesta recortada) |
+| Plancha inox 6 mm | ambiguo | 6 |
+| Plancha inox 8 mm | ambiguo | 3 |
+| Ángulo inox 2 pulgadas x 1/4 pulgadas | ambiguo | 4 |
+| Plancha inox 2 mm | ambiguo | 6 (respuesta recortada) |
+| Tubo cédula 80 4 pulgadas | ambiguo | 4 |
+| Pernos inox 1/2 pulgadas x 1 1/2 pulgadas completos | ambiguo | 1 |
+| Pernos inox 3/4 pulgadas x 6 pulgadas completos | sin_coincidencia | 0 |
+| Bronce 4 1/2 pulgadas x 2 pulgadas x 4 pulgadas largo | sin_coincidencia | 0 |
+| Eje inox 4 pulgadas x 1,50 metros | ambiguo | 5 |
+| Chumacera pared 4H 3 pulgadas | sin_coincidencia | 0 |
+| Pernos inox 5/8 pulgadas x 3 pulgadas completos | ambiguo | 2 |
+
+Los candidatos con atributos desconocidos siguen siendo alternativas inciertas y
+se ordenan después de los comprobados. En el eje, tres candidatos confirman 4 pulgadas;
+los otros dos no informan una unidad interpretable de diámetro. Las ausencias son
+respecto del catálogo y los alias consultados, no una afirmación sobre existencias.
+
+Validación: `mvn -o clean verify` y harness temporal sin dependencias de pruebas:
+medidas/unidades, fracciones mixtas, alias, rangos, exclusión de medidas distintas,
+priorización, reutilización de consultas, cantidades, contrato JSON, límites,
+identificación completa, código exacto, truncamiento y timeout. Se conservaron
+comprobaciones de las familias originales. No se validó HTTP desplegado ni se
+crearon documentos o cotizaciones. Los cambios no se han desplegado.
+
+La sección v1 siguiente conserva el diseño y la validación histórica; sus listas
+de familias, ausencia de conversión y orden de candidatos fueron ampliadas arriba.
+
 # Consulta de resolución de artículos (v1)
 
 `POST /api/reportes/inventario/articulos/resolver` recibe líneas extraídas por el
