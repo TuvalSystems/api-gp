@@ -1,257 +1,257 @@
-# Prompt para crear APIs de reportes de SQL Server
+# Prompt para crear o ampliar APIs de consulta
 
-## Revisión del proyecto
+api-gp es un microservicio que Laravel consume: **Laravel → api-gp → SQL Server**.
+Laravel administra cotizaciones, borradores y sus procesos de negocio. Estas APIs
+consultan y devuelven información; no llaman a Laravel ni crean borradores.
 
-El proyecto usa Java 21, Spring Boot 3.4.4 y Maven. Se organiza por funcionalidad,
-con capas `controller`, `service`, `dao`, `dto`, `request` y `entity` cuando hacen
-falta; la base se separa dentro de cada módulo. Ver [estructura-modular.md](estructura-modular.md).
+## Estructura y reutilización obligatorias
 
-Se establece el nuevo módulo `tuval.api.web.reportes.<funcionalidad>` y las rutas
-`/api/reportes/<reporte>` para todas las APIs creadas con este prompt.
+El proyecto usa Java 21, Spring Boot 3.4.4 y Maven. Revisar primero el código actual
+y [estructura-modular.md](estructura-modular.md). Organizar los reportes por área
+de negocio y funcionalidad, no por nombre de vista, SP, endpoint o prompt generado.
 
-| Conexión obligatoria | JDBC | JDBC con parámetros nombrados | Gestor transaccional | Unidad JPA |
-|---|---|---|---|---|
-| `tuval` | `tuvalJdbcTemplate` | `tuvalNamedParameterJdbcTemplate` | `tuvalTransactionManager` | `tuvalPU` |
-| `dynamics` | `dynamicsJdbcTemplate` | `dynamicsNamedParameterJdbcTemplate` | `dynamicsTransactionManager` | `dynamicsPU` |
+Ejemplo vigente:
 
-Dynamics es `@Primary`: omitir el `@Qualifier` puede dirigir una consulta a la
-conexión equivocada. La base se fija en código; no se selecciona desde HTTP.
-El catálogo físico depende del ambiente y debe verificarse.
+```text
+reportes/inventario/articulos/
+├── controller/ArticulosController.java
+├── service/dynamics/ArticulosService.java
+├── service/dynamics/imp/ArticulosServiceImp.java
+├── dao/dynamics/ArticulosDao.java
+├── dto/
+└── request/
 
-Fuentes revisadas bajo `src/main/java/tuval/api/web`:
+reportes/inventario/varianza/
+├── controller/VarianzaController.java
+├── service/dynamics/VarianzaService.java
+├── service/dynamics/imp/VarianzaServiceImp.java
+├── dao/dynamics/VarianzaDao.java
+├── dto/
+└── request/
+```
 
-- `config/TuvalJpaConfig.java` y `config/DynamicsJpaConfig.java`: beans y escaneo JPA.
-- `ventas/cotizaciones/controller/QuoteController.java`: rutas y respuestas comunes.
-- `ventas/cotizaciones/dao/dynamics/QuoteRecordDao.java`: consultas parametrizadas.
-- `ventas/ordenCompra/dao/dynamics/PurchaseOrderDao.java`: parámetros explícitos
-  con `SimpleJdbcCall`; su SP de escritura no es un ejemplo de reporte.
-- `common/response/ResponseJsonUtils.java`: contrato `success`, `message`, `data`.
+- Buscar la funcionalidad existente antes de crear carpetas o clases.
+- Dentro del mismo módulo y conexión, agregar métodos al controller, interfaz de
+  service, implementación y DAO existentes. **No crear uno de cada uno por API**.
+- Artículos comparte `ArticulosController`, `ArticulosService`,
+  `ArticulosServiceImp` y `ArticulosDao` para maestro, listado y resolución.
+- Crear DTO/request específicos cuando sus datos sean distintos; no forzar todas
+  las respuestas o entradas en una sola clase ni añadir campos sin relación.
+- Una nueva funcionalidad justificada puede necesitar sus propias capas. El agente
+  decide el área y la funcionalidad mediante el análisis descrito abajo; no delega
+  al usuario la elección de carpetas.
+- No crear capas vacías, clientes HTTP ni infraestructura para una consulta SQL.
+  Las reglas de interpretación pueden separarse en un helper dentro del módulo.
+- No mover ni refactorizar módulos ajenos para implementar un endpoint.
 
-También se revisaron `ModuleDatabaseWiringTest` y `PersistenceConfigurationTest`:
-verifican conexiones e inventarios exactos de componentes y paquetes JPA.
+Las clases se nombran por su función: `ArticulosDao`, `VarianzaService`, etc.
+Evitar nombres técnicos como `Inv60Reporte...` y clases por cada endpoint.
+
+### Clasificación automática por función de negocio
+
+Antes de escribir, el agente analiza la definición SQL, tablas/vistas/SP usados,
+joins, filtros, agregaciones, entradas y campos de salida. Deduce qué información
+ofrece o qué operación realiza y la compara con las funcionalidades del proyecto.
+El nombre técnico del objeto es solo una pista, no determina el módulo.
+
+1. Identificar el área: inventario, ventas, cobranzas, clientes u otra sustentada
+   por la consulta y las convenciones existentes.
+2. Identificar la funcionalidad y buscar su controller, service y DAO actuales.
+   Reutilizarlos aunque el endpoint o el SP tengan otro nombre.
+3. Ubicar la consulta en `reportes/<area>/<funcionalidad>` y añadir un método con
+   nombre de negocio. Crear capas únicamente si la funcionalidad aún no existe.
+4. Explicar brevemente en la entrega la ubicación elegida y qué datos del SQL
+   respaldan esa clasificación. No pedir al usuario que decida la carpeta.
+
+Ejemplos: `spInv60`, que consulta varianzas, pertenece a
+`reportes/inventario/varianza`; el maestro, listado y resolución de artículos
+pertenecen a `reportes/inventario/articulos`; `spVen11`, que compara ventas y
+costos por sucursal, pertenece a `reportes/ventas/sucursales`.
+Este último usa `SucursalesController`, `SucursalesService`, `SucursalesServiceImp`
+y `SucursalesDao`, con `GET /api/reportes/ventas/sucursales/comparativo`.
+
+Si la clasificación tiene varias opciones razonables, elegir la más coherente
+con el proyecto y explicar la decisión. Preguntar solo por información funcional
+indispensable que no esté en las fuentes y cuya ausencia impida definir el
+comportamiento o la conexión; una preferencia de carpeta no es ese bloqueo.
+Esta decisión la realiza el agente durante la generación, sin añadir IA externa,
+API keys ni dependencias de IA a la aplicación.
 
 ## Prompt reutilizable
 
-Copiar el bloque siguiente y completar conexión, definición, entradas y salidas.
-Usar `ninguna` cuando no haya entradas y `según definición` para salidas que se
-puedan deducir del SQL. Para implementar y publicar un PR,
-ChatGPT/Codex debe disponer de acceso al repositorio y herramientas de escritura en
-GitHub. Sin ese acceso debe entregar la propuesta y sus pasos pendientes.
+Copiar el siguiente bloque y completar únicamente los datos de la consulta:
 
 ```text
-Crea una API de reporte en git@github.com:TuvalSystems/api-gp.git siguiendo
-docs/prompt-apis-reportes.md y las instrucciones aplicables del repositorio.
-Implementa y prueba; elimina solo los tests temporales que generes antes del
-commit, conservando los existentes. Abre un PR hacia develop; solicita revisión a los
-responsables definidos en .github/CODEOWNERS. No hagas merge.
+Crea o amplía una API de consulta en git@github.com:TuvalSystems/api-gp.git
+siguiendo docs/prompt-apis-reportes.md y las instrucciones del repositorio.
 
+Contexto de negocio opcional: [si se conoce; el agente deduce área y funcionalidad]
 Conexión: [tuval | dynamics]
 Entradas: [filtros/parámetros, o ninguna]
-Salidas: [campos esperados, o según definición]
+Salidas: [campos esperados, o según definición SQL]
 Definición SQL de la tabla, vista o SP:
 [pegar aquí]
+
+Implementa y valida. No crees controller, service ni DAO por endpoint: reutiliza
+las capas de la funcionalidad. Decide su ubicación analizando lo que consulta o
+hace el SQL y los módulos existentes; no pidas al usuario elegir la carpeta.
+Los DTO de respuesta deben seguir la convención
+camelCase o PascalCase existente de forma consistente; en artículos, camelCase.
+No implementes creación de borradores ni llamadas HTTP desde api-gp a Laravel.
+
+Conserva las pruebas existentes. Registra y ejecuta las pruebas temporales que
+crees; retira únicamente esas pruebas después de validar y antes del commit.
+Actualiza la documentación del módulo y los inventarios existentes que apliquen.
+Abre un PR hacia develop y solicita revisión según .github/CODEOWNERS.
+No hagas merge ni despliegues.
 ```
 
-## Reglas que el agente debe tomar del repositorio
+Esta plantilla autoriza la entrega por PR cuando el usuario la invoca para una
+implementación. Leer o editar este documento por sí solo no autoriza commits,
+push, PR, merge ni despliegues de los cambios actuales.
 
-Deduce del SQL el tipo de objeto, esquema, nombre y tipos de los datos cuando
-sean inequívocos. Deriva nombres de clases, funcionalidad y ruta a partir del
-objeto, respetando las convenciones existentes y evitando colisiones. No pidas al
-usuario que repita estos detalles. Las entradas son parámetros de consulta,
-no operaciones de escritura; las salidas son el contrato del reporte.
+## 1. Revisar antes de implementar
 
-Para tablas/vistas sin filtros pedidos, usa solo los controles de paginación.
-Por defecto, página 0 y tamaño 100, con máximo 1000 y orden por una clave única
-verificada. Usa timeout local de 30 segundos. Para SP respeta los límites y
-parámetros reales. Si no existe orden determinista o límite aplicable, o el SQL
-no permite conocer entradas/salidas, pide únicamente el dato faltante.
-Documenta las decisiones derivadas en el PR.
+Leer los `AGENTS.md` aplicables, `pom.xml`, configuración de las dos bases,
+`ResponseJsonUtils`, y controller/service/DAO comparables. `CollectorController`
+es un ejemplo de múltiples operaciones en un mismo controller.
 
-Estas reglas se aplican junto con la estructura actual del proyecto:
+Revisar Git y preservar cambios ajenos. Inventariar los tests y recursos de prueba
+existentes, incluidos los no seguidos. No asumir que existen `src/test` o los
+inventarios de arquitectura solo porque una documentación histórica los menciona.
 
-1. REVISIÓN
-Lee los AGENTS.md aplicables, pom.xml, docs/estructura-modular.md,
-docs/prompt-apis-reportes.md, ambas configuraciones JPA, ResponseJsonUtils,
-un controller/service/DAO comparable y las pruebas de arquitectura actuales.
-Revisa Git y preserva cambios ajenos. No inventes objetos, columnas, claves,
-relaciones, tipos ni firmas de SP. Si falta conexión, definición SQL, contrato
-de salida o una regla esencial, solicita esos datos antes de implementar esa parte.
-Si no hay acceso a SQL Server, usa la definición proporcionada e indica que falta
-validación real en QA. No leas ni publiques credenciales para resolverlo.
+Derivar tipos y parámetros de la definición proporcionada. No inventar tablas,
+columnas, joins, claves, valores por defecto ni firmas de procedimientos.
+Verificar que el SP sea de lectura antes de ejecutarlo. Si falta una definición
+o contrato esencial, preguntar únicamente lo que falta y avanzar con lo demás.
+No mostrar credenciales ni modificar perfiles privados para implementar reportes.
 
-2. UBICACIÓN OBLIGATORIA
-Todo el código de producción del reporte debe quedar en:
-src/main/java/tuval/api/web/reportes/<funcionalidad>/
-  controller/<Nombre>ReporteController.java
-  service/<base>/<Nombre>ReporteService.java
-  dao/<base>/<Nombre>ReporteDao.java
-  dto/<Nombre>ReporteDto.java
-  request/<Nombre>ReporteRequest.java (solo cuando haga falta)
-  entity/<base>/... (solo si se justifica JPA)
-<base> debe ser tuval o dynamics. No crees capas vacías ni ubiques el reporte
-en ventas, bodega, clientes, cobranzas, transacciones o paquetes globales de DAO.
-Las pruebas temporales generadas van en
-src/test/java/tuval/api/web/reportes/<funcionalidad>/ durante la validación y se
-retiran antes del commit según la sección 6. No reemplaces pruebas existentes.
-Usa nombres de componentes únicos para evitar colisiones de beans.
-Fuera del módulo solo se permiten documentación, inventarios de arquitectura y
-los cambios mínimos de escaneo JPA necesarios. No refactorices módulos ajenos.
+## 2. Conexión y persistencia
 
-3. CONEXIÓN Y PERSISTENCIA
-Usa beans existentes e inyección por constructor con @Qualifier explícito:
-tuval -> tuvalJdbcTemplate o tuvalNamedParameterJdbcTemplate;
-dynamics -> dynamicsJdbcTemplate o dynamicsNamedParameterJdbcTemplate.
-No dependas de @Primary ni agregues DataSource, credenciales o propiedades.
-No permitas elegir base, esquema, objeto ni SQL libre desde la petición HTTP.
-Prefiere JDBC y DTO para reportes: una tabla/vista no exige una entidad JPA.
-No agregues @Entity ni @Id ficticios a resultados de consultas o SP.
-Si necesitas JPA, verifica la identidad real, registra exclusivamente los paquetes
-dao/entity de la base elegida en su configuración y actualiza sus inventarios y
-pruebas. Nunca registres el padre reportes en ambas conexiones.
-Si usas @Transactional, especifica transactionManager de la base seleccionada
-y readOnly = true; readOnly no impide escrituras ni prueba que un SP sea de lectura.
-Cada reporte usa una sola conexión. Si hacen falta ambas, solicita definir fuentes y
-combinación y usa DAO separados por base. No supongas joins entre catálogos ni
-transacciones distribuidas.
+| Conexión | JDBC | JDBC con parámetros nombrados | Gestor transaccional |
+|---|---|---|---|
+| Dynamics | `dynamicsJdbcTemplate` | `dynamicsNamedParameterJdbcTemplate` | `dynamicsTransactionManager` |
+| Tuval | `tuvalJdbcTemplate` | `tuvalNamedParameterJdbcTemplate` | `tuvalTransactionManager` |
 
-4. SQL Y SP
-Estas APIs son de consulta: no generes CRUD ni ejecutes SP con escrituras
-persistentes. Si no puedes verificar que el SP es de reporte, pide su definición.
-Selecciona columnas explícitas y esquema verificado. Enlaza valores con parámetros
-JDBC, nunca concatenes datos recibidos. Fija identificadores SQL en código.
-Para orden configurable, traduce solo opciones de una lista cerrada a columnas
-constantes. Implementa filtros, orden estable y límites/paginación acordados.
-Para SP usa SimpleJdbcCall o CallableStatement con firma y tipos explícitos;
-en SimpleJdbcCall desactiva inferencia de metadatos y declara IN/OUT/INOUT, retorno
-y RowMapper de cada result set según el contrato real. No inventes columnas ni
-agregues filtros/paginación que el SP no soporta. Si devuelve resultados sin límite,
-acuerda una solución antes de publicar; recortar en memoria no es paginación SQL.
-Configura timeout local sin modificar los templates compartidos. No copies catálogos
-hardcodeados de otros DAO sin verificar necesidad y ambiente.
-Mapea decimal/moneda a BigDecimal y fechas a java.time según su tipo SQL.
-Conserva NULL: no conviertas un NULL numérico en cero al usar ResultSet.
+Usar inyección por constructor y `@Qualifier` explícito. No depender de `@Primary`
+ni agregar DataSource, credenciales o propiedades de conexión. La base y los
+objetos SQL se fijan en código, nunca se eligen desde la petición HTTP.
 
-5. HTTP Y CAPAS
-Usa @RestController y @RequestMapping con produces = "application/json" en
-/api/reportes/<slug>. Prefiere GET para filtros simples; usa POST /consultar con
-cuerpo para filtros complejos y justifícalo. No uses cuerpo en GET.
-El controller valida y delega al service; el service aplica reglas y llama al DAO;
-solo el DAO contiene SQL/acceso a datos. No expongas entidades como entradas HTTP.
-Usa Jakarta Validation y @Valid cuando corresponda; valida fechas, longitudes,
-límites y orden antes de consultar.
-Conserva ResponseEntity<Map<String,Object>> y reutiliza ResponseJsonUtils:
-- éxito 200: success, message, data;
-- lista vacía 200: data = [];
-- entrada inválida 400: success = false y message (buildNoFound devuelve 400);
-- error interno 500: buildError con mensaje público genérico.
-Si necesitas manejar errores de validación, hazlo localmente al módulo sin cambiar
-APIs existentes. No envíes e.getMessage() al cliente: puede revelar SQL o servidores.
-Respeta el mecanismo de acceso existente; no inventes autenticación ni amplíes permisos.
+Cada consulta usa una conexión. Separar `dao/dynamics` y `dao/tuval` si una
+funcionalidad necesita ambas; no suponer transacciones distribuidas ni joins entre
+servidores. No copiar catálogos hardcodeados sin verificar su necesidad.
 
-6. VERIFICACIÓN Y ENTREGA
-Antes de generar pruebas, registra las rutas de los tests y recursos de prueba
-existentes, incluidos archivos sin seguimiento y cambios ajenos. Lleva una lista
-explícita de los archivos temporales que crees durante esta tarea.
-Genera pruebas temporales sin conexiones reales para verificar selección de conexión entre
-ambos beans, parámetros y tipos SQL, mapeo con NULL, éxito, lista vacía, validación
-400 sin llamada al DAO y errores 500 sin detalles SQL. Para SP prueba firma,
-OUT/retorno y conjuntos de resultados pertinentes. Ejecútalas junto con la suite
-existente y conserva un resumen de comandos, resultados y casos verificados para
-el PR. No elimines una prueba fallida para presentar la validación como exitosa:
-corrige el fallo y vuelve a verificar antes de retirar los temporales.
-Actualiza src/test/resources/architecture/components.txt al agregar componentes:
-ModuleDatabaseWiringTest compara el inventario exacto de toda la aplicación.
-Si cambias escaneo JPA, actualiza <base>-repositories.txt y <base>-entities.txt
-y PersistenceConfigurationTest según corresponda.
-Ejecuta mvn clean test (o mvnw.cmd clean test en Windows) con los tests temporales.
-Después de validar y antes de git add/commit, elimina únicamente los tests y
-recursos temporales que figuren en tu lista y que hayas creado tú en esta tarea.
-No borres tests preexistentes, aunque estén sin seguimiento, ni elimines carpetas
-de pruebas completas mediante patrones o limpieza general.
-Conserva las actualizaciones necesarias de inventarios de arquitectura y de
-pruebas existentes para que la suite siga verificando el código nuevo.
-Ejecuta nuevamente mvn clean test tras retirar los temporales para comprobar el
-estado que se enviará al PR, sin clases de prueba antiguas en target.
-Revisa git diff --check y el diff preparado para el commit: no deben incluirse
-tests temporales, sus recursos ni eliminaciones de pruebas preexistentes.
-No declares pruebas exitosas si no se ejecutaron o fallaron. Los mocks no validan
-SQL ni permisos reales; informa la comprobación pendiente en QA.
-Documenta ruta, base, origen, filtros, JSON, límites y pendientes de validación.
-Indica en el PR qué comprobaciones temporales ejecutaste y retiraste, y distingue
-sus resultados de los de la suite final conservada en el repositorio.
+Preferir JDBC y DTO. Consultar una vista o un SP no requiere JPA: no agregar
+`@Entity`, `@Id` ficticios ni tocar escaneo JPA sin necesidad. Si se justifica JPA,
+registrar exclusivamente los paquetes de su base y actualizar los inventarios y
+pruebas existentes. `@Transactional`, si se necesita, declara el gestor correcto y
+`readOnly = true`; esta anotación no demuestra que el SQL no escriba.
 
-Crea rama codex/reporte-<slug> desde origin/develop actualizado. Incluye únicamente cambios
-de esta tarea, haz commit y push al repositorio indicado y abre un pull request
-hacia develop. Solicita revisión a los responsables de .github/CODEOWNERS con
-acceso de escritura, excluyendo al autor del PR (no puede aprobar su propio PR).
-Si un usuario no existe o no tiene permiso, informa el bloqueo sin sustituirlo
-por otra cuenta. Describe comportamiento, conexión, objeto SQL, pruebas y QA.
-No hagas merge ni despliegues. Si faltan herramientas o permisos, entrega los
-archivos preparados y explica el bloqueo; no afirmes crear un PR sin URL verificable.
-Entrega resumen, archivos, endpoint, petición/respuesta, pruebas y enlace del PR.
+## 3. DAO y SQL
 
-## Aprobación de pull requests
+El DAO contiene el SQL; el service valida y aplica reglas; el controller recibe
+la petición y construye la respuesta. Reutilizar métodos y mappers del módulo.
 
-Los responsables designados son `@josemg23`, `@devtuval` y `@TuvalSystems`.
-Mantenerlos juntos en la misma regla de `.github/CODEOWNERS`: las reglas repetidas
-para el mismo patrón se reemplazan, no se acumulan.
+- Vista/tabla: consulta parametrizada con `JdbcTemplate` o
+  `NamedParameterJdbcTemplate`, columnas explícitas y mapper por tipo de resultado.
+- SP: seguir el patrón existente de `SimpleJdbcCall`, configurado en el constructor,
+  con esquema, procedimiento, firma explícita, metadatos de parámetros desactivados
+  y `returningResultSet` cuando corresponda. Declarar y validar IN, OUT y retorno.
+- En SQL Server, si se usa `withNamedBinding()`, declarar los nombres SQL con `@`
+  y usar las mismas claves en `MapSqlParameterSource`. No cambiar por ello los
+  nombres HTTP. Si se usa enlace posicional, respetar el orden de la firma.
+- Nunca concatenar valores recibidos. Para orden configurable, usar una lista
+  cerrada de columnas/direcciones; no admitir SQL ni identificadores libres.
+- Cantidades e importes: `BigDecimal`. Fechas: `java.time` según SQL.
+  Preservar nulos, precisión, ceros y negativos; no normalizar valores sin contrato.
+- No cambiar la semántica de esquemas de unidades ni atributos crudos de las vistas:
+  no asumir que equivalen a unidad de venta, marca o material comerciales.
 
-La aprobación de al menos un responsable distinto del autor es la política para
-estos reportes. CODEOWNERS no concede permisos ni impide por sí solo hacer merge:
-para exigir esa aprobación en GitHub, `develop` debe tener una regla de protección
-o ruleset con revisión obligatoria de code owners y sin bypass aplicable.
-Esto no exige que los tres aprueben ni garantiza que solo ellos puedan hacer merge.
-Ver la [documentación de GitHub sobre code owners](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners).
+Para tablas/vistas nuevas, si no hay contrato de paginación, usar página 0 y tamaño
+100, máximo 500, con orden estable justificado. Reutilizar límites existentes al
+ampliar una API. Paginar en SQL; no descargar todo para recortar en Java.
+Si falta una clave única, no inventarla: justificar un orden por valores y sus
+límites. Los SP conservan sus parámetros y límites reales; no añadir paginación
+ficticia. Si su resultado no tiene límite, resolver el alcance antes de publicar.
 
-## Ejemplos de selección (fichas parciales)
+El timeout y los límites son locales a la consulta; no mutar los templates
+compartidos. Para consultas nuevas, timeout de 30 segundos salvo requisito distinto;
+las existentes conservan sus límites específicos. `fetchSize` no es paginación.
 
-- Vista de Tuval: `Conexión: tuval`, `Tipo: VISTA`, nombre verificado
-  `esquema.nombre`. DAO en `reportes/<funcionalidad>/dao/tuval` con
-  `tuvalJdbcTemplate` o `tuvalNamedParameterJdbcTemplate`.
-- SP de Dynamics: `Conexión: dynamics`, `Tipo: SP`, nombre verificado, firma y
-  columnas. DAO en `reportes/<funcionalidad>/dao/dynamics` con `dynamicsJdbcTemplate`.
+## 4. HTTP y DTO
 
-Estos ejemplos no identifican objetos reales ni sustituyen la ficha completa.
+Las rutas comienzan con `/api/reportes/<area>/<funcionalidad>`. Agregar métodos
+bajo el `@RequestMapping` existente del módulo y conservar los contratos vigentes
+salvo cambio expresamente solicitado. No crear alias o rutas paralelas sin motivo.
 
-## Alcance
+Ejemplos actuales, todos en `ArticulosController`:
 
-Este cambio entrega el prompt y las instrucciones del módulo. No agrega endpoints
-concretos porque aún no se proporcionó una tabla, vista o SP con su contrato.
-El cumplimiento debe comprobarse con pruebas y revisión del PR; un prompt no
-constituye por sí solo un control automático ni un generador en tiempo de ejecución.
+```http
+GET /api/reportes/inventario/articulos
+GET /api/reportes/inventario/articulos/listado-items
+POST /api/reportes/inventario/articulos/resolver
+```
 
-## Organización por negocio: reportes de inventario
+Usar GET con query para filtros simples. Para lotes/filtros complejos, POST con
+JSON y justificarlo. No usar body en GET. Validar con Jakarta Validation y `@Valid`
+antes de acceder a la base; mantener validación de reglas en el service.
 
-El reporte de artículos se ubica en `reportes/inventario/articulos`, con clases
-`Articulos...`, interfaz `service/dynamics/ArticulosService` e implementación
-`service/dynamics/imp/ArticulosServiceImp`. Su ruta es
-`GET /api/reportes/inventario/articulos`. Para modificarlo, reutilizar ese módulo;
-no regenerar `reportes/articulos` ni la ruta anterior `/api/reportes/articulos`.
-Conservar la consulta de la vista con `dynamicsNamedParameterJdbcTemplate`,
-los filtros, la paginación y el JSON existentes.
+Los DTO de respuesta siguen camelCase o PascalCase de forma consistente con el
+módulo; en artículos se usa camelCase, por ejemplo `txItm`, `descripcion`,
+`txAtrMar`, `txAtrMat`. No copiar snake_case de SQL ni forzar nombres SQL con
+`JsonProperty`. El DAO traduce entre las columnas reales y los campos del DTO.
+No renombrar parámetros HTTP ni columnas SQL como efecto secundario de este ajuste.
 
-La consulta antes ubicada en `reportes/inv60` se mantiene ahora en
-`reportes/inventario/varianza`, con clases `Varianza...` y ruta
-`GET /api/reportes/inventario/varianza/listado-trabajo`. Para cambios a esa consulta,
-reutilizar su módulo existente; no regenerar `reportes/inv60` ni restaurar la ruta
-anterior. Se conservan conexión Dynamics, SP, parámetros y respuesta.
-El reporte permanece dentro de `reportes`, organizado por área y funcionalidad.
-Esta reubicación no mueve los demás reportes ni cambia sus rutas.
+Reutilizar `ResponseEntity<Map<String,Object>>` y `ResponseJsonUtils`:
 
-## Excepción específica autorizada: cotización borrador
+- Éxito 200: `success`, `message`, `data`.
+- Sin coincidencias 200: `data: []` según el contrato de la consulta.
+- Validación 400: `success: false`, mensaje público; `buildNoFound` devuelve 400.
+- Error interno 500: `buildError` con mensaje genérico y excepción registrada en
+  el servidor. No devolver `e.getMessage()`, SQL ni detalles de conexión al cliente.
 
-Por solicitud expresa del usuario, el módulo temporal
-`reportes/cotizacionborrador` y `POST /api/reportes/cotizacion-borrador` delegan
-creación de borrador a la API existente de tuvalBackend. Este caso es solo para
-pruebas, deshabilitado por defecto, sin SQL directo ni credenciales compartidas.
-Se exceptúan exclusivamente lectura/GET/conexión JDBC para ese puente HTTP;
-se conservan validación, contrato público seguro, inventarios y revisión.
-Ver [contrato y controles](reporte-cotizacion-borrador.md). No autoriza convertir
-otros reportes en APIs de escritura ni habilitar el puente en producción.
+En controllers compartidos, conservar el mensaje de validación que corresponda a
+cada request. El manejo local no debe alterar los errores de otros endpoints.
+Respetar el acceso existente: no inventar autenticación ni ampliar permisos.
 
-La excepcion especifica de pruebas tambien cubre POST /api/reportes/resolucion-articulos/crear-borrador,
-su orquestacion HTTP/lectura y cliente dedicado al contrato GET actual de Laravel.
-/consultar sigue siendo solo lectura. Se permite exclusivamente la dependencia
-HTTP necesaria para deshabilitar reintentos internos del GET mutante; no se
-cambian DAO, JPA, credenciales, ambientes ni precios. Ver
-[contrato y controles](resolucion-articulos-borrador.md).
+## 5. Responsabilidad de Laravel
+
+La resolución solo interpreta renglones y devuelve identificaciones, candidatos,
+ambigüedades y datos faltantes. Laravel decide las selecciones y crea el borrador
+con su propio proceso. api-gp no conoce ni replica ese proceso.
+
+No crear endpoints `crear-borrador`, carpetas `client` o `service/tuvalbackend`,
+clientes HTTP, reintentos, registros de idempotencia o dependencias para llamar a
+Laravel. Los antiguos puentes de borradores fueron retirados. No regenerarlos a
+partir de documentación histórica ni reutilizar sus excepciones antiguas.
+
+## 6. Validación y entrega
+
+Probar lo que cambie: registro de rutas sin colisiones, un controller/service/DAO
+por funcionalidad y base, selección de conexión, parámetros/tipos SQL, nulos,
+precisión, mappers, límites y paginación, respuestas 200/400/500 y validación sin
+llamada al DAO. Para SP, verificar firma, enlace SQL Server, retorno y result sets.
+Las simulaciones no prueban permisos, datos ni funcionamiento real de SQL Server.
+
+Si se crean pruebas temporales, mantener una lista explícita y retirarlas solo
+tras corregir y validar todos sus fallos. No borrar tests ajenos, preexistentes o
+sin seguimiento, ni carpetas completas de pruebas. Reutilizar la infraestructura
+existente; no agregar dependencias permanentes solo para comprobaciones temporales.
+
+Si existen inventarios exactos de componentes/JPA, actualizarlos; no generar una
+estructura de tests ausente solo por copiar un registro histórico. Ejecutar
+`mvn clean verify` (o `mvnw.cmd clean verify` si corresponde), limpiar clases viejas
+al mover o eliminar componentes y comprobar el JAR final. Declarar explícitamente
+si Maven no encontró tests. Ejecutar `git diff --check` y revisar todo el diff.
+
+Documentar ubicación, ruta, entradas, JSON, conexión, fuente SQL, límites, cambios
+para consumidores y validaciones realmente ejecutadas. Distinguir comprobaciones
+históricas de actuales y mocks de pruebas con base real. No afirmar despliegue ni
+funcionamiento en otro servidor basándose en una prueba local.
+
+Cuando la tarea incluya entrega por PR: crear rama `codex/reporte-<funcionalidad>`
+desde `origin/develop` actualizado sin perder cambios locales; incluir solo su
+alcance, commit, push y PR hacia `develop`. Usar `.github/CODEOWNERS` para solicitar
+revisión a responsables con acceso de escritura distintos del autor. Si falta
+acceso, informar el bloqueo; no inventar revisores, aprobación ni una URL de PR.
+No hacer merge ni desplegar salvo autorización explícita posterior.

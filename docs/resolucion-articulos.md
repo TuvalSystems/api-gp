@@ -1,6 +1,27 @@
+> Estado actual (2026-11-12): la consulta está integrada en
+> `reportes/inventario/articulos`, con método `resolverArticulos` en
+> `ArticulosController`, `ArticulosService` y `ArticulosServiceImp`, y búsqueda
+> `buscarCandidatosResolucion` en `ArticulosDao`. Usa `ReglasArticulo` como helper
+> de interpretación y los DTO/requests específicos de resolución.
+> Ruta vigente: `POST /api/reportes/inventario/articulos/resolver`.
+> Se retiraron la ruta anterior de consulta y todos los puentes de creación de
+> borradores. Laravel consume la consulta y crea el borrador con su propio proceso.
+> Los atributos de respuesta `txAtrMar` y `txAtrMat` se devuelven en camelCase;
+> las columnas SQL siguen siendo `tx_atrMar` y `tx_atrMat`.
+> Las pruebas y mediciones históricas descritas más abajo corresponden a versiones
+> anteriores; esta copia no contiene `src/test`.
+
+Validación de la integración (2026-11-12): compilación y empaquetado con
+`mvn -o clean verify`. Comprobación temporal con Spring y JDBC simulado, retirada
+tras validar: tres rutas en `ArticulosController`, service/DAO compartidos,
+resolución exacta, ambigüedad, texto no soportado, ausencia de coincidencias,
+truncamiento, timeout, reutilización de búsquedas dentro del lote, parámetros y
+límites SQL, JSON estricto, cantidad por defecto, atributos camelCase y respuestas
+200/400/500. Maestro y listado conservan sus consultas. No se ejecutó una
+creación de borrador, llamada HTTP a Laravel ni consulta a SQL Server real.
 # Consulta de resolución de artículos (v1)
 
-`POST /api/reportes/resolucion-articulos/consultar` recibe líneas extraídas por el
+`POST /api/reportes/inventario/articulos/resolver` recibe líneas extraídas por el
 asistente de una imagen o transcripción. Cada línea se resuelve de forma independiente,
 en el orden recibido. Es una consulta: no cotiza, consulta existencias, selecciona
 bodega California ni crea documentos. No usa IA externa.
@@ -13,7 +34,7 @@ HTTP 400 con mensaje genérico para entradas inválidas; HTTP 500 con mensaje ge
 para errores internos. Ningún error devuelve mensajes del driver, SQL o servidores.
 
 ```http
-POST /api/reportes/resolucion-articulos/consultar
+POST /api/reportes/inventario/articulos/resolver
 Content-Type: application/json
 ```
 
@@ -64,7 +85,7 @@ null: la fuente aporta un esquema de unidades (UOMSCHDL), no una unidad comercia
 `atributos` contiene datos interpretados de la descripción: `medidas`, `unidadMedidas`,
 `material`, `clase`, `refuerzo`, `angulo`, `rosca`, `cedula`, `construccion`,
 `gradoMaterial`, `paso`. Si no son NULL, agrega por separado los valores crudos
-`esquemaUnidad`, `tx_atrMar` y `tx_atrMat`, sin equivalencia comercial.
+`esquemaUnidad`, `txAtrMar` y `txAtrMat`, sin equivalencia comercial.
 Las medidas se expresan como fracciones reducidas y en el orden escrito; `1½` pasa
 a `3/2`, nunca a `1/2`. También se reconoce la fracción mixta `1-1/2`.
 Las diferencias muestran hasta cinco valores por atributo;
@@ -165,14 +186,14 @@ regla todavía no está demostrada en la fuente.
 
 ## Datos, límites y rendimiento
 
-Código en `tuval.api.web.reportes.resolucionarticulos`, con Controller →
+Código en `tuval.api.web.reportes.inventario.articulos`, con Controller →
 Service/dynamics → DAO/dynamics, DTO y Request. Conexión exclusiva mediante
 `@Qualifier("dynamicsNamedParameterJdbcTemplate")`; origen `dbo.vw_listadoItems`.
 Se seleccionan explícitamente los siete campos descriptivos necesarios: tx_itm,
 codZafiro, cod3L, Descripcion, unidadMedida, tx_atrMar y tx_atrMat. El DTO público solo
 expone identificadores, descripción, unidad y
 atributos interpretados y crudos diferenciados. No reutiliza el DTO financiero
-de ReporteArticulos. Comparte la vista con `/api/reportes/listado-items`, sin una
+de ReporteArticulos. Comparte la vista con `/api/reportes/inventario/articulos/listado-items`, sin una
 llamada HTTP entre APIs, y conserva el contrato de resolución.
 
 Por lote hay como máximo seis exploraciones distintas y un presupuesto de diez
@@ -352,9 +373,3 @@ temporal creado para esta comprobación antes del commit. Se conservaron las pru
 existentes y sus regresiones de mapeo, unidad desconocida, atributos crudos,
 ambigüedad, NULL y contrato HTTP. Suite final: Java 21, Maven 3.9.9, clean verify,
 281 pruebas, 0 fallos, 0 errores y 1 omitida preexistente (requiere bases reales).
-
-## Creacion explicita de borrador en pruebas
-
-La nueva operacion POST /api/reportes/resolucion-articulos/crear-borrador reutiliza
-el resolver y conecta el contrato real GET de tuvalBackend. /consultar conserva
-solo lectura. Ver [contrato, habilitacion y limites](resolucion-articulos-borrador.md).

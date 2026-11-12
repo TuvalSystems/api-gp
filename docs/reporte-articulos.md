@@ -7,10 +7,22 @@ reportes/inventario/articulos/
 ├── controller/ArticulosController.java
 ├── service/dynamics/ArticulosService.java
 ├── service/dynamics/imp/ArticulosServiceImp.java
+├── service/dynamics/imp/ReglasArticulo.java
 ├── dao/dynamics/ArticulosDao.java
 ├── dto/ArticulosDto.java
 └── request/ArticulosRequest.java
 ```
+
+El mismo controller, service y DAO manejan también el listado ligero y la
+resolución de peticiones, con sus DTO/requests específicos:
+
+```http
+GET /api/reportes/inventario/articulos/listado-items
+POST /api/reportes/inventario/articulos/resolver
+```
+
+El resolver solo consulta el catálogo y devuelve candidatos; Laravel administra
+la creación de borradores. api-gp no llama a Laravel para ese proceso.
 
 `ArticulosService` es la interfaz y `ArticulosServiceImp` valida la solicitud y
 delega al DAO con inyección por constructor. El DAO conserva la consulta
@@ -19,7 +31,8 @@ El controller registra las excepciones en el servidor sin incluir sus detalles
 en la respuesta JSON, siguiendo el mismo patrón que varianza.
 
 Se retira `/api/reportes/articulos`; los consumidores deben actualizar la URL a
-`/api/reportes/inventario/articulos`. Filtros, paginación y respuesta se conservan.
+`/api/reportes/inventario/articulos`. Filtros, paginación y valores se conservan;
+los nombres JSON se ajustan a camelCase según la sección de columnas y tipos.
 
 Validación de la reorganización (2026-11-12): `mvn -o clean verify` compila y
 empaqueta correctamente. Esta copia no contiene `src/test`, por lo que Maven no
@@ -73,14 +86,17 @@ Los Excel son referencias de desarrollo; nunca se leen en tiempo de ejecución.
 
 ## Columnas y tipos
 
-Los nombres JSON conservan exactamente los de SQL, incluidas mayúsculas y
-abreviaturas. Se usa `String`, `BigDecimal`, `Short` y `LocalDateTime`,
+Los nombres JSON siguen camelCase: `txItm`, `descripcion`, `marca`, `material`,
+`subCompras`, `control` y `subControl` reemplazan los nombres anteriores con
+guiones bajos o inicial mayúscula. Las otras propiedades conservan su nombre.
+Las columnas SQL, filtros HTTP y opciones de `sort` no cambian.
+Se usa `String`, `BigDecimal`, `Short` y `LocalDateTime`,
 respectivamente. No se redondean decimales, no se recortan cadenas y NULL se
 mantiene como `null`; las 37 propiedades se incluyen aun cuando son NULL.
 `fechacreacion` se serializa como fecha/hora ISO local, sin asignarle una zona
 horaria que el tipo SQL `datetime` no proporciona.
 
-| Columna SQL / JSON | Tipo SQL | Admite NULL |
+| Columna SQL | Tipo SQL | Admite NULL |
 |---|---|---|
 | tx_itm | varchar(31) | Sí |
 | codZafiro | varchar(15) | Sí |
@@ -195,10 +211,10 @@ Los decimales JSON son números; su representación puede contener ceros finales
   "message": "Respuesta exitosa",
   "data": [
     {
-      "tx_itm": "966-000235-I",
+      "txItm": "966-000235-I",
       "codZafiro": "966-152I",
       "cod3L": "BEV",
-      "Descripcion": "MECH VALVULA MARIPOSA H. DUCTIL DISCO INOX 316  ASIENTO PTFE PALANCA 250 AWWA 2 1/2\" WAFER D71X32",
+      "descripcion": "MECH VALVULA MARIPOSA H. DUCTIL DISCO INOX 316  ASIENTO PTFE PALANCA 250 AWWA 2 1/2\" WAFER D71X32",
       "unidadMedida": "PZAS",
       "claseItem": "VT-BNS-15",
       "precio": 85.0438,
@@ -220,12 +236,12 @@ Los decimales JSON son números; su representación puede contener ceros finales
       "categoriaCompra": "03. VALVULAS",
       "lineaCompra": "0301. VALVULAS",
       "claseCompra": "0301006. MARIPOSA",
-      "Marca": "MECH",
-      "Material": "H.DUCTIL",
+      "marca": "MECH",
+      "material": "H.DUCTIL",
       "compras": "MECH_ACC_VALV",
-      "SubCompras": "NO_TIENE",
-      "Control": "NO_TIENE",
-      "SubControl": "NO_TIENE",
+      "subCompras": "NO_TIENE",
+      "control": "NO_TIENE",
+      "subControl": "NO_TIENE",
       "fechacreacion": "2025-01-23T00:00:00",
       "catven": "R",
       "catpes": "R",

@@ -31,6 +31,8 @@ tuval.api.web
 │   ├── inventario
 │   │   ├── articulos
 │   │   └── varianza
+│   ├── ventas
+│   │   └── sucursales
 │   └── <funcionalidad> (otras APIs de reportes)
 ├── common
 │   ├── response
@@ -78,11 +80,14 @@ Usa las clases `ArticulosController`, `ArticulosDao`, `ArticulosDto`,
 `service/dynamics/imp/ArticulosServiceImp`. Se retira la ruta anterior
 `/api/reportes/articulos`, conservando filtros, paginación y respuesta.
 
-`reportes/ven11` implementa [Reporte spVen11](reporte-ven11.md):
-`GET /api/reportes/ven11`, llamada JDBC parametrizada a `dbo.spVen11` mediante
+`reportes/ventas/sucursales` implementa [Comparativo de ventas por sucursal](reporte-ven11.md):
+`GET /api/reportes/ventas/sucursales/comparativo`, llamada JDBC parametrizada a `dbo.spVen11` mediante
 `dynamicsJdbcTemplate`. Usa el predeterminado de `isRelacionada`, devuelve los
 15 campos solicitados sin `co_docGP`, ordena por `tx_nom` y rechaza resultados
-de más de 500 filas sin entregar datos parciales.
+de más de 500 filas sin entregar datos parciales. Usa `SucursalesController`,
+`SucursalesService`, `service/dynamics/imp/SucursalesServiceImp` y `SucursalesDao`.
+Sus contratos son `VentasComparativasRequest` y `VentasComparativasDto`;
+`txNom` reemplaza `tx_nom` en JSON. La ruta anterior `/api/reportes/ven11` se retira.
 
 `reportes/inventario/varianza` implementa [Consulta de varianzas spInv60](reporte-inv60.md),
 reubicada desde `reportes/inv60` según su función de negocio:
@@ -98,12 +103,13 @@ en `service/dynamics/imp`, siguiendo el patrón de cobranzas y devoluciones.
 La ruta anterior `/api/reportes/listado-varianzas-trabajo` se retira; los consumidores
 deben actualizar la URL. Se conservan el parámetro `NumeroDocumento` y la respuesta.
 
-`reportes/resolucionarticulos` implementa la [resolución conservadora de artículos](resolucion-articulos.md):
-`POST /api/reportes/resolucion-articulos/consultar` recibe un lote acotado de texto y
-cantidad opcional. Consulta campos descriptivos de `dbo.vw_MaestroArticulo` mediante
-Dynamics; devuelve identificaciones, ambigüedades, candidatos y límites explícitos,
-sin valores comerciales. No utiliza IA externa ni cambia infraestructura.
-
+`reportes/inventario/articulos` también implementa la [resolución conservadora de artículos](resolucion-articulos.md):
+`POST /api/reportes/inventario/articulos/resolver` recibe renglones de texto y cantidad
+opcional. Reutiliza `ArticulosController`, `ArticulosService`, `ArticulosServiceImp`
+y `ArticulosDao`; las reglas de interpretación están en `ReglasArticulo`.
+Consulta `dbo.vw_listadoItems` por Dynamics y devuelve identificaciones,
+ambigüedades, candidatos y límites. No usa IA externa ni crea borradores.
+Laravel consume esta respuesta y administra su propio proceso de creación.
 ## Acceso a las dos bases de datos
 
 La configuración permanece en `config/DynamicsJpaConfig.java` y
@@ -175,23 +181,21 @@ La prueba original `WebApplicationTests` continúa deshabilitada porque requiere
 las bases de datos. Antes de desplegar, validar en QA la ejecución de consultas,
 procedimientos y rollback real en SQL Server.
 
-## Excepción temporal: puente de borrador solo para pruebas
-
-`reportes/cotizacionborrador` contiene el [puente de cotización borrador](reporte-cotizacion-borrador.md),
-`POST /api/reportes/cotizacion-borrador`. Por solicitud explícita se aloja
-provisionalmente en reportes, aunque delega una escritura a tuvalBackend.
-No utiliza JDBC/JPA; su service se ubica en `service/tuvalbackend` y el cliente
-HTTP en `client`. Está deshabilitado por defecto y bloqueado fuera de perfiles
-de pruebas. Esto no cambia la regla de solo lectura de los demás reportes.
-
 ## Listado ligero de items
 
-El modulo reportes/listadoitems implementa GET /api/reportes/listado-items sobre
-dbo.vw_listadoItems mediante Dynamics. Ver [contrato y validacion en pruebas](reporte-listado-items.md).
+El listado ligero se integra en `reportes/inventario/articulos` mediante
+`GET /api/reportes/inventario/articulos/listado-items`, sobre `dbo.vw_listadoItems`
+con Dynamics. Comparte `ArticulosController` con el maestro; agrega un método
+`consultarListadoItems`, sin crear un controller por API. Reutiliza la interfaz
+`ArticulosService`, su implementación `ArticulosServiceImp` y `ArticulosDao`,
+agregando el método de listado a cada capa. La ruta anterior
+`/api/reportes/listado-items` se retira. Conserva sus siete campos, filtros y
+paginación; no reemplaza el maestro de 37 campos ni el resolvedor de artículos.
+Ver [contrato y validación en pruebas](reporte-listado-items.md).
 
-## Integracion del resolver con borradores de pruebas
+## Dirección del servicio
 
-reportes/resolucionarticulos agrega POST /api/reportes/resolucion-articulos/crear-borrador,
-controller separado, service/tuvalbackend y cliente HTTP dedicado. Reutiliza el
-service/dao Dynamics de consulta sin cambiarlo ni abrir transacciones distribuidas.
-Ver [contrato y limites](resolucion-articulos-borrador.md).
+Laravel consume api-gp para consultar datos. Los puentes `cotizacionborrador` y
+`resolucion-articulos/crear-borrador` se retiraron: api-gp no llama a Laravel para
+crear borradores, ni mantiene clientes HTTP o reglas de ese proceso. Las rutas
+anteriores no se conservan como alias. Ver [reglas de generación](prompt-apis-reportes.md).

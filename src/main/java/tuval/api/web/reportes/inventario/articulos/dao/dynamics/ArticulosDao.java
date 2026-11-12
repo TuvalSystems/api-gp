@@ -12,7 +12,10 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import tuval.api.web.reportes.inventario.articulos.dto.ArticulosDto;
+import tuval.api.web.reportes.inventario.articulos.dto.CatalogoArticuloDto;
+import tuval.api.web.reportes.inventario.articulos.dto.ListadoItemsDto;
 import tuval.api.web.reportes.inventario.articulos.request.ArticulosRequest;
+import tuval.api.web.reportes.inventario.articulos.request.ListadoItemsRequest;
 
 @Repository
 public class ArticulosDao {
@@ -28,6 +31,37 @@ public class ArticulosDao {
       FROM dbo.vw_MaestroArticulo
       WHERE 1 = 1
       """;
+
+  private static final String SELECT_LISTADO_ITEMS = """
+      SELECT tx_itm, codZafiro, cod3L, Descripcion, unidadMedida, tx_atrMar, tx_atrMat
+      FROM dbo.vw_listadoItems
+      WHERE 1 = 1
+      """;
+  // No key has been verified: order by every returned value, including binary
+  // tie-breaks and lengths for case/accent/trailing-space variants.
+  private static final String ORDER_LISTADO_ITEMS = """
+       ORDER BY tx_itm COLLATE Latin1_General_100_BIN2,
+       codZafiro COLLATE Latin1_General_100_BIN2,
+       cod3L COLLATE Latin1_General_100_BIN2,
+       Descripcion COLLATE Latin1_General_100_BIN2,
+       unidadMedida COLLATE Latin1_General_100_BIN2,
+       tx_atrMar COLLATE Latin1_General_100_BIN2,
+       tx_atrMat COLLATE Latin1_General_100_BIN2,
+       DATALENGTH(tx_itm), DATALENGTH(codZafiro), DATALENGTH(cod3L),
+       DATALENGTH(Descripcion), DATALENGTH(unidadMedida),
+       DATALENGTH(tx_atrMar), DATALENGTH(tx_atrMat)
+       OFFSET :offset ROWS FETCH NEXT :size ROWS ONLY
+      """;
+
+  public static final int LIMITE_RESOLUCION = 500;
+  // A closed retrieval vocabulary, including aliases understood by the matcher.
+  public enum Familia {
+    BUSHING(List.of("BUSHING")), NIPLE(List.of("NIPLE", "NEPLO")),
+    CODO(List.of("CODO")), NUDO(List.of("NUDO", "UNION UNIVERSAL", "UNIÓN UNIVERSAL")),
+    VALVULA_BOLA(List.of("VALVULA", "VÁLVULA", "LLAVE")), TEFLON(List.of("TEFLON", "TEFLÓN", "PTFE"));
+    private final List<String> anclas;
+    Familia(List<String> anclas) { this.anclas = anclas; }
+  }
 
   public ArticulosDao(
       @Qualifier("dynamicsNamedParameterJdbcTemplate") NamedParameterJdbcTemplate jdbcTemplate) {
@@ -83,6 +117,52 @@ public class ArticulosDao {
     });
   }
 
+  public List<ListadoItemsDto> consultarListadoItems(ListadoItemsRequest request) {
+    var sql = new StringBuilder(SELECT_LISTADO_ITEMS);
+    var parameters = new MapSqlParameterSource();
+    if (request.getCodigo() != null) {
+      sql.append(" AND (tx_itm = :codigo OR codZafiro = :codigo OR cod3L = :codigo)");
+      parameters.addValue("codigo", request.getCodigo(), Types.VARCHAR);
+    }
+    if (request.getDescripcion() != null) {
+      sql.append(" AND Descripcion LIKE :descripcion ESCAPE '~'");
+      parameters.addValue("descripcion", "%" + escapeLike(request.getDescripcion()) + "%", Types.VARCHAR);
+    }
+    if (request.getMarca() != null) {
+      sql.append(" AND tx_atrMar = :marca");
+      parameters.addValue("marca", request.getMarca(), Types.VARCHAR);
+    }
+    if (request.getMaterial() != null) {
+      sql.append(" AND tx_atrMat = :material");
+      parameters.addValue("material", request.getMaterial(), Types.VARCHAR);
+    }
+    sql.append(ORDER_LISTADO_ITEMS);
+    parameters.addValue("offset", (long) request.getPage() * request.getSize(), Types.BIGINT);
+    parameters.addValue("size", request.getSize(), Types.INTEGER);
+
+    // Timeout and row limits belong to this statement, not to the shared template.
+    return jdbcTemplate.execute(sql.toString(), parameters, statement -> {
+      statement.setQueryTimeout(10);
+      statement.setFetchSize(request.getSize());
+      statement.setMaxRows(request.getSize());
+      try (ResultSet rows = statement.executeQuery()) {
+        List<ListadoItemsDto> result = new ArrayList<>();
+        RowMapper<ListadoItemsDto> mapper = listadoItemsMapper();
+        while (rows.next()) {
+          result.add(mapper.mapRow(rows, result.size()));
+        }
+        return result;
+      }
+    });
+  }
+
+  private static RowMapper<ListadoItemsDto> listadoItemsMapper() {
+    return (rows, rowNum) -> new ListadoItemsDto(
+        rows.getString("tx_itm"), rows.getString("codZafiro"), rows.getString("cod3L"),
+        rows.getString("Descripcion"), rows.getString("unidadMedida"),
+        rows.getString("tx_atrMar"), rows.getString("tx_atrMat"));
+  }
+
   private static void exact(StringBuilder sql, MapSqlParameterSource parameters,
       String column, String value) {
     if (value != null) {
@@ -118,5 +198,55 @@ public class ArticulosDao {
           rows.getString("Control"), rows.getString("SubControl"), creationDate(rows),
           rows.getString("catven"), rows.getString("catpes"), rows.getString("catfre"),
           rows.getString("cattuv"), rows.getBigDecimal("marUti"));
+  }
+
+  public List<CatalogoArticuloDto> buscarCandidatosResolucion(Familia familia, String codigo) {
+    if ((familia == null) == (codigo == null) || (codigo != null &&
+        (codigo.isBlank() || codigo.length() > 31))) {
+      throw new IllegalArgumentException("Busqueda invalida");
+    }
+    var parameters = new MapSqlParameterSource().addValue("limite", LIMITE_RESOLUCION + 1, Types.INTEGER);
+    var sql = new StringBuilder("""
+        SELECT TOP (:limite) tx_itm, codZafiro, cod3L, Descripcion, unidadMedida,
+               tx_atrMar, tx_atrMat
+        FROM dbo.vw_listadoItems WHERE (
+        """);
+    if (codigo != null) {
+      sql.append("tx_itm = :codigo OR codZafiro = :codigo OR cod3L = :codigo");
+      parameters.addValue("codigo", codigo, Types.VARCHAR);
+    } else {
+      for (int i = 0; i < familia.anclas.size(); i++) {
+        if (i > 0) sql.append(" OR ");
+        sql.append("UPPER(Descripcion) LIKE :ancla").append(i);
+        parameters.addValue("ancla" + i, "%" + familia.anclas.get(i) + "%", Types.VARCHAR);
+      }
+    }
+    // No offsets, COUNT, hints, shared-template changes, or database objects.
+    sql.append("""
+        ) ORDER BY tx_itm COLLATE Latin1_General_100_BIN2,
+        codZafiro COLLATE Latin1_General_100_BIN2,
+        cod3L COLLATE Latin1_General_100_BIN2,
+        Descripcion COLLATE Latin1_General_100_BIN2,
+        unidadMedida COLLATE Latin1_General_100_BIN2,
+        tx_atrMar COLLATE Latin1_General_100_BIN2,
+        tx_atrMat COLLATE Latin1_General_100_BIN2,
+        DATALENGTH(tx_itm), DATALENGTH(codZafiro), DATALENGTH(cod3L),
+        DATALENGTH(Descripcion), DATALENGTH(unidadMedida),
+        DATALENGTH(tx_atrMar), DATALENGTH(tx_atrMat)
+        """);
+    return jdbcTemplate.execute(sql.toString(), parameters, statement -> {
+      statement.setQueryTimeout(2);
+      statement.setFetchSize(LIMITE_RESOLUCION + 1);
+      statement.setMaxRows(LIMITE_RESOLUCION + 1);
+      try (ResultSet rows = statement.executeQuery()) {
+        List<CatalogoArticuloDto> result = new ArrayList<>();
+        while (rows.next()) {
+          result.add(new CatalogoArticuloDto(rows.getString("tx_itm"), rows.getString("codZafiro"),
+              rows.getString("cod3L"), rows.getString("Descripcion"), rows.getString("unidadMedida"),
+              rows.getString("tx_atrMar"), rows.getString("tx_atrMat")));
+        }
+        return result;
+      }
+    });
   }
 }

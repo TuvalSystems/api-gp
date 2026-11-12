@@ -1,11 +1,56 @@
 # Reporte de listado ligero de items
 
+## Organización actual
+
+Se integra en las capas existentes de `reportes/inventario/articulos`:
+
+```text
+controller/ArticulosController.java (compartido con el maestro)
+service/dynamics/ArticulosService.java
+service/dynamics/imp/ArticulosServiceImp.java
+dao/dynamics/ArticulosDao.java
+dto/ListadoItemsDto.java
+request/ListadoItemsRequest.java
+```
+
+El service y el DAO se comparten con el maestro: el método
+`consultarListadoItems(ListadoItemsRequest)` se declara en `ArticulosService`,
+se implementa en `ArticulosServiceImp` y delega a `ArticulosDao`.
+El DAO conserva la consulta parametrizada de cada vista, sus límites y mappers,
+y reutiliza `escapeLike()` en ambas consultas. Se mantienen los DTO y requests
+específicos porque los campos y filtros son distintos.
+`ArticulosController` agrupa el maestro y el listado mediante métodos distintos,
+como `CollectorController` agrupa las consultas de cobranzas. No se crea un
+controller por endpoint. Registra las excepciones y conserva los mensajes públicos
+y los mensajes de validación específicos de cada solicitud.
+La consolidación se verificó con un contexto Spring y JDBC simulado:
+un solo controller registra ambas rutas y usa el mismo service y DAO. Se
+comprobaron ambas vistas, filtros, escape LIKE, paginación, límites locales,
+JSON camelCase de 7 y 37 campos, nulos y respuestas 200, 400 y 500.
+Se retira `/api/reportes/listado-items`; los consumidores deben utilizar
+`/api/reportes/inventario/articulos/listado-items`.
+Los filtros, paginación, orden, timeout y valores de respuesta se conservan.
+Los nombres JSON siguen camelCase: `txItm`, `codZafiro`, `cod3L`, `descripcion`,
+`unidadMedida`, `txAtrMar`, `txAtrMat`. Se actualizan los nombres anteriores
+`tx_itm`, `Descripcion`, `tx_atrMar` y `tx_atrMat`; las columnas SQL no cambian.
+El maestro sigue disponible en `/api/reportes/inventario/articulos`.
+
+Validación de la reorganización (2026-11-12): `mvn -o clean verify` compila y
+empaqueta correctamente. Se ejecutó y retiró una comprobación temporal con Spring
+y JDBC simulado: las rutas de maestro y listado conviven sin colisiones,
+selección de Dynamics entre dos beans, interfaz/implementación del service,
+serialización de los 7 y 37 campos en camelCase, nulos, filtros, escape LIKE,
+orden, paginación, timeout y validación 400 sin DAO. No se abrió una conexión
+SQL real ni se desplegaron cambios en esta reorganización. Esta copia no tiene
+`src/test`; las pruebas y mediciones de la sección final son el registro histórico
+de la implementación original.
+
 ## Alcance y conexion
 
-`GET /api/reportes/listado-items` consulta exclusivamente `dbo.vw_listadoItems`
+`GET /api/reportes/inventario/articulos/listado-items` consulta exclusivamente `dbo.vw_listadoItems`
 mediante `dynamicsNamedParameterJdbcTemplate`. Usa el catalogo del DataSource,
 sin crear conexiones, entidades JPA, objetos SQL ni modificar configuracion privada.
-El modulo esta en `reportes/listadoitems`.
+El modulo esta en `reportes/inventario/articulos`.
 
 Destino verificado el 10 de noviembre de 2026: el ambiente de pruebas indicado
 por el solicitante, catalogo `Dynamics2021`, perfil existente `dev`.
@@ -40,7 +85,7 @@ WHERE a1.ITEMTYPE = 1
 
 La definicion se documenta; no se incluye migracion ni se ejecuta DDL.
 
-| Columna SQL y propiedad JSON | Tipo SQL | Java | Nullable |
+| Columna SQL | Tipo SQL | Java | Nullable |
 |---|---|---|---|
 | tx_itm | varchar(31) | String | si |
 | codZafiro | varchar(15) | String | si |
@@ -87,9 +132,9 @@ no se modifican templates compartidos.
 ## Ejemplos
 
 ```http
-GET /api/reportes/listado-items?descripcion=bushing&page=0&size=100
-GET /api/reportes/listado-items?codigo=EJEMPLO001I
-GET /api/reportes/listado-items?descripcion=codo&marca=EJEMPLO&size=50
+GET /api/reportes/inventario/articulos/listado-items?descripcion=bushing&page=0&size=100
+GET /api/reportes/inventario/articulos/listado-items?codigo=EJEMPLO001I
+GET /api/reportes/inventario/articulos/listado-items?descripcion=codo&marca=EJEMPLO&size=50
 ```
 
 Respuesta sintetica de ejemplo, no extraida del catalogo:
@@ -100,13 +145,13 @@ Respuesta sintetica de ejemplo, no extraida del catalogo:
   "message": "Respuesta exitosa",
   "data": [
     {
-      "tx_itm": "EJEMPLO001I",
+      "txItm": "EJEMPLO001I",
       "codZafiro": "EJ001",
       "cod3L": "EJ",
-      "Descripcion": "ARTICULO DE EJEMPLO",
+      "descripcion": "ARTICULO DE EJEMPLO",
       "unidadMedida": "PZA",
-      "tx_atrMar": "EJEMPLO",
-      "tx_atrMat": null
+      "txAtrMar": "EJEMPLO",
+      "txAtrMat": null
     }
   ]
 }

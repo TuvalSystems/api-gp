@@ -1,8 +1,47 @@
-# Reporte spVen11
+# Comparativo de ventas por sucursal
 
-`GET /api/reportes/ven11` consulta `dbo.spVen11` a través del bean existente
+## Organización actual
+
+```text
+reportes/ventas/sucursales/
+├── controller/SucursalesController.java
+├── service/dynamics/SucursalesService.java
+├── service/dynamics/imp/SucursalesServiceImp.java
+├── dao/dynamics/SucursalesDao.java
+├── dto/VentasComparativasDto.java
+└── request/VentasComparativasRequest.java
+```
+
+El módulo se clasifica por su función: comparar ventas y costos por sucursal.
+Se retira `/api/reportes/ven11`; los consumidores deben usar
+`/api/reportes/ventas/sucursales/comparativo`. Se conservan `FechaIni`, `FechaFin`
+y `Sucursales`. La propiedad de respuesta `txNom` reemplaza `tx_nom`; la columna
+SQL sigue siendo `tx_nom`. Los otros 14 importes conservan su nombre y valor.
+
+`SucursalesController` comparte la ruta base del módulo. `SucursalesService`
+define el contrato y `SucursalesServiceImp` valida y ordena la respuesta.
+`SucursalesDao` configura `SimpleJdbcCall` en el constructor, con nombres SQL
+`@FechaIni`, `@FechaFin` y `@Sucursales`, tipos explícitos y sin inferencia de
+parámetros desde metadatos. Omite `@isRelacionada` para usar su predeterminado.
+El mapper rechaza la fila 501 y preserva los decimales y nulos.
+La configuración local usa el mismo DataSource de Dynamics, timeout de 30
+segundos, fetch size 100 y max rows 0; no modifica el template compartido.
+El controller registra la excepción sin exponerla en el JSON.
+
+Validación de la reorganización (2026-11-12): `mvn -o clean verify` compila y
+empaqueta correctamente. Esta copia no contiene `src/test`; Maven no ejecuta
+una suite. Se ejecutó y retiró una comprobación temporal con Spring,
+`SimpleJdbcCall` real y JDBC simulado: ruta e inyección Dynamics, firma con tres
+entradas y retorno, omisión de `isRelacionada`, 15 campos camelCase, orden con
+nulos primero, precisión decimal, lista vacía, validación sin DAO, aceptación de
+500 filas y rechazo de 501 sin respuesta parcial, conteos intermedios, retornos
+fallidos/nulos, resultados ausentes/adicionales y respuestas 200/400/500.
+Se verificó el cierre de recursos y que la configuración compartida no cambie.
+No se ejecutó el SP contra SQL Server real ni se desplegaron cambios.
+
+`GET /api/reportes/ventas/sucursales/comparativo` consulta `dbo.spVen11` a través del bean existente
 `dynamicsJdbcTemplate`. La API devuelve los 15 campos solicitados, sin `co_docGP`,
-y ordena el resultado completo por `tx_nom` ascendente.
+y ordena el resultado completo por `txNom` ascendente (columna SQL `tx_nom`).
 
 ## Fuente y alcance
 
@@ -36,12 +75,12 @@ y `VARCHAR`. No consulta metadatos para inferir la firma.
 ## Petición
 
 ```http
-GET /api/reportes/ven11?FechaIni=2026-01-01&FechaFin=2026-01-30&Sucursales=FAC-CAL,FAC-QNT
+GET /api/reportes/ventas/sucursales/comparativo?FechaIni=2026-01-01&FechaFin=2026-01-30&Sucursales=FAC-CAL,FAC-QNT
 Accept: application/json
 ```
 
 ```bash
-curl --get 'http://localhost:8080/api/reportes/ven11' \
+curl --get 'http://localhost:8006/api/reportes/ventas/sucursales/comparativo' \
   --data-urlencode 'FechaIni=2026-01-01' \
   --data-urlencode 'FechaFin=2026-01-30' \
   --data-urlencode 'Sucursales=FAC-CAL,FAC-QNT'
@@ -69,7 +108,7 @@ paginación, orden configurable ni selector de `isRelacionada`.
   "message": "Respuesta exitosa",
   "data": [
     {
-      "tx_nom": "CALDERÓN",
+      "txNom": "CALDERÓN",
       "subTotalDiaHoy": 1234.5600,
       "extCostDiaHoy": 900.1200,
       "subTotalAyer": null,
@@ -89,7 +128,7 @@ paginación, orden configurable ni selector de `isRelacionada`.
 }
 ```
 
-Los importes del ejemplo son ilustrativos. `tx_nom` se obtiene mediante
+Los importes del ejemplo son ilustrativos. `txNom` se obtiene de la columna SQL `tx_nom` mediante
 `ResultSet.getString`; los 14 agregados se obtienen con `getBigDecimal` y se
 serializan como números JSON, sin conversión intermedia a `float` o `double`,
 redondeos ni sustitución de `NULL` por cero. No se afirma un tipo SQL, precisión,
@@ -104,12 +143,11 @@ ni se incluye en la respuesta pública. Una consulta sin coincidencias responde
 
 El SP de referencia no tiene `ORDER BY`, `TOP` ni paginación. El usuario confirmó
 el máximo de 500 filas y un error cuando se supere. El DAO detecta la fila 501,
-cierra los recursos y rechaza la consulta completa con 400. No devuelve las
-primeras 500 filas como una respuesta exitosa ni utiliza `setMaxRows`, que podría
-ocultar el exceso. Este control no es paginación SQL y no limita el trabajo del
+cierra los recursos y rechaza la consulta completa con 400. No devuelve las primeras 500 filas como una respuesta exitosa. Se configura
+`setMaxRows(0)` para evitar recortes heredados que oculten el exceso. Este control no es paginación SQL y no limita el trabajo del
 SP en el servidor.
 
-Solo después de comprobar el tamaño se ordena la lista completa por `tx_nom`
+Solo después de comprobar el tamaño se ordena la lista completa por `txNom`
 en Java, mediante orden natural de `String` (sensible a mayúsculas y acentos),
 con nombres `NULL` primero. No se reproduce la collation de SQL Server.
 Entre nombres idénticos se conserva el orden recibido del SP; no se ofrece
@@ -152,8 +190,6 @@ Antes de habilitar el reporte en un ambiente, verificar:
   fechas con hora, 29 de febrero y concurrencia con `NOLOCK`.
 - Rendimiento, plan de ejecución, timeout, recursos y respuesta al exceder 500 filas.
 
-La validación automática usa dobles JDBC y HTTP sin conexiones reales. Según
-`docs/prompt-apis-reportes.md`, las pruebas nuevas de esta tarea son temporales,
-se ejecutan junto con la suite existente y se retiran antes del commit. Se mantiene
-el inventario permanente de componentes para cubrir el nuevo módulo en la suite
-final. Los comandos y resultados de ambas ejecuciones se documentan en el PR.
+Las comprobaciones locales no sustituyen la validación integrada pendiente.
+Esta copia no tiene inventario de componentes ni suite en `src/test`; no se
+atribuyen a esta reorganización pruebas históricas de otras versiones.
