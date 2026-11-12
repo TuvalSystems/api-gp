@@ -94,6 +94,56 @@ crearon documentos o cotizaciones. Los cambios no se han desplegado.
 La sección v1 siguiente conserva el diseño y la validación histórica; sus listas
 de familias, ausencia de conversión y orden de candidatos fueron ampliadas arriba.
 
+## Comparación de rendimiento antes/después (2026-11-12)
+
+Se comparó el código anterior fijado en el commit
+`4d723736874bb689dd46c35e2db230eac8099f19` con la copia de trabajo compilada que
+incluye las mejoras. Las fuentes anteriores se compilaron con un paquete aislado,
+sin cambiar el checkout, el índice ni los archivos de aplicación. Las huellas SHA-256
+de las fuentes posteriores y las 60 muestras están en
+[las mediciones JSON](resolucion-articulos-benchmark-2026-11-12.json).
+
+Mismo body de doce líneas, cantidades y `maxCandidatos=6`; mismo proceso Java,
+catálogo DEV `Dynamics2021`, pool de una conexión reutilizada en modo lectura.
+Después de una primera invocación por versión se hicieron cinco calentamientos
+por versión y treinta mediciones por versión. Las ejecuciones alternaron antes/después
+y después/antes para reducir el efecto del orden. No hubo concurrencia, cambios SQL
+ni limpieza de cachés de la base de datos.
+
+El tiempo incluye deserializar el body JSON, invocar el controlador, servicio y DAO
+reales y serializar la respuesta. No incluye arranque JVM/pool, red HTTP, gateway ni
+validación MVC del body. El percentil 95 usa el rango más cercano sobre treinta muestras;
+es una comparación local secuencial, no una prueba de carga ni un SLA.
+
+| Métrica por lote | Antes | Después |
+|---|---:|---:|
+| Mediana | 1,22 ms | 833,80 ms |
+| Percentil 95 | 2,69 ms | 989,26 ms |
+| Promedio | 1,50 ms | 860,60 ms |
+| Mínimo / máximo | 0,95 / 6,36 ms | 787,30 / 1199,83 ms |
+| Consultas SQL | 0 | 7 |
+| Filas recuperadas | 0 | 498 |
+| Líneas con candidatos | 0/12 | 9/12 |
+| Candidatos devueltos en total | 0 | 37 |
+| Líneas identificadas automáticamente | 0 | 0 |
+| Líneas ambiguas | 12 | 9 |
+| Líneas sin coincidencia | 0 | 3 |
+| Líneas con exploración incompleta | 12 | 0 |
+
+Las cantidades y los resultados de cobertura fueron constantes en las treinta
+mediciones de cada versión. El tiempo medio acumulado dentro del DAO después fue
+705,24 ms por lote (incluye JDBC y mapeo, no es una medición del CPU de SQL Server).
+
+**Conclusión:** no se confirmó una mejora de velocidad para este body. La versión
+anterior respondía rápidamente porque las doce familias/descripciones quedaban
+fuera del vocabulario y no ejecutaba consultas. La versión nueva añade unos
+832,57 ms de mediana para realizar la búsqueda real y aumenta de 0% a 75% las líneas
+con candidatos (+75 puntos porcentuales). Esto mide cobertura de candidatos, no
+exactitud comercial ni resolución automática: las nueve líneas con candidatos
+siguen requiriendo aclaraciones y tres quedan sin coincidencia. Tampoco permite
+cuantificar por separado cuánto ahorran los nuevos filtros SQL o la reutilización:
+para eso haría falta otro experimento con igual cobertura funcional en ambas variantes.
+
 # Consulta de resolución de artículos (v1)
 
 `POST /api/reportes/inventario/articulos/resolver` recibe líneas extraídas por el
