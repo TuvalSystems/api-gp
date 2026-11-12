@@ -207,6 +207,70 @@ No se provocaron timeouts reales en el servidor ni se desplegaron los cambios.
 Las muestras completas, huellas de fuentes y metodología están en
 [el benchmark de optimización](resolucion-articulos-optimizacion-benchmark-2026-11-12.json).
 
+## Segunda optimización: interpretación reutilizable (2026-11-12)
+
+Se comparó la versión optimizada del commit
+`08e65804223d7b2648e002fa5080849faca665bd` con estos ajustes, conservando el SQL,
+los filtros, límites, orden y ejecución JDBC de esa versión:
+
+- Los patrones de expresiones regulares del vocabulario cerrado se compilan y
+  reutilizan de forma segura entre hilos. Las claves de patrones proceden del código,
+  no de texto enviado por el cliente ni de datos del catálogo.
+- La interpretación de descripciones del catálogo se memoriza por descripción
+  literal en un mapa LRU sincronizado de máximo 4096 entradas. Los resultados son
+  inmutables; la interpretación se calcula fuera del bloqueo. Cada solicitud sigue
+  leyendo las filas actuales de SQL. No se reutilizan códigos, esquema de unidades,
+  marca/material crudos ni respuestas entre solicitudes. Una descripción modificada
+  usa otra clave; si solo cambian otros campos de la fila, esos campos se leen de la
+  fila nueva y se agregan sobre una copia de los atributos interpretados.
+
+Esto amplía la reutilización de interpretaciones descrita en la sección anterior:
+los resultados de catálogo y las referencias locales siguen limitados a cada
+solicitud, mientras que la función pura de interpretar una descripción idéntica
+puede reutilizarse entre solicitudes sin congelar datos comerciales.
+
+Se ejecutaron cinco calentamientos y treinta mediciones alternadas por versión,
+con el mismo body de doce líneas, `maxCandidatos=6`, JVM y conexión DEV. Se comparó
+la igualdad completa de `data` JSON en cada invocación. El tiempo incluye JSON,
+controlador, servicio y DAO, sin servidor HTTP, arranque del pool ni carga concurrente.
+
+| Métrica por lote | Optimización anterior | Segunda optimización |
+|---|---:|---:|
+| Mediana | 664,93 ms | 620,30 ms |
+| Percentil 95 | 716,95 ms | 683,16 ms |
+| Promedio | 667,27 ms | 622,29 ms |
+| Mínimo / máximo | 624,25 / 720,77 ms | 557,68 / 690,16 ms |
+| Tiempo medio dentro del DAO | 615,77 ms | 617,46 ms |
+| Tiempo medio fuera del DAO | 51,50 ms | 4,83 ms |
+| Ejecuciones JDBC / SELECT lógicos | 1 / 7 | 1 / 7 |
+| Filas frescas recuperadas | 498 | 498 |
+| Líneas con candidatos / candidatos totales | 9 / 37 | 9 / 37 |
+| Líneas ambiguas / sin coincidencia | 9 / 3 | 9 / 3 |
+| Líneas identificadas / exploraciones incompletas | 0 / 0 | 0 / 0 |
+
+**Mejora adicional:** mediana 44,62 ms menor (**6,71%**), percentil 95 **4,71%**
+menor y promedio **6,74%** menor. El acceso al catálogo domina el tiempo restante;
+el tiempo del DAO incluye JDBC y mapeo, no es una medición del CPU del servidor.
+Los resultados son de solicitudes con descripciones repetidas después del
+calentamiento. Con descripciones nuevas o un conjunto mayor que el límite LRU,
+habrá más interpretaciones y la ganancia puede reducirse. Se registraron también
+las primeras invocaciones, pero no se usan para inferir una mejora en arranque frío.
+No es una medición bajo concurrencia ni un SLA.
+
+La validación temporal comparó 585 entradas con la interpretación anterior mediante
+2340 comparaciones en paralelo, además de comprobar resultados compartidos inmutables,
+reutilización por descripción exacta, máximo LRU de 4096 y equivalencia tras expulsión.
+Se comprobó que cambiar descripción o esquema de unidades en la fuente se refleje
+en la solicitud siguiente. Pasaron también las comprobaciones anteriores de fallback,
+timeouts, cantidades, códigos exactos, truncamiento y contrato, y el empaquetado
+`mvn -o clean verify`. No se añadió una suite `src/test` ni dependencias.
+
+Las variantes SQL y de buffering evaluadas no aportaron una mejora consistente y
+se retiraron. La implementación final no cambia la vista, la configuración del
+servidor, los hints ni la lectura JDBC anterior. Los cambios no están desplegados.
+
+[Muestras, huellas y metodología de la segunda optimización](resolucion-articulos-segunda-optimizacion-benchmark-2026-11-12.json).
+
 # Consulta de resolución de artículos (v1)
 
 `POST /api/reportes/inventario/articulos/resolver` recibe líneas extraídas por el

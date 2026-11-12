@@ -137,7 +137,7 @@ public class ArticulosServiceImp implements ArticulosService {
     Map<Candidato, Integer> puntajes = new HashMap<>();
     boolean ampliada = spec.familia() != null && ReglasArticulo.ampliada(spec.familia());
     for (var row : fuente.filas()) {
-      var observed = interpretaciones.computeIfAbsent(row.descripcion(), ReglasArticulo::interpretar);
+      var observed = interpretaciones.computeIfAbsent(row.descripcion(), ReglasArticulo::interpretarCatalogo);
       if (codigo == null && ampliada && observed.familia() == null) continue;
       if (codigo == null && observed.familia() != null && observed.familia() != spec.familia()
           && !observed.pendientes().contains("tipos_articulo_multiples")) continue;
