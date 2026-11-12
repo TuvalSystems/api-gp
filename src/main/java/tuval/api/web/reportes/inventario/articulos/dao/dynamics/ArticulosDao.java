@@ -6,6 +6,7 @@ import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -58,7 +59,10 @@ public class ArticulosDao {
   public enum Familia {
     BUSHING(List.of("BUSHING")), NIPLE(List.of("NIPLE", "NEPLO")),
     CODO(List.of("CODO")), NUDO(List.of("NUDO", "UNION UNIVERSAL", "UNIÓN UNIVERSAL")),
-    VALVULA_BOLA(List.of("VALVULA", "VÁLVULA", "LLAVE")), TEFLON(List.of("TEFLON", "TEFLÓN", "PTFE"));
+    VALVULA_BOLA(List.of("VALVULA", "VÁLVULA", "LLAVE")), TEFLON(List.of("TEFLON", "TEFLÓN", "PTFE")),
+    PLANCHA(List.of("PLANCHA", "PLANCHON")), ANGULO(List.of("ANGULO", "ÁNGULO")),
+    TUBO(List.of("TUBO")), PERNO(List.of("PERNO")), EJE(List.of("EJE", "BARRA")),
+    CHUMACERA(List.of("CHUMACERA")), BRONCE(List.of("BARRA", "BUJE", "BOCIN"));
     private final List<String> anclas;
     Familia(List<String> anclas) { this.anclas = anclas; }
   }
@@ -201,6 +205,11 @@ public class ArticulosDao {
   }
 
   public List<CatalogoArticuloDto> buscarCandidatosResolucion(Familia familia, String codigo) {
+    return buscarCandidatosResolucion(familia, codigo, Map.of());
+  }
+
+  public List<CatalogoArticuloDto> buscarCandidatosResolucion(Familia familia, String codigo,
+      Map<String, String> filtros) {
     if ((familia == null) == (codigo == null) || (codigo != null &&
         (codigo.isBlank() || codigo.length() > 31))) {
       throw new IllegalArgumentException("Busqueda invalida");
@@ -221,9 +230,26 @@ public class ArticulosDao {
         parameters.addValue("ancla" + i, "%" + familia.anclas.get(i) + "%", Types.VARCHAR);
       }
     }
+    sql.append(")");
+    // Filter supported aliases before TOP, with parameters local to this statement.
+    String material = filtros.get("material");
+    if ("INOXIDABLE".equals(material)) sql.append(" AND UPPER(Descripcion) LIKE '%INOX%'");
+    else if ("BRONCE".equals(material)) sql.append(" AND UPPER(Descripcion) LIKE '%BRONCE%'");
+    else if ("GALVANIZADO".equals(material)) sql.append(" AND UPPER(Descripcion) LIKE '%GALV%'");
+    String cedula = filtros.get("cedula");
+    if (cedula != null && cedula.matches("[0-9]{1,3}")) {
+      sql.append(" AND (UPPER(Descripcion + ' ') LIKE :ced OR UPPER(Descripcion + ' ') LIKE :cedula"
+          + " OR UPPER(Descripcion + ' ') LIKE :sch OR UPPER(Descripcion + ' ') LIKE :schEspacio"
+          + " OR UPPER(Descripcion + ' ') LIKE :c)");
+      parameters.addValue("ced", "%CED " + cedula + "[^0-9]%");
+      parameters.addValue("cedula", "%CEDULA " + cedula + "[^0-9]%");
+      parameters.addValue("sch", "%SCH" + cedula + "[^0-9]%");
+      parameters.addValue("schEspacio", "%SCH " + cedula + "[^0-9]%");
+      parameters.addValue("c", "% C" + cedula + "[^0-9]%");
+    }
     // No offsets, COUNT, hints, shared-template changes, or database objects.
     sql.append("""
-        ) ORDER BY tx_itm COLLATE Latin1_General_100_BIN2,
+         ORDER BY tx_itm COLLATE Latin1_General_100_BIN2,
         codZafiro COLLATE Latin1_General_100_BIN2,
         cod3L COLLATE Latin1_General_100_BIN2,
         Descripcion COLLATE Latin1_General_100_BIN2,

@@ -3,7 +3,7 @@ package tuval.api.web.reportes.inventario.articulos.service.dynamics.imp;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,7 +28,7 @@ import tuval.api.web.reportes.inventario.articulos.service.dynamics.ArticulosSer
 public class ArticulosServiceImp implements ArticulosService {
   private final ArticulosDao articulosDao;
   private static final long PRESUPUESTO_NANOS = 10_000_000_000L;
-  private static final int MAX_BUSQUEDAS = 6;
+  private static final int MAX_BUSQUEDAS = 20;
   private record Fuente(List<CatalogoArticuloDto> filas, boolean completa, boolean truncada, String motivo) {}
 
   @Override
@@ -68,7 +68,8 @@ public class ArticulosServiceImp implements ArticulosService {
     for (var linea : request.detalle()) {
       var spec = ReglasArticulo.interpretar(linea.texto());
       String codigo = codigo(linea.texto());
-      String key = codigo != null ? "codigo:" + codigo : String.valueOf(spec.familia());
+      var filtros = ReglasArticulo.filtros(spec);
+      String key = codigo != null ? "codigo:" + codigo : spec.familia() + ":" + filtros;
       Fuente fuente = fuentes.get(key);
       if (fuente == null) {
         if (codigo == null && spec.familia() == null) {
@@ -77,7 +78,7 @@ public class ArticulosServiceImp implements ArticulosService {
           fuente = new Fuente(List.of(), false, false, "presupuesto_de_busqueda_agotado");
         } else {
           try {
-            var filas = articulosDao.buscarCandidatosResolucion(codigo == null ? spec.familia() : null, codigo);
+            var filas = articulosDao.buscarCandidatosResolucion(codigo == null ? spec.familia() : null, codigo, filtros);
             boolean truncada = filas.size() > ArticulosDao.LIMITE_RESOLUCION;
             fuente = new Fuente(List.copyOf(filas.subList(0, Math.min(filas.size(),
                 ArticulosDao.LIMITE_RESOLUCION))), !truncada, truncada,
@@ -103,24 +104,35 @@ public class ArticulosServiceImp implements ArticulosService {
     Set<String> faltantes = codigo == null ? new LinkedHashSet<>(ReglasArticulo.faltantes(interpreted))
         : new LinkedHashSet<>();
     List<Candidato> compatibles = new ArrayList<>();
+    Map<Candidato, Integer> puntajes = new HashMap<>();
+    boolean ampliada = spec.familia() != null && ReglasArticulo.ampliada(spec.familia());
     for (var row : fuente.filas()) {
       var observed = ReglasArticulo.interpretar(row.descripcion());
+      if (codigo == null && ampliada && observed.familia() == null) continue;
       if (codigo == null && observed.familia() != null && observed.familia() != spec.familia()
           && !observed.pendientes().contains("tipos_articulo_multiples")) continue;
       var candidateAttrs = new LinkedHashMap<>(observed.atributos());
       boolean contradice = false;
+      int coincidencias = 0;
       Set<String> desconocidos = new LinkedHashSet<>();
       if (codigo == null) {
         if (observed.familia() == null) desconocidos.add("catalogo:tipo_articulo");
         for (String pendiente : observed.pendientes()) {
-          if (!pendiente.startsWith("termino:")) desconocidos.add("catalogo:" + pendiente);
+          if (!ampliada && !pendiente.startsWith("termino:")) desconocidos.add("catalogo:" + pendiente);
         }
         for (var attr : attrs.entrySet()) {
+          if (ampliada && Set.of("medidas", "unidadMedidas").contains(attr.getKey())) continue;
           String actual = candidateAttrs.get(attr.getKey());
-          if (actual == null || atributoIncierto(attr.getKey(), observed.pendientes())) {
+          if (actual == null || atributoIncierto(attr.getKey(), observed.pendientes())
+              || (attr.getKey().endsWith("Mm") && observed.pendientes().contains(attr.getKey()))) {
             desconocidos.add("catalogo:" + attr.getKey());
           }
-          else if (!actual.equals(attr.getValue())) contradice = true;
+          else if (!actual.equals(attr.getValue())) {
+            if (ampliada && spec.familia() == ArticulosDao.Familia.EJE && attr.getKey().equals("largoMm")
+                && new BigDecimal(actual).compareTo(new BigDecimal(attr.getValue())) >= 0) {
+              desconocidos.add("catalogo:corte_largo");
+            } else contradice = true;
+          } else coincidencias++;
         }
       }
       if (!contradice) {
@@ -130,10 +142,15 @@ public class ArticulosServiceImp implements ArticulosService {
         if (row.esquemaUnidad() != null) candidateAttrs.put("esquemaUnidad", row.esquemaUnidad());
         if (row.atributoMarca() != null) candidateAttrs.put("txAtrMar", row.atributoMarca());
         if (row.atributoMaterial() != null) candidateAttrs.put("txAtrMat", row.atributoMaterial());
-        compatibles.add(new Candidato(row.codigoGP(), row.codigoZafiro(), row.codigo3L(),
-            row.descripcion(), null, candidateAttrs));
+        var candidato = new Candidato(row.codigoGP(), row.codigoZafiro(), row.codigo3L(),
+            row.descripcion(), null, candidateAttrs);
+        compatibles.add(candidato);
+        // Keep the DAO's deterministic order for ties; expose no new response fields.
+        puntajes.put(candidato, coincidencias * 100 - desconocidos.size() * 10
+            - (candidateAttrs.containsKey("condicion") ? 1 : 0));
       }
     }
+    if (codigo == null) compatibles.sort(Comparator.comparingInt((Candidato c) -> puntajes.get(c)).reversed());
     String estado = !fuente.completa() ? "ambiguo" : compatibles.isEmpty() ? "sin_coincidencia"
         : compatibles.size() == 1 && faltantes.isEmpty() ? "identificado" : "ambiguo";
     List<String> obs = new ArrayList<>();
@@ -165,7 +182,9 @@ public class ArticulosServiceImp implements ArticulosService {
   private static Map<String, List<String>> diferencias(List<Candidato> candidatos) {
     Map<String, List<String>> result = new LinkedHashMap<>();
     for (String key : List.of("medidas", "material", "clase", "refuerzo", "angulo", "rosca",
-        "cedula", "construccion", "gradoMaterial", "marca", "unidadMedidas", "paso")) {
+        "cedula", "construccion", "gradoMaterial", "marca", "unidadMedidas", "paso",
+        "espesorMm", "anchoMm", "largoMm", "alaMm", "diametroMm", "diametroNominalMm",
+        "acabado", "condicion", "montaje", "agujeros", "forma")) {
       Set<String> values = new LinkedHashSet<>();
       for (var candidato : candidatos) values.add(candidato.atributos().getOrDefault(key, "no_especificado"));
       if (values.size() > 1) {
