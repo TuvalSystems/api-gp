@@ -57,7 +57,7 @@ Content-Type: application/json
 | `texto` | Obligatorio, no vacío, máximo 200 caracteres |
 | `cantidad` | Opcional o null: se devuelve 1 y `cantidadAsumida=true` |
 | Cantidad explícita | Mayor que 0, máximo 1000000, hasta 3 decimales; BigDecimal |
-| `maxCandidatos` | Opcional o null: 3; entero de 1 a 5 |
+| `maxCandidatos` | Opcional o null: 3; entero de 1 a 6 |
 
 La cantidad debe enviarse por separado. No se interpreta el primer número del texto
 como cantidad: podría ser un diámetro. La API no convierte unidades de venta ni

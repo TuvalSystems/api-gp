@@ -187,7 +187,7 @@ public class ArticulosServiceImp implements ArticulosService {
   private static void validar(ResolucionArticulosRequest request) {
     if (request == null || request.detalle() == null || request.detalle().isEmpty()
         || request.detalle().size() > 20 || (request.maxCandidatos() != null &&
-        (request.maxCandidatos() < 1 || request.maxCandidatos() > 5))) throw new IllegalArgumentException();
+        (request.maxCandidatos() < 1 || request.maxCandidatos() > 6))) throw new IllegalArgumentException();
     for (var line : request.detalle()) {
       if (line == null || line.texto() == null || line.texto().isBlank() || line.texto().length() > 200
           || (line.cantidad() != null && (line.cantidad().signum() <= 0
