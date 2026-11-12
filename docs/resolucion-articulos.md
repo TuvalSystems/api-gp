@@ -40,7 +40,7 @@ Content-Type: application/json
 
 ```json
 {
-  "renglones": [
+  "detalle": [
     {"texto": "bushing galvanizado 1 por 1/2", "cantidad": 9},
     {"texto": "neplo galvanizado 1/2 por 2", "cantidad": 2},
     {"texto": "codo galvanizado 1 por 90"},
@@ -53,7 +53,7 @@ Content-Type: application/json
 
 | Entrada | Regla |
 |---|---|
-| `renglones` | Obligatorio, entre 1 y 20 elementos no nulos |
+| `detalle` | Obligatorio, entre 1 y 20 elementos no nulos |
 | `texto` | Obligatorio, no vacío, máximo 200 caracteres |
 | `cantidad` | Opcional o null: se devuelve 1 y `cantidadAsumida=true` |
 | Cantidad explícita | Mayor que 0, máximo 1000000, hasta 3 decimales; BigDecimal |

@@ -65,7 +65,7 @@ public class ArticulosServiceImp implements ArticulosService {
     // Request-scoped reuse: no persistent cache, freshness assumptions or infrastructure.
     Map<String, Fuente> fuentes = new HashMap<>();
     List<ResolucionArticulosDto> results = new ArrayList<>();
-    for (var linea : request.renglones()) {
+    for (var linea : request.detalle()) {
       var spec = ReglasArticulo.interpretar(linea.texto());
       String codigo = codigo(linea.texto());
       String key = codigo != null ? "codigo:" + codigo : String.valueOf(spec.familia());
@@ -94,7 +94,7 @@ public class ArticulosServiceImp implements ArticulosService {
   }
 
   private ResolucionArticulosDto resolver(int indice,
-      ResolucionArticulosRequest.Renglon linea, ReglasArticulo.Especificacion spec,
+      ResolucionArticulosRequest.Detalle linea, ReglasArticulo.Especificacion spec,
       String codigo, Fuente fuente, int max) {
     var attrs = new LinkedHashMap<>(spec.atributos());
     var pending = new ArrayList<>(spec.pendientes());
@@ -185,10 +185,10 @@ public class ArticulosServiceImp implements ArticulosService {
   }
 
   private static void validar(ResolucionArticulosRequest request) {
-    if (request == null || request.renglones() == null || request.renglones().isEmpty()
-        || request.renglones().size() > 20 || (request.maxCandidatos() != null &&
+    if (request == null || request.detalle() == null || request.detalle().isEmpty()
+        || request.detalle().size() > 20 || (request.maxCandidatos() != null &&
         (request.maxCandidatos() < 1 || request.maxCandidatos() > 5))) throw new IllegalArgumentException();
-    for (var line : request.renglones()) {
+    for (var line : request.detalle()) {
       if (line == null || line.texto() == null || line.texto().isBlank() || line.texto().length() > 200
           || (line.cantidad() != null && (line.cantidad().signum() <= 0
           || line.cantidad().compareTo(new BigDecimal("1000000")) > 0
