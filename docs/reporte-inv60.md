@@ -1,5 +1,15 @@
 # Inventario / varianza: consulta de varianzas en trabajo
 
+## Ajuste por eliminación de EXISTENCIA (2026-11-16)
+
+Se eliminó la lectura de `EXISTENCIA` y el campo del DTO para adecuar la API al
+SP actual. Con la conexión DEV local, el DAO actualizado consultó `VAR0000735`
+y devolvió 2 filas; se verificó la serialización JSON con 16 campos y sin
+`EXISTENCIA`. `mvn -o verify` finalizó correctamente; no hay fuentes de pruebas
+en esta copia. La comprobación integrada temporal se retiró. No se desplegó
+este ajuste al servidor de pruebas ni se verificó allí el endpoint actualizado.
+Las validaciones históricas de 17 campos más abajo corresponden al contrato anterior.
+
 ## Organización actual
 
 La consulta se ubica en `src/main/java/tuval/api/web/reportes/inventario/varianza/`:
@@ -137,7 +147,7 @@ omision accidental del filtro.
 
 ## Respuesta
 
-Se conservan exactamente los 17 nombres de columna, todos los registros y su
+Se conservan exactamente los 16 nombres de columna actuales, todos los registros y su
 orden de llegada, incluyendo duplicados. No se agrupa, deduplica, redondea ni
 recalcula ningun valor. Los `NULL` se incluyen explicitamente como `null` y se
 conservan los ceros y las cantidades negativas.
@@ -147,7 +157,7 @@ conservan los ceros y las cantidades negativas.
 | `IVDOCTYP` | `Integer` / numero o `null` |
 | `IVDOCNBR`, `BACHNUMB`, `ITEMNMBR`, `ITMGEDSC`, `ITMSHNAM`, `ITEMDESC`, `TRXLOCTN`, `Reason_Code` | `String` / texto o `null` |
 | `DOCDATE` | `LocalDate` / `YYYY-MM-DD` o `null`; el SP hace `CAST(... AS DATE)` |
-| `LNSEQNBR`, `QTYBSUOM`, `TRXQTY`, `UNITCOST`, `EXTDCOST`, `CURRCOST`, `EXISTENCIA` | `BigDecimal` / numero o `null` |
+| `LNSEQNBR`, `QTYBSUOM`, `TRXQTY`, `UNITCOST`, `EXTDCOST`, `CURRCOST` | `BigDecimal` / numero o `null` |
 
 Se lee `LNSEQNBR` como `BigDecimal` para conservar el valor numerico del driver
 sin asumir una escala SQL que no se proporciono. Los importes y cantidades
@@ -155,8 +165,8 @@ tampoco se convierten a `double` ni a enteros. Los consumidores deben usar tipos
 decimales cuando requieran conservar la precision del JSON.
 
 `CURRCOST` representa el costo promedio segun la convencion confirmada por el
-usuario. `EXISTENCIA` ya viene calculada por el SP como
-`IV00102.QTYONHND - IV00102.ATYALLOC` para el articulo y la bodega. La API solo
+usuario. Desde el 2026-11-16, `EXISTENCIA` se retira del DTO y del mapeo porque
+su eliminación del SP fue intencional. La respuesta ya no incluye ese campo. La API solo
 informa estos valores: no aprueba, contabiliza ni valida costos o inventario.
 
 Ejemplo sintetico, sin datos consultados en SQL Server:
@@ -181,8 +191,7 @@ Ejemplo sintetico, sin datos consultados en SQL Server:
     "UNITCOST": 0.00000,
     "EXTDCOST": 0.00000,
     "Reason_Code": null,
-    "CURRCOST": 48.78538,
-    "EXISTENCIA": 12.123456
+    "CURRCOST": 48.78538
   }]
 }
 ```

@@ -82,8 +82,7 @@ public class VarianzaDao {
           rows.getBigDecimal("UNITCOST"),
           rows.getBigDecimal("EXTDCOST"),
           rows.getString("Reason_Code"),
-          rows.getBigDecimal("CURRCOST"),
-          rows.getBigDecimal("EXISTENCIA"));
+          rows.getBigDecimal("CURRCOST"));
     };
   }
 }
