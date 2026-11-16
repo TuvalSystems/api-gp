@@ -1,23 +1,18 @@
 package tuval.api.web.reportes.inventario.articulos.service.dynamics.imp;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.QueryTimeoutException;
 import org.springframework.stereotype.Service;
 import tuval.api.web.reportes.inventario.articulos.dao.dynamics.ArticulosDao;
 import tuval.api.web.reportes.inventario.articulos.dto.ArticulosDto;
 import tuval.api.web.reportes.inventario.articulos.dto.CatalogoArticuloDto;
 import tuval.api.web.reportes.inventario.articulos.dto.ListadoItemsDto;
 import tuval.api.web.reportes.inventario.articulos.dto.ResolucionArticulosDto;
-import tuval.api.web.reportes.inventario.articulos.dto.ResolucionArticulosDto.Candidato;
 import tuval.api.web.reportes.inventario.articulos.request.ArticulosRequest;
 import tuval.api.web.reportes.inventario.articulos.request.ListadoItemsRequest;
 import tuval.api.web.reportes.inventario.articulos.request.ResolucionArticulosRequest;
@@ -27,9 +22,9 @@ import tuval.api.web.reportes.inventario.articulos.service.dynamics.ArticulosSer
 @RequiredArgsConstructor
 public class ArticulosServiceImp implements ArticulosService {
   private final ArticulosDao articulosDao;
-  private static final long PRESUPUESTO_NANOS = 10_000_000_000L;
-  private static final int MAX_BUSQUEDAS = 20;
-  private record Fuente(List<CatalogoArticuloDto> filas, boolean completa, boolean truncada, String motivo) {}
+  private static final long VIGENCIA_INDICE_NANOS = 60_000_000_000L;
+  private record CacheIndice(IndiceArticulos indice, long creado) {}
+  private volatile CacheIndice cache;
 
   @Override
   public List<ArticulosDto> consultar(ArticulosRequest request) {
@@ -60,183 +55,55 @@ public class ArticulosServiceImp implements ArticulosService {
   @Override
   public List<ResolucionArticulosDto> resolverArticulos(ResolucionArticulosRequest request) {
     validar(request);
-    int max = request.maxCandidatos() == null ? 3 : request.maxCandidatos();
-    long inicio = System.nanoTime();
-    // Both caches are request-scoped: catalog changes are visible on the next request.
-    Map<String, Fuente> fuentes = new HashMap<>();
-    Map<String, ReglasArticulo.Especificacion> interpretaciones = new HashMap<>();
-    var busquedas = new LinkedHashMap<String, ArticulosDao.BusquedaResolucion>();
-    record Linea(ResolucionArticulosRequest.Detalle detalle, ReglasArticulo.Especificacion spec,
-        String codigo, String key) {}
-    List<Linea> lineas = new ArrayList<>();
+    int maximo = request.maxCandidatos() == null ? 3 : request.maxCandidatos();
+    Map<String, List<CatalogoArticuloDto>> codigos = new HashMap<>();
+    List<ResolucionArticulosDto> resultado = new ArrayList<>();
+    IndiceArticulos indice = null;
     for (var linea : request.detalle()) {
-      var spec = ReglasArticulo.interpretar(linea.texto());
       String codigo = codigo(linea.texto());
-      var filtros = ReglasArticulo.filtros(spec);
-      String key = codigo != null ? "codigo:" + codigo : spec.familia() + ":" + filtros;
-      lineas.add(new Linea(linea, spec, codigo, key));
-      if (fuentes.containsKey(key) || busquedas.containsKey(key)) continue;
-      if (codigo == null && spec.familia() == null) {
-        fuentes.put(key, new Fuente(List.of(), false, false, "fuera_del_vocabulario_soportado"));
-      } else if (busquedas.size() >= MAX_BUSQUEDAS) {
-        fuentes.put(key, new Fuente(List.of(), false, false, "presupuesto_de_busqueda_agotado"));
+      List<IndiceArticulos.CoincidenciaTexto> filas;
+      if (codigo != null) {
+        filas = codigos.computeIfAbsent(codigo, articulosDao::buscarCodigoResolucion).stream()
+            .map(articulo -> new IndiceArticulos.CoincidenciaTexto(articulo, 100)).toList();
       } else {
-        busquedas.put(key, new ArticulosDao.BusquedaResolucion(codigo == null ? spec.familia() : null,
-            codigo, filtros));
-      }
-    }
-    if (busquedas.size() > 1 && System.nanoTime() - inicio < PRESUPUESTO_NANOS) {
-      try {
-        var lotes = articulosDao.buscarCandidatosResolucionLote(List.copyOf(busquedas.values()));
-        int indice = 0;
-        for (String key : busquedas.keySet()) fuentes.put(key, fuente(lotes.get(indice++)));
-        busquedas.clear();
-      } catch (QueryTimeoutException exception) {
-        // Retry individually within the original budget so one slow search does not hide the rest.
-      }
-    }
-    for (var entrada : busquedas.entrySet()) {
-      Fuente fuente;
-      if (System.nanoTime() - inicio >= PRESUPUESTO_NANOS) {
-        fuente = new Fuente(List.of(), false, false, "presupuesto_de_busqueda_agotado");
-      } else {
-        var busqueda = entrada.getValue();
-        try {
-          fuente = fuente(articulosDao.buscarCandidatosResolucion(busqueda.familia(), busqueda.codigo(),
-              busqueda.filtros()));
-        } catch (QueryTimeoutException exception) {
-          fuente = new Fuente(List.of(), false, false, "timeout_de_busqueda");
+        var consulta = BusquedaTextoArticulo.preparar(linea.texto());
+        if (consulta.terminos().isEmpty()) filas = List.of();
+        else {
+          if (indice == null) indice = obtenerIndice();
+          filas = indice.buscar(consulta, maximo);
         }
       }
-      fuentes.put(entrada.getKey(), fuente);
+      String estado = filas.isEmpty() ? "sin_coincidencia"
+          : codigo != null && filas.size() == 1 ? "identificado" : "ambiguo";
+      var coincidencias = filas.stream().limit(maximo).map(fila -> new ResolucionArticulosDto.Coincidencia(
+          fila.articulo().descripcion(), fila.articulo().codigoGP(), fila.articulo().codigo3L(),
+          BigDecimal.valueOf(fila.porcentaje()).setScale(2, RoundingMode.HALF_UP))).toList();
+      resultado.add(new ResolucionArticulosDto(linea.texto(),
+          linea.cantidad() == null ? BigDecimal.ONE : linea.cantidad(), estado, coincidencias));
     }
-    List<ResolucionArticulosDto> results = new ArrayList<>();
-    for (var linea : lineas) {
-      results.add(resolver(results.size(), linea.detalle(), linea.spec(), linea.codigo(),
-          fuentes.get(linea.key()), max, interpretaciones));
-    }
-    return results;
+    return resultado;
   }
 
-  private static Fuente fuente(List<CatalogoArticuloDto> filas) {
-    boolean truncada = filas.size() > ArticulosDao.LIMITE_RESOLUCION;
-    return new Fuente(List.copyOf(filas.subList(0, Math.min(filas.size(), ArticulosDao.LIMITE_RESOLUCION))),
-        !truncada, truncada, truncada ? "limite_de_exploracion" : "");
-  }
-
-  private ResolucionArticulosDto resolver(int indice,
-      ResolucionArticulosRequest.Detalle linea, ReglasArticulo.Especificacion spec,
-      String codigo, Fuente fuente, int max, Map<String, ReglasArticulo.Especificacion> interpretaciones) {
-    var attrs = new LinkedHashMap<>(spec.atributos());
-    var pending = new ArrayList<>(spec.pendientes());
-    // Unvalidated source attributes must not complete or contradict a specification.
-    var interpreted = new ReglasArticulo.Especificacion(spec.familia(), attrs, pending);
-    Set<String> faltantes = codigo == null ? new LinkedHashSet<>(ReglasArticulo.faltantes(interpreted))
-        : new LinkedHashSet<>();
-    List<Candidato> compatibles = new ArrayList<>();
-    Map<Candidato, Integer> puntajes = new HashMap<>();
-    boolean ampliada = spec.familia() != null && ReglasArticulo.ampliada(spec.familia());
-    for (var row : fuente.filas()) {
-      var observed = interpretaciones.computeIfAbsent(row.descripcion(), ReglasArticulo::interpretarCatalogo);
-      if (codigo == null && ampliada && observed.familia() == null) continue;
-      if (codigo == null && observed.familia() != null && observed.familia() != spec.familia()
-          && !observed.pendientes().contains("tipos_articulo_multiples")) continue;
-      var candidateAttrs = new LinkedHashMap<>(observed.atributos());
-      boolean contradice = false;
-      int coincidencias = 0;
-      Set<String> desconocidos = new LinkedHashSet<>();
-      if (codigo == null) {
-        if (observed.familia() == null) desconocidos.add("catalogo:tipo_articulo");
-        for (String pendiente : observed.pendientes()) {
-          if (!pendiente.startsWith("termino:") && (!ampliada || Set.of("tipos_articulo_multiples",
-              "materiales_multiples", "atributos_multiples", "formato_medidas_no_soportado",
-              "grados_material_multiples", "cedulas_multiples", "roscas_multiples",
-              "medidas").contains(pendiente))) desconocidos.add("catalogo:" + pendiente);
-        }
-        for (var attr : attrs.entrySet()) {
-          if (ampliada && Set.of("medidas", "unidadMedidas").contains(attr.getKey())) continue;
-          String actual = candidateAttrs.get(attr.getKey());
-          if (actual == null || atributoIncierto(attr.getKey(), observed.pendientes())
-              || (attr.getKey().endsWith("Mm") && observed.pendientes().contains(attr.getKey()))) {
-            desconocidos.add("catalogo:" + attr.getKey());
-          }
-          else if (!actual.equals(attr.getValue())) {
-            if (ampliada && spec.familia() == ArticulosDao.Familia.EJE && attr.getKey().equals("largoMm")
-                && new BigDecimal(actual).compareTo(new BigDecimal(attr.getValue())) >= 0) {
-              desconocidos.add("catalogo:corte_largo");
-            } else contradice = true;
-          } else coincidencias++;
-        }
+  private IndiceArticulos obtenerIndice() {
+    var actual = cache;
+    if (actual != null && System.nanoTime() - actual.creado() < VIGENCIA_INDICE_NANOS) return actual.indice();
+    synchronized (this) {
+      actual = cache;
+      if (actual != null && System.nanoTime() - actual.creado() < VIGENCIA_INDICE_NANOS) return actual.indice();
+      var filas = articulosDao.consultarCatalogoResolucion();
+      if (filas.size() > ArticulosDao.LIMITE_CATALOGO_RESOLUCION) {
+        throw new IllegalStateException("El catalogo supera el limite del indice de busqueda");
       }
-      if (!contradice) {
-        faltantes.addAll(desconocidos);
-        if (row.codigoGP() == null || row.codigoGP().isBlank()) faltantes.add("catalogo:codigoGP");
-        // Preserve source attributes separately from inferred business attributes.
-        if (row.esquemaUnidad() != null) candidateAttrs.put("esquemaUnidad", row.esquemaUnidad());
-        if (row.atributoMarca() != null) candidateAttrs.put("txAtrMar", row.atributoMarca());
-        if (row.atributoMaterial() != null) candidateAttrs.put("txAtrMat", row.atributoMaterial());
-        var candidato = new Candidato(row.codigoGP(), row.codigoZafiro(), row.codigo3L(),
-            row.descripcion(), null, candidateAttrs);
-        compatibles.add(candidato);
-        // Keep the DAO's deterministic order for ties; expose no new response fields.
-        puntajes.put(candidato, coincidencias * 100 - desconocidos.size() * 10
-            - (candidateAttrs.containsKey("condicion") ? 1 : 0));
-      }
+      var indice = new IndiceArticulos(filas);
+      cache = new CacheIndice(indice, System.nanoTime());
+      return indice;
     }
-    if (codigo == null) compatibles.sort(Comparator.comparingInt((Candidato c) -> puntajes.get(c)).reversed());
-    String estado = !fuente.completa() ? "ambiguo" : compatibles.isEmpty() ? "sin_coincidencia"
-        : compatibles.size() == 1 && faltantes.isEmpty() ? "identificado" : "ambiguo";
-    List<String> obs = new ArrayList<>();
-    obs.add("fuente_listado_items");
-    obs.add("unidad_comercial_no_disponible");
-    obs.add("atributos_fuente_sin_equivalencia_comercial");
-    if (!fuente.motivo().isEmpty()) obs.add(fuente.motivo());
-    if (codigo == null) obs.add("reglas_limitadas_al_vocabulario_documentado");
-    boolean recortados = compatibles.size() > max;
-    if (recortados) obs.add("limite_de_candidatos");
-    return new ResolucionArticulosDto(indice, linea.texto(),
-        linea.cantidad() == null ? BigDecimal.ONE : linea.cantidad(), linea.cantidad() == null,
-        estado, estado.equals("identificado") ? compatibles.getFirst() : null,
-        List.copyOf(compatibles.subList(0, Math.min(max, compatibles.size()))),
-        List.copyOf(faltantes), diferencias(compatibles), fuente.completa(), fuente.truncada(),
-        recortados, List.copyOf(obs));
   }
 
-  private static boolean atributoIncierto(String key, List<String> pendientes) {
-    return (key.equals("medidas") && (pendientes.contains("medidas")
-            || pendientes.contains("formato_medidas_no_soportado")))
-        || (key.equals("clase") && pendientes.contains("clases_multiples"))
-        || (key.equals("material") && pendientes.contains("materiales_multiples"))
-        || (key.equals("unidadMedidas") && pendientes.contains("unidades_mixtas"))
-        || (key.equals("gradoMaterial") && pendientes.contains("grados_material_multiples"))
-        || (key.equals("cedula") && pendientes.contains("cedulas_multiples"))
-        || (key.equals("rosca") && pendientes.contains("roscas_multiples"))
-        || (Set.of("angulo", "refuerzo", "rosca", "construccion", "cedula", "gradoMaterial")
-            .contains(key) && pendientes.contains("atributos_multiples"));
-  }
-
-  private static Map<String, List<String>> diferencias(List<Candidato> candidatos) {
-    Map<String, List<String>> result = new LinkedHashMap<>();
-    for (String key : List.of("medidas", "material", "clase", "refuerzo", "angulo", "rosca",
-        "cedula", "construccion", "gradoMaterial", "marca", "unidadMedidas", "paso",
-        "espesorMm", "anchoMm", "largoMm", "alaMm", "diametroMm", "diametroNominalMm",
-        "acabado", "condicion", "montaje", "agujeros", "forma", "tipoCabeza", "tipoBronce",
-        "dimension1Mm", "dimension2Mm", "dimension3Mm")) {
-      Set<String> values = new LinkedHashSet<>();
-      for (var candidato : candidatos) values.add(candidato.atributos().getOrDefault(key, "no_especificado"));
-      if (values.size() > 1) {
-        var shown = new ArrayList<>(values.stream().limit(5).toList());
-        if (values.size() > 5) shown.add("otros_valores_no_mostrados");
-        result.put(key, List.copyOf(shown));
-      }
-    }
-    return result;
-  }
-
-  private static String codigo(String text) {
-    String value = ReglasArticulo.normalizar(text);
-    if (value.matches("\\d{3}-\\d{6}-[A-Z]")) return value;
-    if (value.matches("CODIGO [A-Z0-9][A-Z0-9._/-]{0,30}")) return value.substring(7);
+  private static String codigo(String texto) {
+    String valor = BusquedaTextoArticulo.normalizar(texto);
+    if (valor.matches("\\d{3}-\\d{6}-[A-Z]")) return valor;
+    if (valor.matches("CODIGO [A-Z0-9][A-Z0-9._/-]{0,30}")) return valor.substring(7);
     return null;
   }
 

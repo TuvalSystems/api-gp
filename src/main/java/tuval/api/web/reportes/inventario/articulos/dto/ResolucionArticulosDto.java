@@ -2,13 +2,9 @@ package tuval.api.web.reportes.inventario.articulos.dto;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
-public record ResolucionArticulosDto(int indice, String texto, BigDecimal cantidad,
-    boolean cantidadAsumida, String estado, Candidato articulo, List<Candidato> candidatos,
-    List<String> datosFaltantes, Map<String, List<String>> diferencias,
-    boolean busquedaCompleta, boolean busquedaTruncada, boolean candidatosTruncados,
-    List<String> observaciones) {
-  public record Candidato(String codigoGP, String codigoZafiro, String codigo3L,
-      String descripcion, String unidad, Map<String, String> atributos) {}
+public record ResolucionArticulosDto(String texto, BigDecimal cantidad, String estado,
+    List<Coincidencia> coincidencias) {
+  public record Coincidencia(String descripcion, String codigoGP, String codigo3L,
+      BigDecimal porcentajeCoincidencia) {}
 }

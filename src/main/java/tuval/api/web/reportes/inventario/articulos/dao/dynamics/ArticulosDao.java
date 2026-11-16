@@ -55,17 +55,6 @@ public class ArticulosDao {
       """;
 
   public static final int LIMITE_RESOLUCION = 500;
-  // A closed retrieval vocabulary, including aliases understood by the matcher.
-  public enum Familia {
-    BUSHING(List.of("BUSHING")), NIPLE(List.of("NIPLE", "NEPLO")),
-    CODO(List.of("CODO")), NUDO(List.of("NUDO", "UNION UNIVERSAL", "UNIÓN UNIVERSAL")),
-    VALVULA_BOLA(List.of("VALVULA", "VÁLVULA", "LLAVE")), TEFLON(List.of("TEFLON", "TEFLÓN", "PTFE")),
-    PLANCHA(List.of("PLANCHA", "PLANCHON")), ANGULO(List.of("ANGULO", "ÁNGULO")),
-    TUBO(List.of("TUBO")), PERNO(List.of("PERNO")), EJE(List.of("EJE", "BARRA")),
-    CHUMACERA(List.of("CHUMACERA")), BRONCE(List.of("BARRA", "BUJE", "BOCIN"));
-    private final List<String> anclas;
-    Familia(List<String> anclas) { this.anclas = anclas; }
-  }
 
   public ArticulosDao(
       @Qualifier("dynamicsNamedParameterJdbcTemplate") NamedParameterJdbcTemplate jdbcTemplate) {
@@ -204,124 +193,43 @@ public class ArticulosDao {
           rows.getString("cattuv"), rows.getBigDecimal("marUti"));
   }
 
-  public List<CatalogoArticuloDto> buscarCandidatosResolucion(Familia familia, String codigo) {
-    return buscarCandidatosResolucion(familia, codigo, Map.of());
+  public static final int LIMITE_CATALOGO_RESOLUCION = 50_000;
+
+  /** Only searchable descriptions/codes are loaded; no prices, stocks or product rules. */
+  public List<CatalogoArticuloDto> consultarCatalogoResolucion() {
+    return consultarResolucion(null, LIMITE_CATALOGO_RESOLUCION + 1, 10);
   }
 
-  public List<CatalogoArticuloDto> buscarCandidatosResolucion(Familia familia, String codigo,
-      Map<String, String> filtros) {
-    var consulta = consultaResolucion(familia, codigo, filtros);
-    return jdbcTemplate.execute(consulta.sql(), consulta.parametros(), statement -> {
-      statement.setQueryTimeout(2);
-      statement.setFetchSize(LIMITE_RESOLUCION + 1);
-      statement.setMaxRows(LIMITE_RESOLUCION + 1);
-      try (ResultSet rows = statement.executeQuery()) {
-        return leerCatalogo(rows);
-      }
-    });
+  public List<CatalogoArticuloDto> buscarCodigoResolucion(String codigo) {
+    if (codigo == null || codigo.isBlank() || codigo.length() > 31) throw new IllegalArgumentException();
+    return consultarResolucion(codigo, LIMITE_RESOLUCION + 1, 2);
   }
 
-  public record BusquedaResolucion(Familia familia, String codigo, Map<String, String> filtros) {
-    public BusquedaResolucion { filtros = Map.copyOf(filtros); }
-  }
-
-  /** One JDBC execution, with an independent TOP and deterministic order for each search. */
-  public List<List<CatalogoArticuloDto>> buscarCandidatosResolucionLote(List<BusquedaResolucion> busquedas) {
-    if (busquedas == null || busquedas.isEmpty() || busquedas.size() > 20) {
-      throw new IllegalArgumentException("Lote de busquedas invalido");
-    }
-    var sql = new StringBuilder();
-    var parametros = new MapSqlParameterSource();
-    for (int i = 0; i < busquedas.size(); i++) {
-      var busqueda = busquedas.get(i);
-      var consulta = consultaResolucion(busqueda.familia(), busqueda.codigo(), busqueda.filtros());
-      String prefijo = "b" + i + "_";
-      sql.append(consulta.sql().replaceAll(":([A-Za-z][A-Za-z0-9]*)", ":" + prefijo + "$1")).append(";\n");
-      for (String nombre : consulta.parametros().getParameterNames()) {
-        parametros.addValue(prefijo + nombre, consulta.parametros().getValue(nombre),
-            consulta.parametros().getSqlType(nombre));
-      }
-    }
-    return jdbcTemplate.execute(sql.toString(), parametros, statement -> {
-      statement.setQueryTimeout(2);
-      statement.setFetchSize(LIMITE_RESOLUCION + 1);
-      // TOP belongs to each SELECT. A statement-wide maxRows would obscure that scope.
-      List<List<CatalogoArticuloDto>> resultado = new ArrayList<>();
-      boolean disponible = statement.execute();
-      for (int i = 0; i < busquedas.size(); i++) {
-        if (!disponible) throw new SQLException("Resultado de busqueda incompleto");
-        try (ResultSet rows = statement.getResultSet()) {
-          resultado.add(leerCatalogo(rows));
-        }
-        if (i + 1 < busquedas.size()) disponible = statement.getMoreResults();
-      }
-      return resultado;
-    });
-  }
-
-  private record ConsultaResolucion(String sql, MapSqlParameterSource parametros) {}
-
-  private ConsultaResolucion consultaResolucion(Familia familia, String codigo, Map<String, String> filtros) {
-    if ((familia == null) == (codigo == null) || (codigo != null &&
-        (codigo.isBlank() || codigo.length() > 31))) {
-      throw new IllegalArgumentException("Busqueda invalida");
-    }
-    var parameters = new MapSqlParameterSource().addValue("limite", LIMITE_RESOLUCION + 1, Types.INTEGER);
+  private List<CatalogoArticuloDto> consultarResolucion(String codigo, int limite, int timeout) {
+    var parametros = new MapSqlParameterSource().addValue("limite", limite, Types.INTEGER);
     var sql = new StringBuilder("""
-        SELECT TOP (:limite) tx_itm, codZafiro, cod3L, Descripcion, unidadMedida,
-               tx_atrMar, tx_atrMat
-        FROM dbo.vw_listadoItems WHERE (
+        SELECT TOP (:limite) tx_itm, cod3L, Descripcion
+        FROM dbo.vw_MaestroArticulo
         """);
     if (codigo != null) {
-      sql.append("tx_itm = :codigo OR codZafiro = :codigo OR cod3L = :codigo");
-      parameters.addValue("codigo", codigo, Types.VARCHAR);
-    } else {
-      for (int i = 0; i < familia.anclas.size(); i++) {
-        if (i > 0) sql.append(" OR ");
-        sql.append("UPPER(Descripcion) LIKE :ancla").append(i);
-        parameters.addValue("ancla" + i, "%" + familia.anclas.get(i) + "%", Types.VARCHAR);
-      }
+      sql.append(" WHERE tx_itm = :codigo OR codZafiro = :codigo OR cod3L = :codigo");
+      parametros.addValue("codigo", codigo, Types.VARCHAR);
     }
-    sql.append(")");
-    // Filter supported aliases before TOP, with parameters local to this statement.
-    String material = filtros.get("material");
-    if ("INOXIDABLE".equals(material)) sql.append(" AND UPPER(Descripcion) LIKE '%INOX%'");
-    else if ("BRONCE".equals(material)) sql.append(" AND UPPER(Descripcion) LIKE '%BRONCE%'");
-    else if ("GALVANIZADO".equals(material)) sql.append(" AND UPPER(Descripcion) LIKE '%GALV%'");
-    String cedula = filtros.get("cedula");
-    if (cedula != null && cedula.matches("[0-9]{1,3}")) {
-      sql.append(" AND (UPPER(Descripcion + ' ') LIKE :ced OR UPPER(Descripcion + ' ') LIKE :cedula"
-          + " OR UPPER(Descripcion + ' ') LIKE :sch OR UPPER(Descripcion + ' ') LIKE :schEspacio"
-          + " OR UPPER(Descripcion + ' ') LIKE :c)");
-      parameters.addValue("ced", "%CED " + cedula + "[^0-9]%");
-      parameters.addValue("cedula", "%CEDULA " + cedula + "[^0-9]%");
-      parameters.addValue("sch", "%SCH" + cedula + "[^0-9]%");
-      parameters.addValue("schEspacio", "%SCH " + cedula + "[^0-9]%");
-      parameters.addValue("c", "% C" + cedula + "[^0-9]%");
-    }
-    // No offsets, COUNT, hints, shared-template changes, or database objects.
     sql.append("""
          ORDER BY tx_itm COLLATE Latin1_General_100_BIN2,
-        codZafiro COLLATE Latin1_General_100_BIN2,
-        cod3L COLLATE Latin1_General_100_BIN2,
-        Descripcion COLLATE Latin1_General_100_BIN2,
-        unidadMedida COLLATE Latin1_General_100_BIN2,
-        tx_atrMar COLLATE Latin1_General_100_BIN2,
-        tx_atrMat COLLATE Latin1_General_100_BIN2,
-        DATALENGTH(tx_itm), DATALENGTH(codZafiro), DATALENGTH(cod3L),
-        DATALENGTH(Descripcion), DATALENGTH(unidadMedida),
-        DATALENGTH(tx_atrMar), DATALENGTH(tx_atrMat)
+         cod3L COLLATE Latin1_General_100_BIN2, Descripcion COLLATE Latin1_General_100_BIN2,
+         DATALENGTH(tx_itm), DATALENGTH(cod3L), DATALENGTH(Descripcion)
         """);
-    return new ConsultaResolucion(sql.toString(), parameters);
-  }
-
-  private static List<CatalogoArticuloDto> leerCatalogo(ResultSet rows) throws SQLException {
-    List<CatalogoArticuloDto> result = new ArrayList<>();
-    while (rows.next()) {
-      result.add(new CatalogoArticuloDto(rows.getString("tx_itm"), rows.getString("codZafiro"),
-          rows.getString("cod3L"), rows.getString("Descripcion"), rows.getString("unidadMedida"),
-          rows.getString("tx_atrMar"), rows.getString("tx_atrMat")));
-    }
-    return result;
+    return jdbcTemplate.execute(sql.toString(), parametros, statement -> {
+      statement.setQueryTimeout(timeout);
+      statement.setFetchSize(500);
+      statement.setMaxRows(limite);
+      try (ResultSet rows = statement.executeQuery()) {
+        List<CatalogoArticuloDto> resultado = new ArrayList<>();
+        while (rows.next()) resultado.add(new CatalogoArticuloDto(
+            rows.getString("tx_itm"), rows.getString("cod3L"), rows.getString("Descripcion")));
+        return resultado;
+      }
+    });
   }
 }
