@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record ResolucionArticulosRequest(
-    @NotNull @Size(min = 1, max = 20) List<@NotNull @Valid Detalle> detalle,
+    @NotNull @Size(min = 1, max = 100) List<@NotNull @Valid Detalle> detalle,
     @JsonDeserialize(using = EnteroEstricto.class) @Min(1) @Max(6) Integer maxCandidatos) {
   public record Detalle(
       @JsonDeserialize(using = TextoEstricto.class) @NotBlank @Size(max = 200) String texto,

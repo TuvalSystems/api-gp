@@ -30,7 +30,7 @@ No se exponen el puntaje BM25 ni otros metadatos internos.
 
 `POST /api/reportes/inventario/articulos/resolver`
 
-Se mantiene el request: `detalle` con 1–20 líneas, `texto` de hasta 200
+Se mantiene el request: `detalle` con 1–100 líneas, `texto` de hasta 200
 caracteres y `cantidad` positiva (máximo 1.000.000, hasta tres decimales).
 La cantidad omitida se devuelve como 1. `maxCandidatos` admite 1–6 y su
 valor predeterminado es 3. La cantidad no interviene en la búsqueda.
