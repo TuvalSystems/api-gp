@@ -82,7 +82,12 @@ public class VarianzaDao {
           rows.getBigDecimal("UNITCOST"),
           rows.getBigDecimal("EXTDCOST"),
           rows.getString("Reason_Code"),
-          rows.getBigDecimal("CURRCOST"));
+          rows.getBigDecimal("CURRCOST"),
+          rows.getString("TipoMovimiento"),
+          rows.getString("MotivoEsperado"),
+          rows.getString("EstadoMotivo"),
+          rows.getString("EstadoCosto"),
+          rows.getString("EstadoGeneral"));
     };
   }
 }
