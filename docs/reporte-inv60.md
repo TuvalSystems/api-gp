@@ -1,5 +1,94 @@
 # Inventario / varianza: consulta de varianzas en trabajo
 
+## Ampliacion de validaciones del SP (2026-11-17)
+
+La definicion y los metadatos de `Dynamics2021.dbo.spInv60` se comprobaron en
+la conexion DEV de pruebas. El resultado actual contiene 21 columnas: las 16
+anteriores y **cinco** nuevas. Las tres columnas de estado se acompanan de
+`TipoMovimiento` y `MotivoEsperado`. La API conserva los nombres exactos del
+contrato existente y agrega estos cinco campos al DTO y al RowMapper del mismo
+modulo, sin nuevas capas, rutas, conexiones ni calculos de negocio en Java.
+
+| Campo nuevo | Tipo SQL observado | Tipo JSON |
+|---|---|---|
+| `TipoMovimiento` | `varchar(14)` | texto o null |
+| `MotivoEsperado` | `varchar(15)`, nullable | texto o null |
+| `EstadoMotivo` | `varchar(10)` | texto o null |
+| `EstadoCosto` | `varchar(16)` | texto o null |
+| `EstadoGeneral` | `varchar(7)` | texto o null |
+
+Los cinco valores se copian literalmente del SP; no se infieren, redondean,
+normalizan ni se sustituyen por valores predeterminados. `NULL` se conserva.
+Un SP incompatible que no devuelva alguna columna falla con el error generico
+existente, en vez de devolver una validacion inventada o parcial.
+
+### Reglas observadas en el SP de pruebas
+
+- `TipoMovimiento`: TRXQTY positivo = INGRESO, negativo = EGRESO, cero = SIN MOVIMIENTO.
+- `MotivoEsperado`: ingresos = SOBRANTE_VAR; egresos IMPORT = DIFERENC.IMPORT;
+  egresos de otras bodegas = CONTEO INVENTAR; cantidad cero = null.
+- `EstadoMotivo`: primero motivo nulo/vacio = SIN MOTIVO; luego esperado nulo =
+  NO APLICA; coincidencia usando UPPER/TRIM = OK; otra diferencia = INCORRECTO.
+  `Reason_Code` se conserva como lo devuelve el SP, para auditoria.
+- `EstadoCosto`: en ingresos UNITCOST positivo = OK, nulo/cero = SIN COSTO,
+  negativo = COSTO INCORRECTO. En egresos basta UNITCOST o CURRCOST positivo
+  para OK, incluso si el otro es negativo; ambos nulos/ceros = SIN COSTO;
+  las otras combinaciones = COSTO INCORRECTO. Cantidad cero = NO APLICA.
+- `EstadoGeneral`: REVISAR si cantidad cero, motivo vacio, esperado nulo,
+  motivo distinto o costo no OK; en los demas casos = OK.
+
+Estas reglas describen el SP observado; no son reglas reimplementadas en Java.
+No exigen igualdad entre UNITCOST y CURRCOST. En particular, el motivo de egreso
+IMPORT no incluye el prefijo `8 ` y el de otras bodegas es CONTEO INVENTAR.
+
+### Uso en revisiones y comunicaciones
+
+Presentar estos valores como **estado segun SP**. `EstadoGeneral = OK` no valida
+stock disponible, asignaciones/reservas, cotejo de articulos y cantidades contra
+correo/Excel, duplicados, integridad de la lista ni autorizacion para contabilizar.
+Una diferencia documental o stock sin verificar sigue siendo una observacion
+independiente aunque el estado del SP sea OK. Registrar origen, ambiente y hora;
+no extrapolar pruebas a produccion. El SP usa INNER JOIN y NOLOCK: no garantiza
+incluir toda linea esperada ni una instantanea consistente. La API no envia correo
+ni modifica o contabiliza varianzas.
+
+Los registros historicos de validacion de 16 o 17 campos que siguen no describen
+este contrato ampliado. El despliegue a DEV requiere el flujo de PR/revision de
+DEPLOYMENT.md; una prueba local no actualiza el endpoint remoto.
+
+### Comprobaciones de esta ampliacion
+
+- Java 21 / Maven 3.9.9: `mvn -o -B clean test` y `mvn -o -B clean verify`
+  exitosos. El checkout no contiene `src/test` ni dependencias de tests; Maven
+  informa **No tests to run**, no una suite funcional aprobada.
+- Comprobacion temporal separada del repositorio: 71 aserciones de mapeo/JSON,
+  21 nombres exactos, los cinco null explicitos, estados/textos sin normalizar,
+  fecha ISO, precision, ceros/negativos, duplicados, columna ausente como error,
+  validacion 400 antes del DAO, lista vacia 200 y mensaje 500 generico.
+- La misma comprobacion, usando el DAO/controller actualizados y conexion DEV,
+  completo 684 aserciones acumuladas. Confirmo servidor de pruebas y catalogo
+  Dynamics2021. VAR0000715 devolvio 39 filas; VAR0000716, 28; un documento
+  inexistente, cero. Los cinco valores se cotejaron por documento/item/linea
+  contra una consulta parametrizada posterior del SP. No hubo diferencias;
+  son lecturas sucesivas con NOLOCK, no garantia de snapshot atomico.
+- HTTP local temporal, ligado solo a 127.0.0.1 con Spring MVC/Tomcat y las mismas
+  capas: 422 aserciones. Las dos varianzas devolvieron HTTP 200 con 21 campos;
+  documento inexistente 200/lista vacia; 51 caracteres 400; fallo controlado
+  500 sin detalles en JSON; ruta antigua 404. Servidor cerrado al terminar.
+- En esas 67 filas de pruebas, los tres estados son OK. Esto no resuelve las
+  discrepancias documentales o el stock: son validaciones independientes.
+- JAR sin perfiles privados dev/qa/prod; `git diff --check` sin errores.
+  No se agregaron dependencias ni se modificaron configuraciones privadas.
+- `dependency:build-classpath` no pudo ejecutarse offline por plugin no cacheado;
+  las comprobaciones usaron las dependencias exactas del JAR construido. No se
+  instalaron paquetes ni se cambio el POM para resolverlo.
+
+Las comprobaciones temporales se retiraron despues de ejecutarse y antes del
+commit, conforme al flujo del proyecto. No se modifico el SP, inventario ni GP,
+ni se envio correo, hizo merge o desplego en el servidor remoto. La respuesta
+HTTP desplegada seguia mostrando 16 campos en la comprobacion previa del 17 de
+noviembre; la publicacion y verificacion remota de 21 campos quedan pendientes.
+
 ## Ajuste por eliminación de EXISTENCIA (2026-11-16)
 
 Se eliminó la lectura de `EXISTENCIA` y el campo del DTO para adecuar la API al
@@ -50,9 +139,9 @@ la ubicacion y el contrato HTTP de los reportes existentes.
   parametros OUT ni INOUT en la definicion proporcionada.
 - Una sola conexion, seleccionada por `@Qualifier("dynamicsJdbcTemplate")`.
   El catalogo esperado es `Dynamics2021`; el procedimiento consulta las tablas
-  `TUVAL.dbo.IV10000`, `IV10001`, `IV00101` e `IV00102` en la misma instancia.
-- Se utiliza el SP tal como fue compartido: filtro `IVDOCTYP = 2`, inventario
-  `RCRDTYPE = 2`, `INNER JOIN` y orden por `IVDOCNBR, LNSEQNBR`. No se modifica el
+  `TUVAL.dbo.IV10000`, `IV10001` e `IV00101` en la misma instancia (definicion verificada el 2026-11-17).
+- El SP actual filtra `IVDOCTYP = 2`, usa `INNER JOIN` y ordena por
+  `IVDOCNBR, LNSEQNBR`. Ya no consulta IV00102 ni filtra RCRDTYPE. No se modifica el
   procedimiento ni se duplican sus joins en Java.
 
 El DAO sigue el patrón de los DAO de artículos, cobranzas y órdenes de compra:
@@ -76,7 +165,7 @@ negativos, duplicados, 1505 filas sin recorte, conteos intermedios, cierre del
 statement, configuración compartida intacta y rechazo de retorno fallido/nulo,
 resultado ausente o adicional. La comprobación temporal se retiró tras validar.
 `mvn -o clean verify` compila y empaqueta el proyecto; no hay suite de pruebas en
-esta copia. La validación con SQL Server real sigue pendiente.
+esta copia. La validación con SQL Server real quedó pendiente en aquella etapa; ver la comprobación DEV del 2026-11-17.
 
 ## Service y diagnóstico de errores
 
@@ -147,7 +236,7 @@ omision accidental del filtro.
 
 ## Respuesta
 
-Se conservan exactamente los 16 nombres de columna actuales, todos los registros y su
+Se conservan los 16 nombres de columna anteriores y se agregan los cinco del SP (21 en total), todos los registros y su
 orden de llegada, incluyendo duplicados. No se agrupa, deduplica, redondea ni
 recalcula ningun valor. Los `NULL` se incluyen explicitamente como `null` y se
 conservan los ceros y las cantidades negativas.
@@ -156,6 +245,7 @@ conservan los ceros y las cantidades negativas.
 |---|---|
 | `IVDOCTYP` | `Integer` / numero o `null` |
 | `IVDOCNBR`, `BACHNUMB`, `ITEMNMBR`, `ITMGEDSC`, `ITMSHNAM`, `ITEMDESC`, `TRXLOCTN`, `Reason_Code` | `String` / texto o `null` |
+| `TipoMovimiento`, `MotivoEsperado`, `EstadoMotivo`, `EstadoCosto`, `EstadoGeneral` | `String` / texto o `null` |
 | `DOCDATE` | `LocalDate` / `YYYY-MM-DD` o `null`; el SP hace `CAST(... AS DATE)` |
 | `LNSEQNBR`, `QTYBSUOM`, `TRXQTY`, `UNITCOST`, `EXTDCOST`, `CURRCOST` | `BigDecimal` / numero o `null` |
 
@@ -166,8 +256,8 @@ decimales cuando requieran conservar la precision del JSON.
 
 `CURRCOST` representa el costo promedio segun la convencion confirmada por el
 usuario. Desde el 2026-11-16, `EXISTENCIA` se retira del DTO y del mapeo porque
-su eliminación del SP fue intencional. La respuesta ya no incluye ese campo. La API solo
-informa estos valores: no aprueba, contabiliza ni valida costos o inventario.
+su eliminación del SP fue intencional. La respuesta ya no incluye ese campo. La API transmite los valores y las validaciones calculadas por el SP; no recalcula reglas,
+aprueba ni contabiliza, y tampoco valida stock ni cotejos documentales.
 
 Ejemplo sintetico, sin datos consultados en SQL Server:
 
@@ -191,7 +281,12 @@ Ejemplo sintetico, sin datos consultados en SQL Server:
     "UNITCOST": 0.00000,
     "EXTDCOST": 0.00000,
     "Reason_Code": null,
-    "CURRCOST": 48.78538
+    "CURRCOST": 48.78538,
+    "TipoMovimiento": "EGRESO",
+    "MotivoEsperado": "CONTEO INVENTAR",
+    "EstadoMotivo": "SIN MOTIVO",
+    "EstadoCosto": "OK",
+    "EstadoGeneral": "REVISAR"
   }]
 }
 ```
@@ -302,7 +397,7 @@ completo 70 casos, sin fallos ni errores y con el mismo caso deshabilitado.
 Se genero el JAR y se verifico que incluye la ruta solicitada y las cinco clases
 del reporte, sin la ruta anterior ni perfiles privados dev, qa o prod.
 `git diff --check` tambien paso. Las pruebas con mocks no validan SQL Server,
-permisos, rendimiento ni datos reales; la comprobacion integrada sigue pendiente.
+permisos, rendimiento ni datos reales; la comprobacion integrada quedo pendiente en aquella etapa; ver la comprobacion DEV del 2026-11-17.
 
 La prueba integrada temporal de QA fallo en la precondicion de visibilidad y
 permisos del SP descrita arriba; no forma parte de la suite final ni se ejecuta

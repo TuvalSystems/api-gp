@@ -22,4 +22,9 @@ public record VarianzaDto(
     BigDecimal UNITCOST,
     BigDecimal EXTDCOST,
     String Reason_Code,
-    BigDecimal CURRCOST) {}
+    BigDecimal CURRCOST,
+    String TipoMovimiento,
+    String MotivoEsperado,
+    String EstadoMotivo,
+    String EstadoCosto,
+    String EstadoGeneral) {}
