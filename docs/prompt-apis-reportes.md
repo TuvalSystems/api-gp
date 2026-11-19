@@ -1,5 +1,9 @@
 # Prompt para crear o ampliar APIs de consulta
 
+## Lectura obligatoria antes de implementar
+
+Antes de implementar, lee los AGENTS.md aplicables, si existen, y docs/estructura-modular.md y docs/prompt-apis-reportes.md. Sigue las instrucciones adicionales que esos documentos referencien y que apliquen al cambio. Contrasta la documentación con el código actual, reutiliza su estructura y conserva las reglas de negocio. Si falta una referencia, búscala en el proyecto y comunica la limitación sin inventar su contenido.
+
 api-gp es un microservicio que Laravel consume: **Laravel → api-gp → SQL Server**.
 Laravel administra cotizaciones, borradores y sus procesos de negocio. Estas APIs
 consultan y devuelven información; no llaman a Laravel ni crean borradores.
@@ -82,6 +86,13 @@ API keys ni dependencias de IA a la aplicación.
 Copiar el siguiente bloque y completar únicamente los datos de la consulta:
 
 ```text
+Antes de implementar, lee los AGENTS.md aplicables, si existen, y
+docs/estructura-modular.md y docs/prompt-apis-reportes.md. Sigue las instrucciones
+adicionales que esos documentos referencien y que apliquen al cambio. Contrasta la
+documentación con el código actual, reutiliza su estructura y conserva las reglas de
+negocio. Si falta una referencia, búscala en el proyecto y comunica la limitación sin
+inventar su contenido.
+
 Crea o amplía una API de consulta en git@github.com:TuvalSystems/api-gp.git
 siguiendo docs/prompt-apis-reportes.md y las instrucciones del repositorio.
 
